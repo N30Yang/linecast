@@ -4,7 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, Swahili, and Chinese in the traditional script, twenty-seven languages in all, and sunshine can read the day in the halachic, Roman, Edo, or Islamic hours.
+linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, Swahili, and Chinese in the traditional script, twenty-seven languages in all, and sunshine can read the day in the halachic, Roman, Edo, Islamic, or Swahili hours.
 
 New this version:
 
@@ -18,6 +18,7 @@ New this version:
   - `roman` reads the twelve horae and four vigiliae of Rome.
   - `japanese` reads the six koku of the Edo day and night, 明六つ to 暮六つ.
   - `islamic` reads the prayer times, Fajr to Isha, by the convention of the country shown or a named one, and counts down the fast in Ramadan. In Turkish the prayers are named as the Diyanet prints them, İmsak to Yatsı.
+  - `swahili` reads Swahili time, saa moja at seven in the morning and seven at night, and is on by default in Swahili.
 - Sky: The Chinese sky names its brightest stars in Chinese, such as 北极二, and names 星宿, 龟 and 平 among the asterisms.
 - Weather: Units are written as each language writes them.
 - Weather: Hong Kong's warnings read in Chinese when linecast does.

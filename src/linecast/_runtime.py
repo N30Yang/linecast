@@ -215,8 +215,10 @@ WEEK_START_WEEKDAY = {"monday": 0, "saturday": 5, "sunday": 6}  # date.weekday()
 # Magen Avraham's day, alot to tzeit, where halachic is the Gr"a's.
 # islamic-<method> pins a prayer-time convention where the place's
 # country would pick one, and islamic-hanafi or -shafii the school
-# whose Asr is listed.
+# whose Asr is listed. swahili is the one a language brings: `auto`
+# reads the day in it with --lang sw.
 HOURS_CHOICES = ("halachic", "halachic-mga", "roman", "japanese", "islamic",
+                 "swahili",
                  "islamic-mwl", "islamic-isna", "islamic-egypt", "islamic-makkah",
                  "islamic-karachi", "islamic-tehran", "islamic-turkey",
                  "islamic-singapore", "islamic-jakim", "islamic-kemenag",
@@ -548,8 +550,10 @@ def sunshine_parser():
                          "-jordan, -morocco, -algeria, -tunisia, -oman), or "
                          "with "
                          "a school's Asr "
-                         "(islamic-hanafi, -shafii). Default: the "
-                         "`linecast hours` setting, else none")
+                         "(islamic-hanafi, -shafii), or Swahili time, "
+                         "saa 1 at seven (swahili). Default: the "
+                         "`linecast hours` setting, else swahili with "
+                         "--lang sw, else none")
     _add_clock_flags(p)
     p.add_argument("--json", dest="json_mode", action="store_true",
                     help="machine-readable JSON output (implies --print)")

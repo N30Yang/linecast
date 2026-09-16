@@ -4,7 +4,7 @@ Two things are painted when a system of hours is on. The top-left
 corner, which the day view leaves empty, takes the reading of the
 shown moment: "4:20 · 1h = 57m" for the halachic hours, "hora nona"
 for the Roman, "昼八つ半" for the Edo, "Asr · Maghrib in 1h 12m" for
-the prayer times. A line under the sunrise and sunset lists the day's
+the prayer times, "saa 7:13 usiku" for Swahili time. A line under the sunrise and sunset lists the day's
 marks in order: the ones already past dim, the next in the text
 colour with a countdown, the rest muted. The line keeps as many marks
 as fit, the next one first, then those still to come, then the ones
@@ -32,6 +32,10 @@ def corner_reading(hours, now, runtime):
     r = reading(hours, now)
     if r is not None:
         name = reading_name(hours.system, r, runtime)
+        # A clock's own hours are sixty minutes long, so there is no
+        # length to give.
+        if hours.wall_clock:
+            return name
         # The hour's length in minutes, 43m in a December night and
         # 74m on a June day, since "1h = 1h 14m" reads as a riddle.
         unit = unit_name(hours.system, runtime, r.night)

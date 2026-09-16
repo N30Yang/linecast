@@ -6,7 +6,8 @@ everywhere. The Edo hours keep their kanji in Japanese and take the
 bell count and the animal's hour elsewhere. The prayer names are
 transliterated, with Indonesian's own spellings, as the Hijri months
 have theirs, and Turkish's own names, İmsak to Yatsı, as the Diyanet
-prints them; sunrise reads in each language's own word.
+prints them; sunrise reads in each language's own word. Swahili time
+reads in Swahili everywhere, as Latin does.
 
 Each mark has a short name for the line under the chart and a full
 name for `--json` and the help. Names that are the same in every
@@ -187,6 +188,10 @@ def reading_name(system, r, runtime):
     if system == "japanese":
         from linecast._hours.wadokei import koku_name
         return koku_name(r, runtime)
+    if system == "swahili":
+        from linecast._hours.swahili import saa
+        from datetime import timedelta
+        return saa(r.start + timedelta(hours=r.fraction))
     clock = f"{r.index}:{int(r.fraction * 60):02d}"
     return f"{hs('night', runtime)} {clock}" if r.night else clock
 

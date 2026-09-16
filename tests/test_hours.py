@@ -22,7 +22,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from linecast._hours import (
-    DayHours, Mark, hours_now, last_mark, next_mark, reading, resolve_hours,
+    DayHours, Mark, day_hours, hours_now, last_mark, next_mark, reading, resolve_hours,
 )
 from linecast._hours.prayer_times import (
     METHODS, default_method, default_school, prayer_times,
@@ -533,6 +533,17 @@ class TestResolver:
         write_config({"hours": "mayan"})
         assert resolve_hours(None) == (None, None)
 
+    def test_swahili_brings_its_own_hours_and_the_rest_bring_none(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("LINECAST_CONFIG_DIR", str(tmp_path))
+        from linecast._config import write_config
+        assert resolve_hours(None, "sw") == ("swahili", None)
+        assert resolve_hours(None, "en") == (None, None)
+        assert resolve_hours("roman", "sw") == ("roman", None)
+        write_config({"hours": "none"})
+        assert resolve_hours(None, "sw") == (None, None)
+        write_config({"hours": "halachic"})
+        assert resolve_hours(None, "sw") == ("halachic", None)
+
 
 class TestCommand:
     def test_set_show_and_auto(self, tmp_path, monkeypatch):
@@ -554,7 +565,7 @@ class TestCommand:
             hours._cmd_show()
         assert saved_hours() is None
         assert out.getvalue().startswith("Hours set to auto")
-        assert "auto  [none" in out.getvalue()
+        assert "auto  [swahili with --lang sw, else none]" in out.getvalue()
 
     def test_every_choice_has_a_confirmation(self, tmp_path, monkeypatch):
         monkeypatch.setenv("LINECAST_CONFIG_DIR", str(tmp_path))
@@ -1381,3 +1392,51 @@ def test_magen_avraham_keeps_no_midnight_when_the_padding_eats_the_night():
     keys = [m.key for m in hours.marks]
     assert "chatzot_halayla" not in keys
     assert keys[:2] == ["alot", "sunrise"]
+
+
+class TestSwahili:
+    DAR = ZoneInfo("Africa/Dar_es_Salaam")
+
+    def _corner(self, now, lat=-6.792, lng=39.208, lang="sw"):
+        from linecast._sunshine_hours import corner_reading
+        hours, now = hours_now("swahili", now, lat, lng, now.tzinfo)
+        return corner_reading(hours, now, _runtime(lang=lang, use_24h=True))
+
+    def test_the_hours_count_from_six_on_the_clock(self):
+        # The University of Kansas table, hour for hour.
+        expected = {
+            (0, 0): "saa 6:00 usiku", (1, 13): "saa 7:13 usiku",
+            (4, 0): "saa 10:00 alfajiri", (6, 14): "saa 12:14 alfajiri",
+            (7, 0): "saa 1:00 asubuhi", (11, 59): "saa 5:59 asubuhi",
+            (12, 0): "saa 6:00 mchana", (15, 30): "saa 9:30 mchana",
+            (16, 10): "saa 10:10 jioni", (18, 19): "saa 12:19 jioni",
+            (19, 0): "saa 1:00 usiku", (23, 59): "saa 5:59 usiku",
+        }
+        for (h, m), reading_text in expected.items():
+            assert self._corner(datetime(2026, 9, 17, h, m, tzinfo=self.DAR)) == reading_text
+
+    def test_the_night_and_day_split_at_six(self):
+        hours = day_hours("swahili", date(2026, 9, 17), -6.792, 39.208, self.DAR)
+        assert reading(hours, datetime(2026, 9, 17, 17, 59, tzinfo=self.DAR)).night is False
+        assert reading(hours, datetime(2026, 9, 17, 18, 0, tzinfo=self.DAR)).night is True
+        assert reading(hours, datetime(2026, 9, 17, 5, 59, tzinfo=self.DAR)).night is True
+        assert hours.marks == []
+
+    def test_a_clock_change_moves_the_reading_with_the_clock(self):
+        london = ZoneInfo("Europe/London")
+        # The clocks go back at 02:00 on 25 October 2026, but the hours
+        # still follow the clock through the long night.
+        assert self._corner(datetime(2026, 10, 25, 3, 0, tzinfo=london),
+                            51.5, -0.13) == "saa 9:00 usiku"
+        assert self._corner(datetime(2026, 3, 29, 3, 30, tzinfo=london),
+                            51.5, -0.13) == "saa 9:30 usiku"
+
+    def test_it_reads_in_swahili_whatever_the_language(self):
+        now = datetime(2026, 9, 17, 9, 5, tzinfo=self.DAR)
+        assert self._corner(now, lang="en") == "saa 3:05 asubuhi"
+
+    def test_there_is_no_marks_line(self):
+        from linecast._sunshine_hours import hours_line
+        now = datetime(2026, 9, 17, 9, 5, tzinfo=self.DAR)
+        hours, now = hours_now("swahili", now, -6.792, 39.208, self.DAR)
+        assert hours_line(hours, now, 120, _runtime(lang="sw")) == ""

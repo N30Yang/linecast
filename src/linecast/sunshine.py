@@ -890,12 +890,12 @@ def main():
         off = dt.utcoffset()
         return None if off is None else off.total_seconds() / 3600
 
-    # The day read in a tradition's hours, from the flag or the saved
-    # setting; None keeps the civil clock alone. The table is built
-    # for the shown moment's date, cached by date, so scrubbing pays
-    # for it once a day.
+    # The day read in a tradition's hours, from the flag, the saved
+    # setting, or the language; None keeps the civil clock alone. The
+    # table is built for the shown moment's date, cached by date, so
+    # scrubbing pays for it once a day.
     from linecast._hours import hours_now, resolve_hours
-    hours_system, hours_variant = resolve_hours(args.hours)
+    hours_system, hours_variant = resolve_hours(args.hours, runtime.lang)
     # The prayer-time method follows the country of the place shown.
     # resolve_location leaves the country blank for an override, so
     # it is reverse geocoded then (cached), as the moon does for the

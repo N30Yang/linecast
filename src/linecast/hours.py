@@ -5,12 +5,12 @@ Usage: linecast hours [show]
        linecast hours roman
        linecast hours japanese
        linecast hours islamic
+       linecast hours swahili
        linecast hours none
        linecast hours auto
 
-Precedence: sunshine's --hours flag > this setting > none. There is
-no system a language brings with it: `auto` and `none` read the same
-until one does.
+Precedence: sunshine's --hours flag > this setting > the language's
+own (swahili with --lang sw) > none.
 """
 
 import argparse
@@ -30,6 +30,8 @@ _SET = {
                 "Edo bells struck them",
     "islamic": "the prayer times, Fajr to Isha, by the country's "
                "convention, and the fast in Ramadan",
+    "swahili": "Swahili time: twelve hours from six in the morning and "
+               "twelve from six in the evening, saa 1 asubuhi at seven",
     "islamic-hanafi": "the prayer times with the Hanafi school's later Asr",
     "islamic-shafii": "the prayer times with the Shafi'i school's Asr, "
                       "whatever the country",
@@ -54,9 +56,9 @@ def _cmd_show():
         print(f"{saved}  [fixed]")
         print("Run 'linecast hours auto' to clear the setting.")
     else:
-        print("auto  [none: sunshine keeps the civil clock]")
+        print("auto  [swahili with --lang sw, else none]")
         print("Run 'linecast hours halachic', 'halachic-mga', 'roman', "
-              "'japanese', or 'islamic' to read the day in one.")
+              "'japanese', 'islamic', or 'swahili' to read the day in one.")
 
 
 def _cmd_set(choice):
@@ -75,7 +77,7 @@ def _cmd_auto():
     config = read_config()
     if config.pop("hours", None) is not None:
         save_config(config)
-    print("Hours set to auto (none: sunshine keeps the civil clock)")
+    print("Hours set to auto (swahili with --lang sw, else none)")
 
 
 def main():
@@ -102,6 +104,9 @@ def main():
     from linecast._hours.prayer_times import METHODS
     for key, (name, _fajr, _isha, _maghrib) in METHODS.items():
         sub.add_parser(f"islamic-{key}", help=f"the prayer times by the {name} convention")
+    sub.add_parser("swahili",
+                   help="Swahili time: saa 1 asubuhi at seven, saa 1 usiku "
+                        "at seven in the evening")
     sub.add_parser("islamic-hanafi", help="the prayer times with the Hanafi Asr")
     sub.add_parser("islamic-shafii", help="the prayer times with the Shafi'i Asr")
     sub.add_parser("none", help="no hours, whatever the language")

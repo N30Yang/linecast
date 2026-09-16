@@ -13,19 +13,26 @@ the same way. Only the edges, the count, and the names differ:
 - japanese (wadokei): six koku each, the edges at the Sun 7°21′40″
   below the horizon;
 - islamic (prayer_times): no equal hours at all, only the marks, by
-  a method that follows the country, and the fast in Ramadan.
+  a method that follows the country, and the fast in Ramadan;
+- swahili (swahili): twelve hours each way from the clock's six
+  o'clock, read off the wall clock.
 
 Each tradition is a module beside this one, and answers `day_hours`
 for a civil date at a place with a DayHours: the edges, the count, and
 the marks. This module holds the model, the reading of a moment
 against it (which hour, how far in, how long the hour is), and the
-resolver that picks a system from the flag or the saved setting.
+resolver that picks a system from the flag, the saved setting, or the
+language.
 """
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 
-HOURS_SYSTEMS = ("halachic", "roman", "japanese", "islamic")
+HOURS_SYSTEMS = ("halachic", "roman", "japanese", "islamic", "swahili")
+
+# The system a language tells the time in. Swahili says the hour in
+# its own count, so `auto` reads the day in it for a Swahili reader.
+HOURS_OF_LANG = {"sw": "swahili"}
 
 
 @dataclass(frozen=True)
@@ -48,7 +55,9 @@ class DayHours:
     table used. `fast` is (start, end) on a day of fasting, Fajr to
     Maghrib in Ramadan, or None. `after` is the first mark of the next
     day where the table names one, so a night with no hours of its own
-    still counts down to the dawn.
+    still counts down to the dawn. `wall_clock` marks hours that are the
+    civil clock's own, read off the local time rather than measured
+    between the edges, so a night with a clock change still runs twelve.
     """
     system: str
     date: date
@@ -62,6 +71,7 @@ class DayHours:
     night_divisions: int | None = None
     fast: tuple | None = None
     after: Mark | None = None
+    wall_clock: bool = False
 
     def __post_init__(self):
         if self.night_divisions is None:
@@ -80,17 +90,21 @@ class Reading:
     end: datetime
 
 
-def resolve_hours(flag):
+def resolve_hours(flag, lang=None):
     """(system, variant) in force: the --hours flag, else the saved
-    setting, else (None, None). `auto` is none: the calendars follow
-    the language because their readers know the Moon through them,
-    and no system of hours follows a language that way. A hyphen in
-    the name separates the tradition from an opinion or method within
-    it: halachic-mga is the halachic hours by the Magen Avraham."""
+    setting, else the language's own, else (None, None). The calendars
+    follow the language because their readers know the Moon through
+    them; the hours follow it only where the language tells the time
+    in them, as Swahili does, and the traditions of observance stay a
+    choice. A hyphen in the name separates the tradition from an
+    opinion or method within it: halachic-mga is the halachic hours by
+    the Magen Avraham."""
     name = flag
     if name is None:
         from linecast._config import saved_hours
         name = saved_hours()
+    if name is None:
+        name = HOURS_OF_LANG.get(lang)
     if name is None or name == "none":
         return None, None
     system, _hyphen, variant = name.partition("-")
@@ -143,6 +157,9 @@ def day_hours(system, local_date, lat, lng, tzinfo=None, variant=None,
         from linecast._hours.prayer_times import prayer_times
         return prayer_times(local_date, lat, lng, tzinfo, method=variant,
                             country=country)
+    if system == "swahili":
+        from linecast._hours.swahili import swahili_hours
+        return swahili_hours(local_date, tzinfo)
     return None
 
 
@@ -174,6 +191,8 @@ def reading(hours, now):
     if hours is None or not hours.divisions:
         return None
     now = _aware(now, hours.day_start.tzinfo if hours.day_start else None)
+    if hours.wall_clock:
+        return _wall_reading(hours, now)
     spans = (
         (False, hours.day_start, hours.day_end),
         (True, hours.day_end, hours.next_day_start),
@@ -189,6 +208,18 @@ def reading(hours, now):
         return Reading(night, index, through - index, hour.total_seconds(),
                        start, end)
     return None
+
+
+def _wall_reading(hours, now):
+    """The reading of a clock's own hours, off *now*'s wall clock: the
+    hours since the day's or the night's edge at its hour, and the
+    minutes into this one."""
+    edge = hours.day_start.hour
+    night = not edge <= now.hour < hours.day_end.hour
+    index = (now.hour - edge) % hours.divisions
+    top = now.replace(minute=0, second=0, microsecond=0)
+    through = (now - top).total_seconds() / 3600
+    return Reading(night, index, through, 3600.0, top, shift(top, timedelta(hours=1)))
 
 
 def next_mark(hours, now):
