@@ -350,6 +350,23 @@ _SKY_STRINGS = {
         "search_jump": 'enter lần nữa để đến thời điểm đó',
         "tradition": "truyền thống",
     },
+    "eo": {
+        "sun": "Suno", "moon": "Luno",
+        "mercury": "Merkuro", "venus": "Venuso", "mars": "Marso",
+        "jupiter": "Jupitero", "saturn": "Saturno", "uranus": "Urano",
+        "neptune": "Neptuno",
+        "facing": "rigardo al {dir}",
+        "field_of_view": "{deg}° larĝa",
+        "overhead": "en la zenito",
+        "planets_none": "neniu planedo supre",
+        "star": "stelo",
+        "search_prompt": 'nomo aŭ kataloga numero',
+        "search_none": 'nenio kun tiu nomo',
+        "rises_at": '{name} leviĝas je {time} ĉe {dir}',
+        "never_rises": '{name} neniam leviĝas ĉi tie',
+        "search_jump": 'enter denove por iri al tiu momento',
+        "tradition": "tradicio",
+    },
 }
 
 # The scripts whose constellation names are not set in capitals on the
@@ -359,7 +376,7 @@ NO_CAPITALS = frozenset({"ja", "ko", "zh", "th"})
 
 # The cultures' titles, for the status line, the culture command, and the
 # search panel. Stellarium's data gives each culture an English title;
-# this table gives the other nineteen languages, keyed by the short name
+# this table gives the other twenty languages, keyed by the short name
 # `linecast culture` takes. A proper name (Boorong, Tukano) stays as it is
 # in the Latin-script languages and is transliterated in the others; a
 # name that is an adjective (Chinese, Norse) takes the language's own word.
@@ -385,6 +402,7 @@ CULTURE_TITLES = {
         "id": "Anuta",
         "uk": "Анута",
         "vi": "Anuta",
+        "eo": "Anuta",
     },
     "belarusian": {
         "en": "Belarusian",
@@ -407,6 +425,7 @@ CULTURE_TITLES = {
         "id": "Belarus",
         "uk": "білоруська",
         "vi": "Belarus",
+        "eo": "belorusa",
     },
     "blackfoot": {
         "en": "Blackfoot",
@@ -429,6 +448,7 @@ CULTURE_TITLES = {
         "id": "Blackfoot",
         "uk": "Чорноногі",
         "vi": "Blackfoot",
+        "eo": "Blackfoot",
     },
     "boorong": {
         "en": "Boorong",
@@ -451,6 +471,7 @@ CULTURE_TITLES = {
         "id": "Boorong",
         "uk": "Бурунг",
         "vi": "Boorong",
+        "eo": "Boorong",
     },
     "bugis": {
         "en": "Bugis",
@@ -473,6 +494,7 @@ CULTURE_TITLES = {
         "id": "Bugis",
         "uk": "Бугіс",
         "vi": "Bugis",
+        "eo": "Bugis",
     },
     "chinese": {
         "en": "Chinese",
@@ -495,6 +517,7 @@ CULTURE_TITLES = {
         "id": "Tiongkok",
         "uk": "китайська",
         "vi": "Trung Hoa",
+        "eo": "ĉina",
     },
     "chinese-modern": {
         "en": "Chinese Contemporary",
@@ -517,6 +540,7 @@ CULTURE_TITLES = {
         "id": "Tiongkok Modern",
         "uk": "китайська сучасна",
         "vi": "Trung Quốc hiện đại",
+        "eo": "ĉina nuntempa",
     },
     "hawaiian": {
         "en": "Hawaiian",
@@ -539,6 +563,7 @@ CULTURE_TITLES = {
         "id": "Hawaii",
         "uk": "гавайська",
         "vi": "Hawaii",
+        "eo": "havaja",
     },
     "indian": {
         "en": "Indian Vedic",
@@ -561,6 +586,7 @@ CULTURE_TITLES = {
         "id": "Weda India",
         "uk": "ведична (Індія)",
         "vi": "Vệ Đà Ấn Độ",
+        "eo": "veda",
     },
     "japanese": {
         "en": "Japanese Lunar Stations",
@@ -583,6 +609,7 @@ CULTURE_TITLES = {
         "id": "Rumah Bulan Jepang",
         "uk": "японські місячні стоянки",
         "vi": "Nhị thập bát tú Nhật Bản",
+        "eo": "japanaj lunaj domoj",
     },
     "mandar": {
         "en": "Mandar",
@@ -605,6 +632,7 @@ CULTURE_TITLES = {
         "id": "Mandar",
         "uk": "Мандар",
         "vi": "Mandar",
+        "eo": "Mandar",
     },
     "maori": {
         "en": "Maori",
@@ -627,6 +655,7 @@ CULTURE_TITLES = {
         "id": "Māori",
         "uk": "маорійська",
         "vi": "Māori",
+        "eo": "maoria",
     },
     "mongolian": {
         "en": "Mongolian",
@@ -649,6 +678,7 @@ CULTURE_TITLES = {
         "id": "Mongolia",
         "uk": "монгольська",
         "vi": "Mông Cổ",
+        "eo": "mongola",
     },
     "norse": {
         "en": "Norse",
@@ -671,6 +701,7 @@ CULTURE_TITLES = {
         "id": "Nordik",
         "uk": "скандинавська",
         "vi": "Bắc Âu",
+        "eo": "norena",
     },
     "romanian": {
         "en": "Romanian",
@@ -693,6 +724,7 @@ CULTURE_TITLES = {
         "id": "Rumania",
         "uk": "румунська",
         "vi": "Romania",
+        "eo": "rumana",
     },
     "ruelle": {
         "en": "Ruelle",
@@ -715,6 +747,7 @@ CULTURE_TITLES = {
         "id": "Ruelle",
         "uk": "Рюель",
         "vi": "Ruelle",
+        "eo": "Ruelle",
     },
     "sami": {
         "en": "Sami",
@@ -737,6 +770,7 @@ CULTURE_TITLES = {
         "id": "Sami",
         "uk": "саамська",
         "vi": "Sami",
+        "eo": "samea",
     },
     "siberian": {
         "en": "Siberian",
@@ -759,6 +793,7 @@ CULTURE_TITLES = {
         "id": "Siberia",
         "uk": "сибірська",
         "vi": "Siberia",
+        "eo": "siberia",
     },
     "tongan": {
         "en": "Tongan",
@@ -781,6 +816,7 @@ CULTURE_TITLES = {
         "id": "Tonga",
         "uk": "тонганська",
         "vi": "Tonga",
+        "eo": "tonga",
     },
     "tukano": {
         "en": "Tukano",
@@ -803,6 +839,7 @@ CULTURE_TITLES = {
         "id": "Tukano",
         "uk": "Тукано",
         "vi": "Tukano",
+        "eo": "Tukano",
     },
     "snt": {
         "en": "Western (Sky & Telescope)",
@@ -825,6 +862,7 @@ CULTURE_TITLES = {
         "id": "Barat (Sky & Telescope)",
         "uk": "західна (Sky & Telescope)",
         "vi": "Phương Tây (Sky & Telescope)",
+        "eo": "okcidenta (Sky & Telescope)",
     },
     "rey": {
         "en": "Western (H.A.Rey)",
@@ -847,6 +885,7 @@ CULTURE_TITLES = {
         "id": "Barat (H.A.Rey)",
         "uk": "західна (H.A.Rey)",
         "vi": "Phương Tây (H.A.Rey)",
+        "eo": "okcidenta (H.A.Rey)",
     },
 }
 

@@ -322,6 +322,7 @@ class TestCatalogue:
         assert sky.star_names("pl")[0] == ("Syriusz", "α CMa")
         assert sky.star_names("uk")[0] == ("Сіріус", "α CMa")
         assert sky.star_names("vi")[0] == ("Sao Thiên Lang", "α CMa")
+        assert sky.star_names("eo")[0] == ("Siriuso", "α CMa")
         vega = next(i for i, (n, _d) in sky.star_names().items() if n == "Vega")
         assert sky.star_names("zh")[vega] == ("织女一", "α Lyr")
         assert sky.star_names("en") is sky.star_names()
@@ -346,6 +347,7 @@ class TestCatalogue:
         assert sky.constellation_name(ursa, "pl") == "Wielka Niedźwiedzica"
         assert sky.constellation_name(ursa, "uk") == "Велика Ведмедиця"
         assert sky.constellation_name(ursa, "vi") == "Đại Hùng"
+        assert sky.constellation_name(ursa, "eo") == "Granda Ursino"
         assert sky.constellation_name(ursa, "en") == ursa["name"]
 
     def test_the_constellations(self):
@@ -905,6 +907,11 @@ class TestCultures:
         assert search("thien lang", pool)[0].label == "Sao Thiên Lang · α CMa"
         assert search("đại hùng", pool)[0].kind == "constellation"
         assert search("bắc đẩu", pool)[0].kind == "asterism"
+        pool = targets(_runtime(lang="eo"))
+        assert search("siriuso", pool)[0].label == "Siriuso · α CMa"
+        assert search("ĝemeloj", pool)[0].label == "Ĝemeloj · Gemini"
+        assert search("gxemeloj", pool)[0].label == "Ĝemeloj · Gemini"
+        assert search("granda ĉaro", pool)[0].kind == "asterism"
         pool = targets(_runtime(lang="ja"))
         assert search("シリウス", pool)[0].key == 0
 

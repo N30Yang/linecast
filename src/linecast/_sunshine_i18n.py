@@ -399,6 +399,23 @@ _SUNSHINE_STRINGS = {
         "sunrise": "mặt trời mọc",
         "sunset": "mặt trời lặn",
     },
+    "eo": {
+        "today": "hodiaŭ",
+        "in_day": "post {n} tago",
+        "in_days": "post {n} tagoj",
+        "day_ago": "antaŭ {n} tago",
+        "days_ago": "antaŭ {n} tagoj",
+        "sky_night": "nokto",
+        "sky_astronomical": "astronomia krepusko",
+        "sky_nautical": "naŭtika krepusko",
+        "sky_civil": "civila krepusko",
+        "sky_day": "tago",
+        "midnight_sun": "noktomeza suno",
+        "polar_night": "polusa nokto",
+        "solar_noon": "suna tagmezo",
+        "sunrise": "sunleviĝo",
+        "sunset": "sunsubiro",
+    },
 }
 
 # Month-axis labels where the first three letters of the MONTHS_I18N name

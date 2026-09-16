@@ -139,6 +139,38 @@ class TestVietnameseWeather:
         assert DAY_NAMES["vi"] == ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
 
 
+class TestEsperantoWeather:
+    def test_comparative_sentences_are_impersonal(self):
+        """The weather is an adverb in Esperanto: "estas varme", not "varma"."""
+        runtime = SimpleNamespace(lang="eo", celsius=True)
+        now = datetime(2026, 8, 24, 15)
+        warmer = comparative_sentence({"temperature_2m_max": [20, 21, 24]}, now, runtime)
+        same = comparative_sentence({"temperature_2m_max": [20, 21, 22]}, now, runtime)
+        assert warmer == "Morgaŭ estos iom pli varme ol hodiaŭ"
+        assert same == "Morgaŭ estos proksimume same varme kiel hodiaŭ"
+
+    def test_precipitation_phrases_read_as_clock_times(self):
+        runtime = SimpleNamespace(lang="eo", use_24h=True)
+        now = datetime(2026, 8, 24, 12, 10)
+        hourly = {
+            "time": [f"2026-08-24T{h:02d}:00" for h in range(12, 18)],
+            "precipitation_probability": [0, 0, 0, 0, 0, 80],
+            "weather_code": [0, 0, 0, 0, 0, 95],
+        }
+        line = _precipitation_line(hourly, now, runtime)
+        assert "Fulmotondro verŝajne komenciĝos ĉirkaŭ 17:00" in line
+
+    def test_past_precipitation_takes_da(self):
+        runtime = SimpleNamespace(lang="eo", metric=True, precip_unit="mm")
+        now = datetime(2026, 8, 24, 12)
+        hourly = {"time": ["2026-08-24T11:00"], "precipitation": [4.0],
+                  "snowfall": [0], "weather_code": [63]}
+        assert "4.0 mm da pluvo en la lastaj 24 h" in _past_precip_line(hourly, now, runtime)
+
+    def test_weekdays_use_standard_abbreviations(self):
+        assert DAY_NAMES["eo"] == ["lun", "mar", "mer", "ĵaŭ", "ven", "sab", "dim"]
+
+
 class TestWeatherLocaleImprovements:
     def test_same_temperature_sentences_are_idiomatic(self):
         expected = {

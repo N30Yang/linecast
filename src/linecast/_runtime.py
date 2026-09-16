@@ -428,7 +428,7 @@ def _base_parser(prog, description):
                     help="use standard emoji icons (same as --icons emoji)")
     p.add_argument("--lang", default=None,
                     help="language code (en, fr, es, de, it, pt, nl, pl, "
-                         "no, sv, is, da, fi, ja, ko, zh, th, id, uk, or vi); "
+                         "no, sv, is, da, fi, ja, ko, zh, th, id, uk, vi, or eo); "
                          "'linecast language' saves one")
     p.add_argument("--classic-colors", action="store_true",
                     help="use pre-theme fixed color palette")

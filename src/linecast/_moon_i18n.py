@@ -380,6 +380,24 @@ _MOON_STRINGS = {
         "autumn_equinox": "Thu phân",
         "winter_solstice": "Đông chí",
     },
+    "eo": {
+        "illuminated": "{pct}% lumigita",
+        "age": "tago {age} el {total}",
+        "lunar_age": "luna aĝo {age} t",
+        "up_now": "Nun supre",
+        "above_horizon": "{alt}° super la horizonto",
+        "below_horizon": "Sub la horizonto",
+        "moonrise": "Lunleviĝo",
+        "moonset": "Lunsubiro",
+        "in_days": "post {days} t",
+        "begins_at_sunset": "komenciĝas ĉe sunsubiro",
+        "in_time": "post {dur}",
+        "year_day": "Tago {n} el {total}",
+        "spring_equinox": "Printempa ekvinokso",
+        "summer_solstice": "Somera solstico",
+        "autumn_equinox": "Aŭtuna ekvinokso",
+        "winter_solstice": "Vintra solstico",
+    },
 }
 
 
@@ -418,6 +436,8 @@ MONTHS_I18N = {
            "лип", "сер", "вер", "жов", "лис", "гру"],
     # Vietnamese months are numbered; CLDR's short form.
     "vi": [f"thg {m}" for m in range(1, 13)],
+    "eo": ["jan", "feb", "mar", "apr", "maj", "jun",
+           "jul", "aŭg", "sep", "okt", "nov", "dec"],
 }
 
 # Date order/format per language: {month} = abbreviated name from

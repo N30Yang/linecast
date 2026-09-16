@@ -98,6 +98,7 @@ _HOURS_STRINGS = {
     "id": {"night": "malam", "in_time": "dalam {dur}", "fast": "puasa"},
     "uk": {"night": "ніч", "in_time": "через {dur}", "fast": "піст"},
     "vi": {"night": "đêm", "in_time": "còn {dur}", "fast": "nhịn chay"},
+    "eo": {"night": "nokto", "in_time": "post {dur}", "fast": "fasto"},
 }
 
 # The sunrise and sunset marks read in the language's own words, since

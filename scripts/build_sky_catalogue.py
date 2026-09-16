@@ -96,7 +96,7 @@ WIKIDATA_LANG = {
     "fr": "fr", "es": "es", "de": "de", "it": "it", "pt": "pt", "nl": "nl",
     "pl": "pl", "no": "nb", "sv": "sv", "is": "is", "da": "da", "fi": "fi",
     "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id", "uk": "uk",
-    "vi": "vi",
+    "vi": "vi", "eo": "eo",
 }
 
 GREEK = {
@@ -210,6 +210,11 @@ GREEK_WORDS = (
     "альфа", "бета", "гамма", "дельта", "епсилон", "дзета", "зета", "ета", "тета",
     "йота", "каппа", "лямбда", "мю", "ню", "ксі", "омікрон", "пі", "ро", "сигма",
     "тау", "іпсилон", "упсилон", "фі", "хі", "псі", "омега",
+    # The Esperanto spellings, as Esperanto titles its stars ("Gama de
+    # Kruco", "Epsilono de Oriono", "Alfo Karena").
+    "alfo", "beto", "gamo", "gama", "delto", "epsilono", "zeto", "eto", "teto", "teta",
+    "joto", "kapo", "kapa", "lambdo", "muo", "nuo", "ksio", "omikrono", "omikron", "pio",
+    "roo", "sigmo", "taŭo", "taŭ", "upsilono", "fio", "ĥio", "psio", "omego",
 )
 GREEK_LETTERS = "αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
 # A variable star's designation: one or two capitals before the genitive.
@@ -469,6 +474,12 @@ OVERRIDES = {
             "Canopus": "Sao Lão Nhân", "Deneb": "Sao Thiên Tân",
             "Polaris": "Sao Bắc Cực", "Sirius": "Sao Thiên Lang",
             "Vega": "Sao Chức Nữ",
+        },
+        # Wikidata files Sirius under its A component ("Sirius A") and
+        # has no Esperanto label for Mizar; these two are as Esperanto
+        # Wikipedia titles them.
+        "eo": {
+            "Mizar": "Mizaro", "Sirius": "Siriuso",
         },
         "zh": {
             "Abt's Star": "阿布特星", "Aldhibah": "紫微左垣四", "Alhiba": "天潢五",

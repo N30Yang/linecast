@@ -263,6 +263,19 @@ _STRINGS = {
         "radar_unavailable": "không có radar ({err})",
         "no_frames": "không có khung hình radar",
     },
+    "eo": {
+        "loading": "ŝargas…",
+        "hint": "spaco ludi/paŭzi · rulumo/←→ paŝi · +/- zomi · treni / wasd · c temp · W vento · t etoso · S satelito · q eliri",
+        "theme": "etoso",
+        "now": "nun",
+        "near": "{dist} {unit} {dir} de {name}",
+        "compass": "N NO O SO S SU U NU",
+        "forecast": "prognozo",
+        "echo_pct": "{pct}% eĥo",
+        "cloud_pct": "{pct}% nuboj",
+        "radar_unavailable": "radaro ne haveblas ({err})",
+        "no_frames": "neniuj radaraj bildoj",
+    },
 }
 
 

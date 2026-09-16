@@ -12,6 +12,7 @@ question a search for something not up is really asking.
 """
 
 import math
+import re
 import threading
 import unicodedata
 from datetime import timedelta, timezone
@@ -221,6 +222,16 @@ def _fold(text):
                    if not unicodedata.combining(ch)).translate(_BARRED)
 
 
+_X_SYSTEM = re.compile(r"([cghjsu])x")
+
+
+def _x_system(text):
+    """*text* with the Esperanto x-system's digraphs reduced to their base
+    letter, "gxemeloj" to "gemeloj", which is how the accent-stripped
+    names read; typed without an Esperanto keyboard, ĝ is gx."""
+    return _X_SYSTEM.sub(r"\1", text)
+
+
 def _score(name, q):
     """How well *name* answers *q*: 0 whole, 1 from the start, 2 from a
     word's start, 3 anywhere inside; None if it does not."""
@@ -241,10 +252,12 @@ def search(query, pool, limit=MAX_ROWS):
     contain it; the brightest or grandest first within each. A target's
     `exact` names take only the first two, and a match on a name
     stripped of its accents counts one step behind the same match on
-    the name itself."""
+    the name itself, and a query in the Esperanto x-system matches the
+    accent-stripped names the same way."""
     q = query.strip().lower()
     if not q:
         return []
+    queries = (q,) if _x_system(q) == q else (q, _x_system(q))
     scored = []
     for t in pool:
         best = None
@@ -255,11 +268,12 @@ def search(query, pool, limit=MAX_ROWS):
                 best = 1
         for names, penalty in ((t.names, 0), (t.folded, 1)):
             for name in names:
-                score = _score(name, q)
-                if score is None:
-                    continue
-                score = min(3, score + penalty)
-                best = score if best is None else min(best, score)
+                for text in queries:
+                    score = _score(name, text)
+                    if score is None:
+                        continue
+                    score = min(3, score + penalty)
+                    best = score if best is None else min(best, score)
         if best is not None:
             scored.append((best, t.rank, t.label, t))
     scored.sort(key=lambda s: (s[0], s[1], s[2]))

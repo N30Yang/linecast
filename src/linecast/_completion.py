@@ -36,6 +36,7 @@ LANG_CODES = (
     "id",
     "uk",
     "vi",
+    "eo",
 )
 
 SHELLS = ("bash", "zsh", "fish", "nu", "nushell")
