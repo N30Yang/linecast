@@ -4,41 +4,45 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-- Language: linecast speaks Russian, Romanian, and Czech. `linecast language ru`, `ro`, or `cs`, or a terminal locale in one of them, puts every view in that language, and the sky names its constellations in each and its brightest stars where the language has its own names.
-- Language: linecast speaks Traditional Chinese. `linecast language zh-Hant`, or a Taiwan, Hong Kong, or Macau terminal locale, puts every view in the traditional characters; the Chinese calendar and the Chinese sky come with it as they do with `zh`, and the sky names its stars and constellations in the traditional script. `zh` is the simplified script, as before.
-- Weather: Hong Kong's warnings read in Chinese, in either script, when linecast does. They were fetched in English whatever the language.
-- Weather: Units read as the language writes them: km/u in Dutch, km/t in Norwegian and Danish, km/klst. in Icelandic, km/jam in Indonesian, км/год and мм in Ukrainian, กม./ชม. and มม. in Thai, and km/sa in Turkish. The wind speed takes the space before its unit that the language's other figures already had.
-- Language: The Moon's almanac counsel and solunar periods, the koku of the Edo hours, and the inch mark on rain read in every language. They fell back to English.
-- Weather: French, Spanish, German, Italian, Portuguese, Dutch, Norwegian, Swedish, Danish, Icelandic, Finnish, and Indonesian put a space before a metric unit, 13 km/h and 2 mm, as they write it.
-- Language: linecast speaks Turkish. `linecast language tr` or a Turkish terminal locale puts every view in Turkish, and the sky names its constellations and brightest stars in Turkish. Its search takes a dotless ı or a dotted i alike: `yildiz` finds Yıldız names.
-- Language: linecast speaks Esperanto. `linecast language eo` or an Esperanto terminal locale puts every view in Esperanto, and the sky names its constellations and brightest stars in Esperanto. Its search takes the x-system too: `gxemeloj` finds Ĝemeloj.
-- Sunshine: The day can be read in the halachic hours, the sha'ot zmaniyot, beside the civil clock. `sunshine --hours halachic` or `linecast hours halachic` puts the hour and its length in the corner of the day view and lists the day's zmanim under the chart, from alot hashachar to tzeit, with the next one counted down; `halachic-mga` reads the day by the Magen Avraham. `--json` and `--oneline` carry the same. Checked against Hebcal to the minute. `roman` reads it in the twelve horae and four vigiliae of Rome, and `japanese` in the six koku of the Edo day and night, 明六つ to 暮六つ by the Kansei calendar's rule, checked against the National Astronomical Observatory's dawn and dusk for Tokyo to the minute. `islamic` reads it by the prayer times, Fajr to Isha, by the convention of the country shown or a named one, with the Hanafi Asr where it is printed, the fast counted down in Ramadan, and the night after Isha counted down to Fajr, checked against Aladhan and, for Turkey, the Diyanet's own table; Turkish reads the names as the Diyanet prints them, İmsak to Yatsı. HOURS.md describes each. Suggested by [@ylub](https://github.com/ylub) in [#95](https://github.com/ashuttl/linecast/discussions/95).
-- Sunshine: The traditional hours keep real time across a clock change. On the night the clocks go back or forward, the halachic, Roman, and Edo hours and the countdown to the next mark were an hour off for a pinned location.
-- Sunshine: Where the Sun sets after midnight, as at Nuuk or Tromsø in June, the small hours read in the day that began the evening before, so the coming sunset is the one an hour away rather than tomorrow's. By the Magen Avraham, a polar night too short for the seventy-two minutes either side no longer lists a midnight inside the next morning.
-- Language: A Norwegian terminal locale, nb_NO or nn_NO, puts linecast in Norwegian. It fell back to English before.
-- Location: `--location` and `linecast location set` refuse coordinates off the planet, such as 91,0, and no longer read "1,2,3" as 1,2. A string that is not two coordinates is looked up as a place name.
-- Settings: A config.json that has been edited into something other than a JSON object, or that is not UTF-8, is ignored rather than ending every command in a traceback. A saved location with non-numeric coordinates is ignored the same way.
-- Units: `WEATHER_UNITS` applies to the weather command alone, as the README says; it used to set the units for every command over `LINECAST_UNITS`.
-- Radar, maps: A cached radar index or built-up tile stamped with a date in the future is refetched instead of being served forever.
-- Completion: In bash, `--lang=f` and the other `--flag=value` forms complete their values, and a flag being typed no longer counts as already used, so `radar --lay` can reach `--layer` and `weather --print` finishes with a space. In zsh, the script completes values when installed as `_linecast` on `fpath`, not only when sourced. In nushell, the settings commands no longer register as bare commands named `units`, `calendar`, and so on, which made nushell parse those programs' arguments by linecast's rules.
-- Moon: On a window too short for the month grid, the last week is drawn one row high instead of being cut off below the frame.
-- Live views: A wheel notch, key, or mouse movement that arrives while the terminal is still drawing the previous frame is painted as soon as the terminal catches up. Since 2.5.2 it could sit unpainted until the next input or the view's own refresh, a minute later in weather and tides.
-- Live views: A second ctrl-C or a second termination signal while linecast is handing the terminal back no longer leaves the shell without echo. Quitting while a frame is still being drawn no longer leaves the terminal's reply on the command line.
+linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, and Chinese in the traditional script, twenty-six languages in all, and sunshine can read the day in the halachic, Roman, Edo, or Islamic hours.
+
+New this version:
+
+- Language: linecast speaks Turkish, Esperanto, Russian, Romanian, and Czech. `linecast language tr`, `eo`, `ru`, `ro`, or `cs`, or a terminal locale in one of them, puts every view in that language, and the sky names its constellations in each and its brightest stars where the language has its own names. Turkish search takes a dotless ı or a dotted i alike, so `yildiz` finds Yıldız, and Esperanto search takes the x-system, so `gxemeloj` finds Ĝemeloj.
+- Language: linecast speaks Chinese in the traditional script. `linecast language zh-Hant`, or a Taiwan, Hong Kong, or Macau terminal locale, puts every view in traditional characters, with the Chinese calendar and the Chinese sky as `zh` has them. `zh` is the simplified script, as before.
+- Sunshine: The day can be read in a tradition's hours beside the civil clock. `linecast hours` saves a choice and `sunshine --hours` sets it for one run. The hour and its length sit in the corner of the day view, the day's marks are listed under the chart with the next one counted down, and `--json` and `--oneline` carry the same. HOURS.md describes each system and what it is checked against. Suggested by [@ylub](https://github.com/ylub) in [#95](https://github.com/ashuttl/linecast/discussions/95).
+- Sunshine: `halachic` reads the sha'ot zmaniyot and the zmanim from alot hashachar to tzeit, and `halachic-mga` reads them by the Magen Avraham.
+- Sunshine: `roman` reads the twelve horae and four vigiliae of Rome.
+- Sunshine: `japanese` reads the six koku of the Edo day and night, 明六つ to 暮六つ.
+- Sunshine: `islamic` reads the prayer times, Fajr to Isha, by the convention of the country shown or a named one, with the Hanafi Asr where the country prints it. In Ramadan the fast is counted down, and after Isha the night is counted down to Fajr. In Turkish the prayers are named as the Diyanet prints them, İmsak to Yatsı.
+- Sky: In Chinese, the Chinese sky names its stars in Chinese, 北极二 rather than nothing, and names 星宿, 龟 and 平 among the asterisms.
+- Weather: Units read as each language writes them: km/u in Dutch, km/t in Norwegian and Danish, km/klst. in Icelandic, km/jam in Indonesian, км/год and мм in Ukrainian, and กม./ชม. and มม. in Thai. The European languages and Indonesian put a space before a metric unit, 13 km/h and 2 mm, as they write it.
+- Weather: Hong Kong's warnings read in Chinese when linecast does.
+- Language: The Moon's almanac counsel and solunar periods, and the inch mark on rain, read in every language. They fell back to English.
+- Language: A Norwegian terminal locale, nb_NO or nn_NO, puts linecast in Norwegian. It fell back to English.
+
+Fixes:
+
+- Weather: The hours after a clock change read as the clock there reads them. The day after the clocks went back ran an hour late, sunrise and sunset with it, and the day after they went forward an hour early. The hourly chart draws the day of the change with its 23 or 25 hours.
+- Weather: The day and night tint of the hourly chart no longer shifts by an hour on the night the machine's clocks change.
+- Weather: A gap in the forecast, an unexpected answer from a warning feed, or an undated day in the climate archive no longer ends the view in a traceback or takes the air quality and the "warmer than usual" line down with it. A missing current temperature is left off the header rather than shown as 0°.
+- Live views: A wheel notch, key, or mouse movement that arrives while the terminal is still drawing is painted as soon as the terminal catches up. Since 2.5.2 it could sit unpainted until the next input, a minute later in weather and tides.
+- Live views: A second ctrl-C while linecast is handing the terminal back no longer leaves the shell without echo, and quitting mid-frame no longer leaves the terminal's reply on the command line.
 - Live views: The theme and tradition pickers no longer hang on a window narrower than four columns.
 - Live views: A hover chip goes away once the mouse has been still for seven seconds, so a view left open on the desk, such as `sunshine --year`, does not keep one up.
-- Piping `--print` output into a reader that closes early, such as `head`, ends quietly instead of with a broken-pipe traceback.
-- Weather: An hour or a day the forecast has no value for no longer ends the view in a traceback. Open-Meteo leaves a null where a station has no reading; the curve, the bars, the daily rows, the prose, `--json` and `--oneline` now skip it. A null current temperature is left off the header rather than shown as 0°.
-- Weather: A warning feed that answers in a shape the parser does not expect costs only the alerts. It used to take the air quality and the climate scale down with it.
-- Weather: A day the climate archive could not date no longer costs the "warmer than usual" line and the climate scale of the hourly chart. The years around it are still averaged.
-- Weather: The day and night tint of the hourly chart no longer shifts by an hour on the night the machine's clocks change.
-- Weather: The hours after a clock change read as the clock there reads them. A forecast that reached past the change labelled every hour beyond it in the old offset, so the day after the clocks went back ran an hour late, sunrise and sunset with it, and the day after they went forward an hour early. The hourly chart draws the day of the change with its 23 or 25 hours, and the "warmer than usual" line is read for the day it is at the location rather than on the machine.
-- Radar: With the network down, or a source with nothing for the view, the live radar waits half a minute before asking again. It used to start a new round of requests the moment the last one failed, hundreds of times a second.
-- Radar: A location above 80° north or south opens on a view the tile sources can draw, with the marker at the true place, instead of failing on every frame.
-- Tides: The range in the header shows only when the window holds both a high and a low. A diurnal station's lone low used to print a negative range.
-- Tides: A Canadian or TideCheck station whose details could not be fetched no longer ends the view in a traceback; the chart takes its clock from the predictions.
+- Radar: With the network down, the live radar waits half a minute before asking again, instead of retrying hundreds of times a second.
+- Radar: A location above 80° north or south opens with the marker at the true place instead of failing on every frame.
+- Radar, maps: Cached data stamped with a date in the future is refetched instead of being served forever.
+- Maps: A corrupt street tile is skipped rather than failing the whole view, and a search result without coordinates no longer makes the whole search unavailable.
+- Tides: The header shows the range only when the window holds both a high and a low. A diurnal station's lone low printed a negative range.
+- Tides: A Canadian or TideCheck station whose details could not be fetched no longer ends the view in a traceback.
 - Tides: A NOAA station list that comes back empty is not kept for a month.
-- Maps: A corrupt street tile is skipped rather than failing the whole view, and a search result without coordinates is left out rather than making the whole search unavailable.
-- Sky: In Chinese, the Chinese sky names its stars in Chinese, 北极二 rather than nothing. The star names came from Stellarium in English only, so a Chinese reader saw the asterisms named and the stars bare; the names are now derived from the asterism and the star's ordinal, with the rest from the culture's own translation. Three asterisms, 星宿, 龟 and 平, are named in Chinese too.
+- Moon: On a window too short for the month grid, the last week is drawn one row high instead of being cut off.
+- Location: `--location` and `linecast location set` refuse coordinates off the planet, such as 91,0, and no longer read "1,2,3" as 1,2. Anything that is not two coordinates is looked up as a place name.
+- Settings: A config.json edited into something other than a JSON object, or not UTF-8, is ignored rather than ending every command in a traceback.
+- Units: `WEATHER_UNITS` applies to the weather command alone, as the README says. It used to override `LINECAST_UNITS` for every command.
+- Completion: In bash, `--flag=value` completes its value, and a flag being typed no longer counts as already used, so `radar --lay` reaches `--layer`. In zsh, completion works when installed as `_linecast` on `fpath`, not only when sourced. In nushell, the settings commands no longer shadow programs named `units`, `calendar`, and so on.
+- Print: Piping `--print` into a reader that closes early, such as `head`, ends quietly instead of with a broken-pipe traceback.
 
 ## 2.6.1 — 2026-09-16
 
