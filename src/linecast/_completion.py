@@ -287,8 +287,15 @@ def _bash_script(flags_by_command):
 
 _linecast_seen_flag() {{
   local needle="$1"
-  local token
-  for token in "${{COMP_WORDS[@]}}"; do
+  local i token
+  for i in "${{!COMP_WORDS[@]}}"; do
+    # The word being completed is not a flag already given: it is the
+    # one being offered, so `--lay` must still reach --layer beside
+    # --layers, and a flag typed in full still gets its space.
+    if (( i == COMP_CWORD )); then
+      continue
+    fi
+    token="${{COMP_WORDS[i]}}"
     if [[ "$token" == "$needle" || "$token" == "$needle="* ]]; then
       return 0
     fi
@@ -317,6 +324,20 @@ _linecast_complete_value_list() {{
 }}
 
 _linecast_complete_common_values() {{
+  # bash's default COMP_WORDBREAKS has = in it, so `--lang=f` arrives as
+  # three words, --lang, = and f, and `--lang=` as two, with = the word
+  # being completed. Readline puts a bare value back after the =, so the
+  # flag is the word before it and the values are offered as they are.
+  # The --flag=value arms below still serve a user who has taken = out
+  # of COMP_WORDBREAKS, where the flag and value arrive as one word.
+  local cur="$cur"
+  local prev="$prev"
+  if [[ "$cur" == "=" ]]; then
+    cur=""
+  elif [[ "$prev" == "=" ]] && (( COMP_CWORD >= 2 )); then
+    prev="${{COMP_WORDS[COMP_CWORD-2]}}"
+  fi
+
   case "$prev" in
 {prev_arms}
     {free})
@@ -448,8 +469,12 @@ def _zsh_script(flags_by_command):
     shells = _SPACE.join(SHELLS)
     standalone = _SPACE.join(flags_by_command)
 
+    # -g: dropped into fpath as _linecast, this whole file is the body
+    # of the autoloaded function, and a plain typeset there would make
+    # the lists locals of its first call, gone by the time completion
+    # asks for them.
     declarations = "\n".join(
-        f"typeset -a {_var(name)}\n"
+        f"typeset -ga {_var(name)}\n"
         f"{_var(name)}=({_SPACE.join(values)})"
         for name, values in value_lists.items()
     )
@@ -480,8 +505,15 @@ def _zsh_script(flags_by_command):
 
 _linecast_seen_flag() {{
   local needle="$1"
-  local token
-  for token in "${{words[@]}}"; do
+  local i token
+  for (( i = 1; i <= ${{#words[@]}}; i++ )); do
+    # The word being completed is not a flag already given: it is the
+    # one being offered, so `--lay` must still reach --layer beside
+    # --layers, and a flag typed in full still gets its space.
+    if (( i == CURRENT )); then
+      continue
+    fi
+    token="${{words[i]}}"
     if [[ "$token" == "$needle" || "$token" == ${{needle}}=* ]]; then
       return 0
     fi
@@ -616,7 +648,14 @@ _linecast() {{
   return 0
 }}
 
-compdef _linecast linecast {standalone}
+# Autoloaded from fpath, this file runs as _linecast itself and must
+# complete the line it was called for; sourced from the README's
+# `source <(linecast completion zsh)`, it only has to register.
+if [[ "${{funcstack[1]}}" == "_linecast" ]]; then
+  _linecast "$@"
+else
+  compdef _linecast linecast {standalone}
+fi
 """
 
 
@@ -774,11 +813,10 @@ def _nu_script(flags_by_command):
                 for cmd, flags in flags_by_command.items()}
     version_only = ["    --version # Show version"]
 
-    def dispatcher(prefix):
-        # linecast's own subcommands, and the same commands standalone
-        for cmd in TOP_LEVEL_COMMANDS:
-            if cmd in nu_flags:
-                lines.extend(_nu_extern(f"{prefix}{cmd}", nu_flags[cmd]))
+    for cmd in COMMANDS:
+        lines.extend(_nu_extern(f"linecast {cmd}", nu_flags[cmd]))
+
+    def settings(prefix):
         lines.extend(_nu_extern(
             f"{prefix}location",
             version_only,
@@ -847,13 +885,20 @@ def _nu_script(flags_by_command):
         lines.extend(_nu_extern(f"{prefix}doctor", [
             *version_only, "    --offline", "    --json", "    --debug"]))
 
-    dispatcher("linecast ")
+    settings("linecast ")
     lines.extend(_nu_extern("linecast link", _nu_flags(_link_flags())))
     lines.extend(_nu_extern(
         "linecast completion",
         [],
         ['shell?: string@"nu-complete linecast-shells"'],
     ))
-    dispatcher("")
+
+    # The seven view commands again under their short names, as the
+    # other shells register them. Only those answer to their own name
+    # (__main__.STANDALONE); a bare `units` or `calendar` is some other
+    # program's, and an extern by that name would have nushell parse
+    # that program's arguments by linecast's signature and refuse them.
+    for cmd in COMMANDS:
+        lines.extend(_nu_extern(cmd, nu_flags[cmd]))
 
     return "\n".join(lines) + "\n"

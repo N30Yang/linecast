@@ -37,10 +37,14 @@ class CompletionScriptTests(unittest.TestCase):
         self.assertIn('export extern "moon"', script)
         self.assertIn('export extern "radar"', script)
         self.assertIn('export extern "maps"', script)
-        self.assertIn('export extern "location"', script)
-        self.assertIn('export extern "units"', script)
         self.assertIn('export extern "linecast doctor"', script)
-        self.assertIn('export extern "doctor"', script)
+        # The settings commands have no short name (__main__.STANDALONE
+        # is the seven views), and an extern named `units` or `calendar`
+        # would have nushell parse some other program's arguments by
+        # linecast's signature and refuse them.
+        self.assertNotIn('export extern "location"', script)
+        self.assertNotIn('export extern "units"', script)
+        self.assertNotIn('export extern "doctor"', script)
         self.assertIn('nu-complete linecast-units-subcommands', script)
         self.assertIn('--metric', script)
         self.assertIn('--theme', script)
@@ -109,7 +113,7 @@ class CompletionScriptTests(unittest.TestCase):
         identifier = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
         for shell, pattern in (
             ("bash", r"^(_linecast_\S+?_values)="),
-            ("zsh", r"^typeset -a (\S+)$"),
+            ("zsh", r"^typeset -ga (\S+)$"),
         ):
             script = render_completion(shell)
             names = re.findall(pattern, script, re.MULTILINE)
@@ -121,12 +125,14 @@ class CompletionScriptTests(unittest.TestCase):
                 self.assertNotIn("-start_values", script)
                 self.assertNotIn("-range_values", script)
 
-    def _run_in_shell(self, shell, script, command):
+    def _run_in_shell(self, shell, script, command, name=None):
         """Write `script` to a file and run `command` in `shell` with no
         user config, the file's path in $1 (or $argv[1] in fish); return
         what it prints. nushell reads its path at parse time, so there
         the path is spliced into the command in single quotes, which
-        nushell reads with no escapes at all.
+        nushell reads with no escapes at all. `name` fixes the file's
+        basename, for a zsh function file that fpath must find as
+        _linecast.
 
         A shell that is not installed skips the test, unless the shell
         is named in LINECAST_REQUIRE_SHELLS: CI sets that where it has
@@ -138,23 +144,24 @@ class CompletionScriptTests(unittest.TestCase):
             if shell in required:
                 self.fail(f"{shell} is required here and is not installed")
             self.skipTest(f"{shell} is not installed")
-        with tempfile.NamedTemporaryFile("w", suffix=f".{shell}",
-                                         delete=False, encoding="utf-8") as handle:
+        directory = tempfile.mkdtemp()
+        path = os.path.join(directory, name or f"completion.{shell}")
+        with open(path, "w", encoding="utf-8") as handle:
             handle.write(script)
         try:
             # The path rides as an argument so a Windows path's
             # backslashes are not read as escapes.
             if shell == "nu":
-                argv = [exe, "-n", "-c", command.replace("$1", f"'{handle.name}'")]
+                argv = [exe, "-n", "-c", command.replace("$1", f"'{path}'")]
             elif shell == "fish":
                 argv = [exe, "--no-config", "-c", command.replace("$1", "$argv[1]"),
-                        handle.name]
+                        path]
             else:
-                argv = [exe, "-f", "-c", command, exe, handle.name]
+                argv = [exe, "-f", "-c", command, exe, path]
             result = subprocess.run(argv, capture_output=True, text=True,
                                     check=False)
         finally:
-            os.unlink(handle.name)
+            shutil.rmtree(directory)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, "")
         return result.stdout.strip()
@@ -184,6 +191,56 @@ class CompletionScriptTests(unittest.TestCase):
             '&& printf "%s\\n" "${COMPREPLY[@]}"')
         self.assertEqual(out.split(), ["monday", "sunday", "saturday"])
 
+    def test_bash_completes_a_value_after_an_equals_sign(self):
+        """bash's default COMP_WORDBREAKS has = in it, so `--lang=f`
+        reaches the function as --lang, = and f, and `--lang=` with the
+        = as the word being completed; both must offer the values."""
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(linecast weather --lang = f) '
+            '&& COMP_CWORD=4 && _linecast_complete '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertEqual(out.split(), ["fr", "fi"])
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(linecast moon --week-start =) '
+            '&& COMP_CWORD=3 && _linecast_complete '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertEqual(out.split(), ["monday", "sunday", "saturday"])
+        # With = taken out of COMP_WORDBREAKS the flag and value are one
+        # word, and the reply must carry the flag back.
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(linecast weather --lang=f) '
+            '&& COMP_CWORD=2 && _linecast_complete '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertEqual(out.split(), ["--lang=fr", "--lang=fi"])
+
+    def test_bash_offers_the_flag_being_typed(self):
+        """The word under the cursor is not a flag already given: --lay
+        must reach --layer beside --layers, and a flag typed in full is
+        still offered so bash appends its space. A flag given earlier
+        on the line is still left out."""
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(linecast radar --layer) '
+            '&& COMP_CWORD=2 && _linecast_complete '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertEqual(out.split(), ["--layer", "--layers"])
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(weather --print) '
+            '&& COMP_CWORD=1 && _linecast_complete_weather '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertEqual(out.split(), ["--print"])
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(linecast weather --print --) '
+            '&& COMP_CWORD=3 && _linecast_complete '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertNotIn("--print", out.split())
+        self.assertIn("--json", out.split())
+
     def test_zsh_completion_sources_cleanly(self):
         """The README's `source <(linecast completion zsh)` must not
         fail; `compdef` is stubbed because -f skips compinit."""
@@ -192,6 +249,41 @@ class CompletionScriptTests(unittest.TestCase):
             'compdef() { : }; source "$1" '
             '&& print -r -- "${_linecast_week_start_values[@]}"')
         self.assertEqual(out, "monday sunday saturday")
+
+    # A stand-in for zsh's compadd that prints what it was given; the
+    # real one filters by the word under the cursor, this one shows the
+    # whole offer, `--` first.
+    _ZSH_STUBS = 'compdef() { : }; compadd() { print -r -- "$@" }; '
+
+    def test_zsh_completes_through_autoload(self):
+        """Saved as _linecast in fpath, the #compdef route: the file is
+        the body of the autoloaded function, so its value lists must be
+        globals, and it must complete the line it was called for, on
+        the first call and every one after."""
+        out = self._run_in_shell(
+            "zsh", render_completion("zsh"),
+            self._ZSH_STUBS + 'fpath=("${1:h}" $fpath); autoload -Uz _linecast; '
+            'words=(linecast moon --week-start s); CURRENT=4; '
+            '_linecast; _linecast',
+            name="_linecast")
+        self.assertEqual(out.splitlines(), ["-- monday sunday saturday"] * 2)
+
+    def test_zsh_offers_the_flag_being_typed(self):
+        """The word under the cursor is not a flag already given: --lay
+        must reach --layer beside --layers. A flag given earlier on the
+        line is still left out."""
+        out = self._run_in_shell(
+            "zsh", render_completion("zsh"),
+            self._ZSH_STUBS + 'source "$1"; '
+            'words=(linecast radar --layer); CURRENT=3; _linecast')
+        self.assertIn("--layer", out.split())
+        self.assertIn("--layers", out.split())
+        out = self._run_in_shell(
+            "zsh", render_completion("zsh"),
+            self._ZSH_STUBS + 'source "$1"; '
+            'words=(linecast weather --print --); CURRENT=4; _linecast')
+        self.assertNotIn("--print", out.split())
+        self.assertIn("--json", out.split())
 
     def test_fish_completes_a_hyphenated_flags_values(self):
         """The README's `linecast completion fish | source`, then fish's
@@ -257,6 +349,26 @@ class CompletionScriptTests(unittest.TestCase):
                 with self.subTest(shell=shell, command=command):
                     self.assertIn(command, script)
 
+    def test_standalone_names_track_the_dispatcher(self):
+        """Every shell registers the short names the binary answers to
+        as argv[0], and no others: a nushell extern named for a command
+        linecast does not own would parse that program's arguments by
+        linecast's signature and refuse them."""
+        expected = set(cli.STANDALONE)
+        bash = render_completion("bash")
+        self.assertEqual(
+            set(re.findall(r"^complete -F _linecast_complete_\w+ (\S+)$", bash, re.M)),
+            expected)
+        zsh = render_completion("zsh")
+        self.assertEqual(set(re.search(r"^\s*compdef _linecast linecast (.*)$", zsh,
+                                       re.M).group(1).split()), expected)
+        fish = render_completion("fish")
+        self.assertEqual(set(re.findall(r"^complete -c (?!linecast\b)(\S+) ", fish, re.M)),
+                         expected)
+        nu = render_completion("nu")
+        bare = set(re.findall(r'^export extern "(?!linecast\b)([^" ]+)', nu, re.M))
+        self.assertEqual(bare, expected)
+
     def test_calendar_subcommands_track_its_parser(self):
         """`linecast calendar` takes the calendar names moon's --calendar
         takes, plus show and auto; every shell offers them all."""
@@ -274,7 +386,7 @@ class CompletionScriptTests(unittest.TestCase):
                       f"-a '{joined}'", fish)
         for sub in CALENDAR_SUBCOMMANDS:
             self.assertIn(f'export extern "linecast calendar {sub}"', nu)
-            self.assertIn(f'export extern "calendar {sub}"', nu)
+            self.assertNotIn(f'export extern "calendar {sub}"', nu)
 
     def test_hours_subcommands_track_its_parser(self):
         """`linecast hours` takes the names sunshine's --hours takes,
@@ -297,7 +409,7 @@ class CompletionScriptTests(unittest.TestCase):
                       f"-a '{joined}'", fish)
         for sub in HOURS_SUBCOMMANDS:
             self.assertIn(f'export extern "linecast hours {sub}"', nu)
-            self.assertIn(f'export extern "hours {sub}"', nu)
+            self.assertNotIn(f'export extern "hours {sub}"', nu)
 
     def test_language_subcommands_list_every_language(self):
         """`linecast language` takes every code linecast has strings for,
@@ -316,7 +428,7 @@ class CompletionScriptTests(unittest.TestCase):
                       f"-a '{joined}'", fish)
         for sub in LANGUAGE_SUBCOMMANDS:
             self.assertIn(f'export extern "linecast language {sub}"', nu)
-            self.assertIn(f'export extern "language {sub}"', nu)
+            self.assertNotIn(f'export extern "language {sub}"', nu)
 
     def _moon_calendar_choices(self):
         for action in _runtime.moon_parser()._actions:
