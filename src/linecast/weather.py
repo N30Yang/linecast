@@ -795,7 +795,8 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
         fut_geocode = pool.submit(_reverse_geocode, lat, lng)
         fut_forecast = pool.submit(fetch_forecast, lat, lng, runtime)
         fut_aqi = pool.submit(fetch_aqi, lat, lng)
-        fut_hist = pool.submit(fetch_historical, lat, lng, date.today(),
+        today = date.today()
+        fut_hist = pool.submit(fetch_historical, lat, lng, today,
                                celsius=runtime.celsius, metric=runtime.metric)
 
         # Alerts depend on geocode for country_code
@@ -810,6 +811,18 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
         result["data"] = _settle(fut_forecast, "forecast", None)
         result["aqi"] = _settle(fut_aqi, "air quality", None)
         result["historical"] = _settle(fut_hist, "historical averages", None)
+        # The archive was asked for the machine's day, which is the
+        # location's until the date line or a midnight comes between.
+        # Then it is asked again for the day it is there: the download
+        # covers the whole year, so the second answer comes from the
+        # first's cache (issue #110).
+        if result["data"]:
+            there = _local_now_for_data(result["data"]).date()
+            if there != today:
+                result["historical"] = _settle(
+                    pool.submit(fetch_historical, lat, lng, there,
+                                celsius=runtime.celsius, metric=runtime.metric),
+                    "historical averages", None)
         result["alerts"] = _settle(fut_alerts, "alerts", [])
 
     # A place the reverse geocoder cannot name keeps the name the

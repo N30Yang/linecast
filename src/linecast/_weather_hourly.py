@@ -368,10 +368,12 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     window_cloud = cloud_cover[start_idx:end_idx + 1] if cloud_cover else []
     window_dts = [dt for i, dt in parsed if start_idx <= i <= end_idx]
 
-    total_hours = 24
-    if window_dts and len(window_dts) > 1:
-        total_secs = (window_dts[-1] - window_dts[0]).total_seconds()
-        total_hours = total_secs / 3600 if total_secs > 0 else 24
+    # Hours of real time across the window: the samples are an hour
+    # apart, so one fewer than there are samples, whatever the wall
+    # clock says between the first and the last.  The day the clocks
+    # change has 23 or 25 of them, and each is as wide on the chart as
+    # any other (issue #110).
+    total_hours = len(window_dts) - 1 if len(window_dts) > 1 else 24
 
     # Global stats across all available data for stable layout while scrolling
     all_temp_lo = min(temps) if temps else 0
@@ -408,16 +410,43 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     }
 
 
+def _sample_col(i, n, graph_w):
+    """The column the i-th of n samples is drawn at."""
+    return int(i / max(1, n - 1) * (graph_w - 1))
+
+
+def _column_of(dt, window_dts, graph_w):
+    """The column a moment falls on, found among the window's samples
+    rather than counted in clock hours from the first: the samples are
+    an hour apart in real time whatever the wall clock says across a
+    clock change, so this is where the curve draws that moment.  None
+    outside the window."""
+    n = len(window_dts)
+    if n < 2 or dt < window_dts[0] or dt > window_dts[-1]:
+        return None
+    i = n - 2
+    for k in range(n - 1):
+        if window_dts[k + 1] > dt:
+            i = k
+            break
+    span = (window_dts[i + 1] - window_dts[i]).total_seconds()
+    frac = (dt - window_dts[i]).total_seconds() / span if span > 0 else 0.0
+    return (i + min(1.0, max(0.0, frac))) / (n - 1) * (graph_w - 1)
+
+
 def _compute_time_markers(window_dts, total_hours, graph_w, runtime=None):
-    """Compute notable timeline columns (midnight, noon) and day labels."""
+    """Compute notable timeline columns (midnight, noon) and day labels.
+
+    The samples are on the hour, so a midnight or a noon is one of them,
+    and is drawn where the curve draws it."""
     lang = lang_of(runtime)
     midnight_cols = set()
     noon_cols = set()
     midnight_day_names = {}
     if window_dts:
-        for h_off in range(int(total_hours) + 1):
-            dt = window_dts[0] + timedelta(hours=h_off)
-            x = int(h_off / total_hours * (graph_w - 1)) if total_hours > 0 else 0
+        n = len(window_dts)
+        for i, dt in enumerate(window_dts):
+            x = _sample_col(i, n, graph_w)
             if not (0 < x < graph_w - 1):
                 continue
             if dt.hour == 0:
@@ -438,22 +467,18 @@ def _compute_sun_labels(window_dts, sun_events, total_hours, graph_w, runtime):
     sunrise_icon = "\u2191"
     sunset_icon = "\u2193"
     if window_dts and sun_events:
-        t0 = window_dts[0]
         for rise, sset in sun_events:
-            if rise:
-                off_h = (rise - t0).total_seconds() / 3600
-                if 0 < off_h < total_hours:
-                    x = int(off_h / total_hours * (graph_w - 1))
-                    if 0 < x < graph_w - 1:
-                        lbl = fmt_time_dt(rise, use_24h)
-                        sun_labels[x] = (f"{sunrise_icon}{lbl}", True)
-            if sset:
-                off_h = (sset - t0).total_seconds() / 3600
-                if 0 < off_h < total_hours:
-                    x = int(off_h / total_hours * (graph_w - 1))
-                    if 0 < x < graph_w - 1:
-                        lbl = fmt_time_dt(sset, use_24h)
-                        sun_labels[x] = (f"{sunset_icon}{lbl}", False)
+            for moment, icon, is_rise in ((rise, sunrise_icon, True),
+                                          (sset, sunset_icon, False)):
+                if not moment:
+                    continue
+                col = _column_of(moment, window_dts, graph_w)
+                if col is None:
+                    continue
+                x = int(col)
+                if 0 < x < graph_w - 1:
+                    lbl = fmt_time_dt(moment, use_24h)
+                    sun_labels[x] = (f"{icon}{lbl}", is_rise)
     return sun_labels
 
 
@@ -907,25 +932,17 @@ def _render_tick_labels(window_dts, total_hours, graph_w, runtime=None, hover_co
     else:
         interval = 2
 
-    t0 = window_dts[0]
-    # Find first clock-aligned hour that falls within the window
-    first_hour = t0.replace(minute=0, second=0, microsecond=0)
-    if first_hour < t0:
-        first_hour += timedelta(hours=1)
-    # Round up to next multiple of interval
-    remainder = first_hour.hour % interval
-    if remainder != 0:
-        first_hour += timedelta(hours=interval - remainder)
-
+    # Each label is one of the samples, at the column the curve draws
+    # it: the hour the clocks skip has no label, the hour they repeat
+    # has two.
+    n = len(window_dts)
     label_items = []
-    dt = first_hour
-    end_dt = t0 + timedelta(hours=total_hours)
-    while dt <= end_dt:
-        h_off = (dt - t0).total_seconds() / 3600
-        x = int(h_off / total_hours * (graph_w - 1)) if total_hours > 0 else 0
+    for i, dt in enumerate(window_dts):
+        if dt.hour % interval:
+            continue
+        x = _sample_col(i, n, graph_w)
         if 0 <= x < graph_w:
             label_items.append((x, fmt_hour(dt.hour, use_24h), dt.hour == 0))
-        dt += timedelta(hours=interval)
 
     canvas = [" "] * graph_w
     last_end = 0
@@ -1180,10 +1197,10 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     # color: at launch it sits at the left edge, and it keeps saying
     # "you are here" once the chart has been scrolled (issue #49).
     now_col = None
-    if window_dts and total_hours > 0:
-        now_off = (now - window_dts[0]).total_seconds() / 3600
-        if 0 <= now_off <= total_hours:
-            now_col = int(now_off / total_hours * (graph_w - 1))
+    if window_dts:
+        col = _column_of(now, window_dts, graph_w)
+        if col is not None:
+            now_col = int(col)
     sun_labels = _compute_sun_labels(window_dts, sun_events, total_hours, graph_w, runtime)
     col_daylight = _compute_daylight_columns(window_dts, sun_events, graph_w)
     col_temps = _interpolate_columns(window_temps, graph_w)

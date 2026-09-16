@@ -174,6 +174,55 @@ def forecast_is_todays(data) -> bool:
     return made is not None and made == _local_now_for_data(data).date()
 
 
+def wall_clock(data):
+    """The forecast's timestamps as the clock on the wall reads them.
+
+    Open-Meteo stamps a whole response with the zone's UTC offset at the
+    moment of the request, so a forecast that spans a clock change
+    labels every hour after it in the offset of the day it was fetched:
+    an hour late once the clocks have gone back, an hour early once they
+    have gone forward, and the sunrise and sunset beside them the same.
+    Read back through the zone, the day of the change has 23 or 25
+    hours and every label agrees with the wall clock (issue #110).  The
+    series is left as it came without a zone, or with one the machine
+    does not know, when _local_now_for_data reads by the same offset.
+    """
+    tz_name = (data or {}).get("timezone")
+    if not tz_name:
+        return data
+    try:
+        from zoneinfo import ZoneInfo
+        zone = ZoneInfo(tz_name)
+        offset = timedelta(seconds=int(data.get("utc_offset_seconds", 0)))
+    except Exception as exc:
+        log_failure("tz", f"lookup of {tz_name}", exc, fallback="timestamps left as stamped")
+        return data
+
+    def local(text):
+        try:
+            stamped = datetime.fromisoformat(text)
+        except (TypeError, ValueError):
+            return text
+        if stamped.tzinfo is not None:
+            return text
+        wall = ((stamped - offset).replace(tzinfo=timezone.utc)
+                .astimezone(zone).replace(tzinfo=None))
+        return text if wall == stamped else wall.isoformat(timespec="minutes")
+
+    for block, keys in (("hourly", ("time",)), ("daily", ("sunrise", "sunset"))):
+        series = data.get(block)
+        if not isinstance(series, dict):
+            continue
+        for key in keys:
+            values = series.get(key)
+            if isinstance(values, list):
+                series[key] = [local(v) for v in values]
+    current = data.get("current")
+    if isinstance(current, dict) and current.get("time"):
+        current["time"] = local(current["time"])
+    return data
+
+
 def fetch_forecast(lat: float, lng: float,
                    runtime: WeatherRuntime | None = None) -> dict[str, Any] | None:
     """Fetch hourly + daily forecast from Open-Meteo. Cached 1h, and
@@ -200,14 +249,14 @@ def fetch_forecast(lat: float, lng: float,
         "&current=temperature_2m,apparent_temperature,weather_code,"
         "wind_speed_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m"
     )
-    return fetch_json_cached(
+    return wall_clock(fetch_json_cached(
         cache_file,
         3600,
         url,
         timeout=10,
         fallback=None,
         fresh=forecast_is_todays,
-    )
+    ))
 
 
 def fetch_aqi(lat: float, lng: float) -> dict[str, Any] | None:

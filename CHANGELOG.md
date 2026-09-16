@@ -29,6 +29,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Weather: A warning feed that answers in a shape the parser does not expect costs only the alerts. It used to take the air quality and the climate scale down with it.
 - Weather: A day the climate archive could not date no longer costs the "warmer than usual" line and the climate scale of the hourly chart. The years around it are still averaged.
 - Weather: The day and night tint of the hourly chart no longer shifts by an hour on the night the machine's clocks change.
+- Weather: The hours after a clock change read as the clock there reads them. A forecast that reached past the change labelled every hour beyond it in the old offset, so the day after the clocks went back ran an hour late, sunrise and sunset with it, and the day after they went forward an hour early. The hourly chart draws the day of the change with its 23 or 25 hours, and the "warmer than usual" line is read for the day it is at the location rather than on the machine.
 - Radar: With the network down, or a source with nothing for the view, the live radar waits half a minute before asking again. It used to start a new round of requests the moment the last one failed, hundreds of times a second.
 - Radar: A location above 80° north or south opens on a view the tile sources can draw, with the marker at the true place, instead of failing on every frame.
 - Tides: The range in the header shows only when the window holds both a high and a low. A diurnal station's lone low used to print a negative range.
