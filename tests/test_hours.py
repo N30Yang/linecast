@@ -601,7 +601,8 @@ class TestPainting:
         from unittest.mock import patch
         from linecast.sunshine import render
         now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
-        with patch("linecast.sunshine.get_terminal_size", return_value=(80, 24)):
+        with patch("linecast.sunshine.get_terminal_size", return_value=(80, 24)), \
+             patch("linecast.sunshine._local_today", return_value=now.date()):
             out = _plain(render(31.778, 35.235, now.timetuple().tm_yday, 14.5,
                                 fullscreen=True, runtime=_runtime(), tz_offset_h=3,
                                 location_label="Jerusalem", now=now,

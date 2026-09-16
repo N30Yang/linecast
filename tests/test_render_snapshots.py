@@ -158,8 +158,13 @@ class TestSunshineSnapshot:
         # the host's live offset via _tz_offset_hours(), which otherwise makes
         # this test depend on both the machine's timezone and the current DST
         # state. doy=64 (March 5) is in standard time for US Eastern, so -5.
+        # The arc is drawn for the machine's year, which the declination
+        # reads through _local_today; pin that too, or the glyphs drift
+        # by a cell or two from one year to the next.
         with patch("linecast.sunshine.get_terminal_size", return_value=(80, 24)), \
-             patch("linecast.sunshine._tz_offset_hours", return_value=-5):
+             patch("linecast.sunshine._tz_offset_hours", return_value=-5), \
+             patch("linecast.sunshine._local_today",
+                   return_value=datetime(2026, 3, 5).date()):
             output = render(
                 lat=43.7, lng=-79.4, doy=64,
                 now_hour=14.5, fullscreen=False,

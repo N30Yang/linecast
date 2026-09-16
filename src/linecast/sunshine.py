@@ -316,10 +316,11 @@ def _declination_on(year, doy):
 def _declination(doy):
     """Solar declination in degrees, from the ephemeris.
 
-    doy is a day of the machine's current year; 0 and 367 reach into the
-    neighboring years, as callers' yesterday and tomorrow do.
+    doy is a day of the user's current year; 0 and 367 reach into the
+    neighboring years, as callers' yesterday and tomorrow do. The year
+    is read through _local_today so a test can pin it.
     """
-    return _declination_on(datetime.now().year, doy)
+    return _declination_on(_local_today().year, doy)
 
 def solar_times(lat, lng, doy, tz_offset_h=None):
     """Sunrise/sunset as local decimal hours.
