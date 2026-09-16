@@ -4,12 +4,12 @@ Two things are painted when a system of hours is on. The top-left
 corner, which the day view leaves empty, takes the reading of the
 shown moment: "4:20 · 1h = 57m" for the halachic hours, "hora nona"
 for the Roman, "昼八つ半" for the Edo, "Asr · Maghrib in 1h 12m" for
-the prayer times, "saa 7:13 usiku" for Swahili time. A line under the sunrise and sunset lists the day's
-marks in order: the ones already past dim, the next in the text
-colour with a countdown, the rest muted. The line keeps as many marks
-as fit, the next one first, then those still to come, then the ones
-gone by, most recent first; sunrise and sunset go last, since the
-line above names them already.
+the prayer times, "saa 7:13 usiku" for Swahili time. A line under
+the sunrise and sunset lists the day's marks in order: the ones
+already past dim, the next in the text colour with a countdown, the
+rest muted. The line keeps as many marks as fit, the next one first,
+then those still to come, then the ones gone by, most recent first;
+sunrise and sunset go last, since the line above names them already.
 """
 
 from linecast._graphics import RESET, fg, fmt_time_dt, visible_len
