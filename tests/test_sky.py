@@ -325,6 +325,11 @@ class TestCatalogue:
         assert sky.star_names("eo")[0] == ("Siriuso", "α CMa")
         polaris = next(i for i, (n, _d) in sky.star_names().items() if n == "Polaris")
         assert sky.star_names("tr")[polaris] == ("Kutup Yıldızı", "α UMi")
+        assert sky.star_names("ru")[polaris] == ("Полярная звезда", "α UMi")
+        assert sky.star_names("ro")[polaris] == ("Steaua Polară", "α UMi")
+        assert sky.star_names("cs")[polaris] == ("Polárka", "α UMi")
+        assert sky.star_names("ru")[0] == ("Сириус", "α CMa")
+        assert sky.star_names("cs")[0] == ("Sirius", "α CMa")
         vega = next(i for i, (n, _d) in sky.star_names().items() if n == "Vega")
         assert sky.star_names("zh")[vega] == ("织女一", "α Lyr")
         assert sky.star_names("zh-Hant")[vega] == ("織女一", "α Lyr")
@@ -359,6 +364,9 @@ class TestCatalogue:
         assert sky.constellation_name(ursa, "vi") == "Đại Hùng"
         assert sky.constellation_name(ursa, "eo") == "Granda Ursino"
         assert sky.constellation_name(ursa, "tr") == "Büyükayı"
+        assert sky.constellation_name(ursa, "ru") == "Большая Медведица"
+        assert sky.constellation_name(ursa, "ro") == "Ursa Mare"
+        assert sky.constellation_name(ursa, "cs") == "Velká medvědice"
         assert sky.constellation_name(ursa, "zh") == "大熊座"
         assert sky.constellation_name(ursa, "zh-Hant") == "大熊座"
         coma = next(r for r in sky.constellations() if r["id"] == "Com")
@@ -968,6 +976,18 @@ class TestCultures:
         assert search("ikizler", pool)[0].label == "İkizler · Gemini"
         assert search("buyukayi", pool)[0].label == "Büyükayı · Ursa Major"
         assert search("büyük kepçe", pool)[0].kind == "asterism"
+        pool = targets(_runtime(lang="ru"))
+        assert search("полярная звезда", pool)[0].label == "Полярная звезда · α UMi"
+        assert search("близнецы", pool)[0].label == "Близнецы · Gemini"
+        assert search("большой ковш", pool)[0].kind == "asterism"
+        pool = targets(_runtime(lang="ro"))
+        assert search("steaua polara", pool)[0].label == "Steaua Polară · α UMi"
+        assert search("gemenii", pool)[0].label == "Gemenii · Gemini"
+        assert search("carul mare", pool)[0].kind == "asterism"
+        pool = targets(_runtime(lang="cs"))
+        assert search("polarka", pool)[0].label == "Polárka · α UMi"
+        assert search("blíženci", pool)[0].label == "Blíženci · Gemini"
+        assert search("velky vuz", pool)[0].kind == "asterism"
         pool = targets(_runtime(lang="zh-Hant"))
         assert search("織女一", pool)[0].label == "織女一 · α Lyr"
         assert search("大熊座", pool)[0].label == "大熊座 · Ursa Major"

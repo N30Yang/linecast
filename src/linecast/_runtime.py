@@ -446,7 +446,7 @@ def _base_parser(prog, description):
     p.add_argument("--lang", default=None,
                     help="language code (en, fr, es, de, it, pt, nl, pl, "
                          "no, sv, is, da, fi, ja, ko, zh, zh-Hant, th, id, uk, vi, "
-                         "eo, or tr); 'linecast language' saves one")
+                         "eo, tr, ru, ro, or cs); 'linecast language' saves one")
     p.add_argument("--classic-colors", action="store_true",
                     help="use pre-theme fixed color palette")
     p.add_argument("--legacy-colors", action="store_true",

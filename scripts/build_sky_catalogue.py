@@ -253,6 +253,14 @@ GREEK_WORDS = (
     # The Turkish spellings ("Alfa Centauri", "Gama Crucis").
     "gama", "epsilon", "teta", "kapa", "mü", "nü", "ksi", "omikron", "ro", "ipsilon",
     "fi", "ki", "omega",
+    # The Russian spellings, where they differ from the Ukrainian ("эта
+    # Кассиопеи", "эпсилон Эридана", "кси Персея").
+    "эпсилон", "эта", "кси", "омикрон", "пи", "ипсилон", "фи", "хи", "пси",
+    # The Czech spellings ("Mý Cephei", "Éta Ursae Minoris", "Théta Pegasi").
+    "zéta", "éta", "théta", "ióta", "mý", "ný", "ksí", "pí", "ró", "ypsilon", "fí",
+    "chí", "psí",
+    # The Romanian spellings ("Teta Scorpii", "Gama Boötis").
+    "miu", "niu", "csi", "hi",
 )
 GREEK_LETTERS = "αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
 # A variable star's designation: one or two capitals before the genitive.
@@ -537,6 +545,32 @@ OVERRIDES = {
         "tr": {
             "Aldulfin": "", "Capella": "", "Mintaka": "",
         },
+        # Russian Wikipedia titles most stars by the Bayer letter and the
+        # named ones as Wikidata labels them, with these exceptions:
+        # Wikidata files Sirius and Fomalhaut under their A components,
+        # gives Elnath its other name (Нат), and describes Aludra, Sargas,
+        # and Yildun by their letters where the articles carry the names.
+        # Aspidiske is titled by its letter and named in the first line.
+        "ru": {
+            "Sirius": "Сириус", "Fomalhaut": "Фомальгаут", "Elnath": "Эльнат",
+            "Aludra": "Алудра", "Aspidiske": "Аспидиске", "Sargas": "Саргас",
+            "Yildun": "Йильдун",
+        },
+        # Romanian charts print the IAU names; Wikidata's two Romanian
+        # labels are a French spelling and a variant. Polaris is the one
+        # star with a Romanian name in everyday use.
+        "ro": {
+            "Aldulfin": "", "Merope": "", "Polaris": "Steaua Polară",
+        },
+        # Czech Wikipedia titles these by the IAU name where Wikidata's
+        # label is another spelling or an older name (Deneb Kaitos, Ksora,
+        # Altarf, Turais, Zuben Eschemali, Gemma, Becrux); Almach has no
+        # article to check Alamak against. Schedir, Polárka, Betelgeuze,
+        # Prokyon, Alkor, and Ras Alhague are the titles.
+        "cs": {
+            "Almach": "", "Alphecca": "", "Diphda": "", "Meridiana": "", "Mimosa": "",
+            "Ruchbah": "", "Tarf": "", "Tureis": "", "Zubeneschamali": "",
+        },
         "zh": {
             "Abt's Star": "阿布特星", "Aldhibah": "紫微左垣四", "Alhiba": "天潢五",
             "Almizan": "右旗三", "Alya": "天市左垣七", "Andrews' star": "",
@@ -564,6 +598,13 @@ OVERRIDES = {
         },
     },
     "constellations": {
+        # Czech Wikipedia titles the articles "Souhvězdí Velké medvědice",
+        # in the genitive, and Wikidata carries the nominative names the
+        # charts print; two of its labels are the article's phrase, and
+        # Ursa Minor is Malý medvěd, as the article and the charts have it.
+        "cs": {
+            "Car": "Lodní kýl", "Cru": "Jižní kříž", "UMi": "Malý medvěd",
+        },
         "de": {
             "CMa": "Großer Hund", "CMi": "Kleiner Hund", "Car": "Kiel des Schiffs",
             "Com": "Haar der Berenike", "CrA": "Südliche Krone", "CrB": "Nördliche Krone",
@@ -618,6 +659,11 @@ OVERRIDES = {
             "Tel": "Luneta", "TrA": "Trójkąt Południowy", "Tri": "Trójkąt", "Tuc": "Tukan",
             "UMa": "Wielka Niedźwiedzica", "UMi": "Mała Niedźwiedzica", "Vel": "Żagiel",
             "Vir": "Panna", "Vol": "Ryba Latająca", "Vul": "Lisek",
+        },
+        # Romanian Wikipedia titles Aquila "Vulturul" and Ophiuchus
+        # "Ofiucus"; Wikidata keeps the Latin for both.
+        "ro": {
+            "Aql": "Vulturul", "Oph": "Ofiucus",
         },
         "pt": {
             "And": "", "Ant": "Máquina Pneumática", "Aps": "Ave-do-Paraíso", "Aql": "Águia",

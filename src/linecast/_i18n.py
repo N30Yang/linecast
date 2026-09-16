@@ -17,6 +17,7 @@ LANGUAGES = (
     ("zh", "Simplified Chinese"), ("zh-Hant", "Traditional Chinese"),
     ("th", "Thai"), ("id", "Indonesian"), ("uk", "Ukrainian"),
     ("vi", "Vietnamese"), ("eo", "Esperanto"), ("tr", "Turkish"),
+    ("ru", "Russian"), ("ro", "Romanian"), ("cs", "Czech"),
 )
 LANGUAGE_CODES = tuple(code for code, _name in LANGUAGES)
 LANGUAGE_NAMES = dict(LANGUAGES)
@@ -84,13 +85,57 @@ def lang_of(runtime):
 
 # Languages that write the percent sign before the number: %40.
 PERCENT_FIRST = frozenset({"tr"})
+# Languages that set the sign off with a space: 40 %. In Czech "40%"
+# reads as the adjective, forty-percent.
+PERCENT_SPACED = frozenset({"cs"})
 
 
 def fmt_percent(value, runtime):
     """`value` as a whole-number percentage the display language's way:
-    "40%", or "%40" in Turkish."""
+    "40%", "%40" in Turkish, "40 %" in Czech."""
     text = f"{value:.0f}"
-    return f"%{text}" if lang_of(runtime) in PERCENT_FIRST else f"{text}%"
+    lang = lang_of(runtime)
+    if lang in PERCENT_FIRST:
+        return f"%{text}"
+    return f"{text} %" if lang in PERCENT_SPACED else f"{text}%"
+
+
+def plural_category(lang, n):
+    """Which form a count takes in `lang`: "one", "few", or "many", as
+    CLDR draws the lines. Russian and Ukrainian count 1, 21, 31 as one,
+    2–4 and 22–24 as few, the rest (11–14 among them) as many; Polish
+    the same but with only 1 as one; Czech 1, 2–4, and the rest;
+    Romanian 1, then few to 19 and again from 101 to 119, with "de"
+    before the noun beyond ("21 de zile", "101 zile"). A fraction is many in the
+    Slavic languages and few in Romanian. Every other language has one
+    and many."""
+    whole = float(n) == int(n)
+    n = abs(int(n)) if whole else n
+    if lang in ("ru", "uk"):
+        if not whole:
+            return "many"
+        if n % 10 == 1 and n % 100 != 11:
+            return "one"
+        if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+            return "few"
+        return "many"
+    if lang == "pl":
+        if whole and n == 1:
+            return "one"
+        if whole and n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+            return "few"
+        return "many"
+    if lang == "cs":
+        if not whole:
+            return "many"
+        return "one" if n == 1 else "few" if n in (2, 3, 4) else "many"
+    if lang == "ro":
+        if whole and n == 1:
+            return "one"
+        if not whole or n == 0 or n % 100 in range(1, 20):
+            return "few"
+        return "many"
+    return "one" if whole and n == 1 else "many"
 
 
 def lookup(table, key, lang, **kwargs):

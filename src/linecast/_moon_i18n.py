@@ -5,7 +5,7 @@ chart's moon labels); this module holds the strings specific to the ``moon``
 command plus month names for the full/new moon dates.
 """
 
-from linecast._i18n import lang_of, lookup
+from linecast._i18n import lang_of, lookup, plural_category
 from linecast._tides_i18n import MOON_NAMES_I18N, _moon_name  # noqa: F401 — re-export
 from linecast._weather_i18n import DAY_NAMES  # re-export for convenience
 
@@ -654,6 +654,94 @@ _MOON_STRINGS = {
         "autumn_equinox": "Sonbahar ekinoksu",
         "winter_solstice": "Kış gündönümü",
     },
+    "ru": {
+        "illuminated": "освещено {pct}%",
+        "age": "день {age} из {total}",
+        "lunar_age": "возраст Луны {age} д",
+        "up_now": "Над горизонтом",
+        "above_horizon": "{alt}° над горизонтом",
+        "below_horizon": "Под горизонтом",
+        "moonrise": "Восход Луны",
+        "moonset": "Заход Луны",
+        "in_days": "через {days} д",
+        "begins_at_sunset": "начинается с заходом солнца",
+        "in_time": "через {dur}",
+        "year_day": "День {n} из {total}",
+        "light_of_moon": "Луна растёт",
+        "dark_of_moon": "Луна убывает",
+        "good_for": "Благоприятно: {things}",
+        "hold_off": "Подождите: {things}",
+        "light_good": "посев надземных культур, прививка, пересадка",
+        "light_hold": "корнеплоды",
+        "dark_good": "корнеплоды, обрезка, прополка",
+        "dark_hold": "посев надземных культур",
+        "solunar_major": "Солунар главный",
+        "solunar_minor": "второстепенный",
+        "spring_equinox": "Весеннее равноденствие",
+        "summer_solstice": "Летнее солнцестояние",
+        "autumn_equinox": "Осеннее равноденствие",
+        "winter_solstice": "Зимнее солнцестояние",
+    },
+    "ro": {
+        "illuminated": "{pct}% iluminată",
+        "age": "ziua {age} din {total}",
+        "lunar_age": "vârsta Lunii {age} zile",
+        "up_now": "Pe cer acum",
+        "above_horizon": "{alt}° deasupra orizontului",
+        "below_horizon": "Sub orizont",
+        "moonrise": "Răsăritul Lunii",
+        "moonset": "Apusul Lunii",
+        # A count of twenty or more takes "de" before its noun: "peste
+        # 3 zile", "peste 21 de zile"; one is "peste 1 zi".
+        "in_days": "peste {days} zile",
+        "in_days_one": "peste {days} zi",
+        "in_days_many": "peste {days} de zile",
+        "begins_at_sunset": "începe la apus",
+        "in_time": "peste {dur}",
+        "year_day": "Ziua {n} din {total}",
+        "light_of_moon": "Lună în creștere",
+        "dark_of_moon": "Lună în descreștere",
+        "good_for": "Prielnic: {things}",
+        "hold_off": "Amână: {things}",
+        "light_good": "semănatul culturilor de suprafață, altoit, transplantat",
+        "light_hold": "rădăcinoase",
+        "dark_good": "rădăcinoase, tăieri, plivit",
+        "dark_hold": "semănatul culturilor de suprafață",
+        "solunar_major": "Solunar major",
+        "solunar_minor": "minor",
+        "spring_equinox": "Echinocțiul de primăvară",
+        "summer_solstice": "Solstițiul de vară",
+        "autumn_equinox": "Echinocțiul de toamnă",
+        "winter_solstice": "Solstițiul de iarnă",
+    },
+    "cs": {
+        "illuminated": "osvětleno {pct} %",
+        "age": "den {age} z {total}",
+        "lunar_age": "stáří Měsíce {age} d",
+        "up_now": "Nad obzorem",
+        "above_horizon": "{alt}° nad obzorem",
+        "below_horizon": "Pod obzorem",
+        "moonrise": "Východ Měsíce",
+        "moonset": "Západ Měsíce",
+        "in_days": "za {days} d",
+        "begins_at_sunset": "začíná západem slunce",
+        "in_time": "za {dur}",
+        "year_day": "Den {n} z {total}",
+        "light_of_moon": "Měsíc dorůstá",
+        "dark_of_moon": "Měsíc couvá",
+        "good_for": "Vhodné: {things}",
+        "hold_off": "Počkejte: {things}",
+        "light_good": "setí nadzemních plodin, roubování, přesazování",
+        "light_hold": "kořenová zelenina",
+        "dark_good": "kořenová zelenina, řez, pletí",
+        "dark_hold": "setí nadzemních plodin",
+        "solunar_major": "Solunární hlavní",
+        "solunar_minor": "vedlejší",
+        "spring_equinox": "Jarní rovnodennost",
+        "summer_solstice": "Letní slunovrat",
+        "autumn_equinox": "Podzimní rovnodennost",
+        "winter_solstice": "Zimní slunovrat",
+    },
 }
 
 
@@ -696,6 +784,12 @@ MONTHS_I18N = {
            "jul", "aŭg", "sep", "okt", "nov", "dec"],
     "tr": ["Oca", "Şub", "Mar", "Nis", "May", "Haz",
            "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"],
+    "ru": ["янв", "фев", "мар", "апр", "май", "июн",
+           "июл", "авг", "сен", "окт", "ноя", "дек"],
+    "ro": ["ian", "feb", "mar", "apr", "mai", "iun",
+           "iul", "aug", "sep", "oct", "noi", "dec"],
+    "cs": ["led", "úno", "bře", "dub", "kvě", "čvn",
+           "čvc", "srp", "zář", "říj", "lis", "pro"],
 }
 
 # Date order/format per language: {month} = abbreviated name from
@@ -703,6 +797,7 @@ MONTHS_I18N = {
 _DATE_MD = {
     "en": "{month} {day}",
     "de": "{day}. {month}",
+    "cs": "{day}. {month}",
     "fi": "{day}.{mnum}.",
     "ja": "{mnum}月{day}日",
     "zh": "{mnum}月{day}日",
@@ -713,8 +808,15 @@ _DATE_MD_DEFAULT = "{day} {month}"
 
 
 def _ms(key, runtime, **kwargs):
-    """Look up a moon-specific localized string."""
-    return lookup(_MOON_STRINGS, key, lang_of(runtime), **kwargs)
+    """Look up a moon-specific localized string. A count of days takes
+    the form the language gives that count where the table has one
+    (Romanian's "peste 1 zi", "peste 21 de zile")."""
+    lang = lang_of(runtime)
+    if key == "in_days" and "days" in kwargs:
+        variant = f"in_days_{plural_category(lang, float(kwargs['days']))}"
+        if variant in _MOON_STRINGS.get(lang, {}):
+            key = variant
+    return lookup(_MOON_STRINGS, key, lang, **kwargs)
 
 
 # Season names for the four events (March equinox, June solstice,

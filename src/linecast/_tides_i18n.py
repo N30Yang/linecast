@@ -118,6 +118,21 @@ _TIDES_STRINGS = {
         "waves": "Dalgalar",
         "swell": "Soluğan",
     },
+    "ru": {
+        "space_to_now": "пробел — вернуться к настоящему",
+        "waves": "Волны",
+        "swell": "Зыбь",
+    },
+    "ro": {
+        "space_to_now": "spațiu pentru a reveni la prezent",
+        "waves": "Valuri",
+        "swell": "Hulă",
+    },
+    "cs": {
+        "space_to_now": "mezerník pro návrat na současnost",
+        "waves": "Vlny",
+        "swell": "Mrtvé vlnění",
+    },
 }
 
 
@@ -168,6 +183,12 @@ MOON_NAMES_I18N = {
            "Plenluno", "Malkreskanta ĝiba luno", "Lasta kvarono", "Malkreskanta lunarko"],
     "tr": ["Yeni Ay", "Büyüyen hilal", "İlk dördün", "Büyüyen şişkin Ay",
            "Dolunay", "Küçülen şişkin Ay", "Son dördün", "Küçülen hilal"],
+    "ru": ["Новолуние", "Растущий серп", "Первая четверть", "Растущая Луна",
+           "Полнолуние", "Убывающая Луна", "Последняя четверть", "Убывающий серп"],
+    "ro": ["Lună nouă", "Semilună crescătoare", "Primul pătrar", "Lună gibboasă crescătoare",
+           "Lună plină", "Lună gibboasă descrescătoare", "Ultimul pătrar", "Semilună descrescătoare"],
+    "cs": ["Nov", "Dorůstající srpek", "První čtvrť", "Dorůstající Měsíc",
+           "Úplněk", "Couvající Měsíc", "Poslední čtvrť", "Couvající srpek"],
 }
 
 

@@ -10,7 +10,7 @@ from linecast._runtime import WeatherRuntime, current_runtime, log_failure, log_
 from linecast._textwidth import wrap_display_width
 from linecast._weather_i18n import (
     fmt_wind,
-    DAY_NAMES, WMO_NAMES, WMO_NAMES_I18N, _PRECIP_DESCS_I18N, _s, _wmo_icons,
+    DAY_NAMES, ON_DAY_FORMS, WMO_NAMES, WMO_NAMES_I18N, _PRECIP_DESCS_I18N, _s, _wmo_icons,
 )
 from linecast._weather_style import (MUTED, TEXT, WIND_COLOR, _aqi_color,
                                      _colored_temp, _india_aqi_color)
@@ -465,6 +465,9 @@ def precipitation_sentence(hourly, now, runtime=None):
                 return _s("tomorrow_afternoon", runtime)
             return _s("tomorrow_evening", runtime)
         day_names = DAY_NAMES.get(lang, DAY_NAMES["en"])
+        form = ON_DAY_FORMS.get(lang, {}).get(dt.weekday())
+        if form:
+            return form.format(day=day_names[dt.weekday()])
         return _s("on_day", runtime, day=day_names[dt.weekday()])
 
     first_idx = window[0][0]

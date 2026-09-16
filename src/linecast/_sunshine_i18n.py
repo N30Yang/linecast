@@ -5,7 +5,7 @@ module holds the year view's relative-day phrases and the numeric month
 labels for the languages whose month names don't abbreviate.
 """
 
-from linecast._i18n import lang_of, lookup
+from linecast._i18n import lang_of, lookup, plural_category
 from linecast._moon_i18n import MONTHS_I18N, _fmt_month_day  # noqa: F401 — re-export
 
 _SUNSHINE_STRINGS = {
@@ -456,6 +456,74 @@ _SUNSHINE_STRINGS = {
         "sunrise": "gün doğumu",
         "sunset": "gün batımı",
     },
+    "ru": {
+        "today": "сегодня",
+        "in_day": "через {n} день",
+        "in_days_few": "через {n} дня",
+        "in_days": "через {n} дней",
+        "day_ago": "{n} день назад",
+        "days_ago_few": "{n} дня назад",
+        "days_ago": "{n} дней назад",
+        "sky_night": "ночь",
+        "sky_astronomical": "астрономические сумерки",
+        "sky_nautical": "навигационные сумерки",
+        "sky_civil": "гражданские сумерки",
+        "sky_astronomical_dawn": "астрономический рассвет",
+        "sky_nautical_dawn": "навигационный рассвет",
+        "sky_civil_dawn": "гражданский рассвет",
+        "sky_day": "день",
+        "midnight_sun": "полярный день",
+        "polar_night": "полярная ночь",
+        "solar_noon": "солнечный полдень",
+        "sunrise": "восход",
+        "sunset": "закат",
+    },
+    "ro": {
+        "today": "azi",
+        # Romanian puts "de" between a count of twenty or more and its
+        # noun: "peste 3 zile", "peste 21 de zile".
+        "in_day": "peste {n} zi",
+        "in_days_few": "peste {n} zile",
+        "in_days": "peste {n} de zile",
+        "day_ago": "acum {n} zi",
+        "days_ago_few": "acum {n} zile",
+        "days_ago": "acum {n} de zile",
+        "sky_night": "noapte",
+        "sky_astronomical": "crepuscul astronomic",
+        "sky_nautical": "crepuscul nautic",
+        "sky_civil": "crepuscul civil",
+        "sky_day": "zi",
+        "midnight_sun": "soare de miezul nopții",
+        "polar_night": "noapte polară",
+        "solar_noon": "amiază solară",
+        "sunrise": "răsărit",
+        "sunset": "apus",
+    },
+    "cs": {
+        "today": "dnes",
+        # "před" takes the instrumental, whose plural is "dny" for every
+        # count above one; "za" takes the accusative, "dny" to four
+        # and "dní" beyond.
+        "in_day": "za {n} den",
+        "in_days_few": "za {n} dny",
+        "in_days": "za {n} dní",
+        "day_ago": "před {n} dnem",
+        "days_ago_few": "před {n} dny",
+        "days_ago": "před {n} dny",
+        "sky_night": "noc",
+        "sky_astronomical": "astronomický soumrak",
+        "sky_nautical": "nautický soumrak",
+        "sky_civil": "občanský soumrak",
+        "sky_astronomical_dawn": "astronomické svítání",
+        "sky_nautical_dawn": "nautické svítání",
+        "sky_civil_dawn": "občanské svítání",
+        "sky_day": "den",
+        "midnight_sun": "půlnoční slunce",
+        "polar_night": "polární noc",
+        "solar_noon": "sluneční poledne",
+        "sunrise": "východ slunce",
+        "sunset": "západ slunce",
+    },
 }
 
 # Month-axis labels where the first three letters of the MONTHS_I18N name
@@ -535,30 +603,23 @@ def polar_name(state, runtime):
     return ""
 
 
-def _slavic_form(n, one, few, many):
-    """The form a count takes in Ukrainian and its neighbours: 1, 21, 31
-    with `one`, 2–4 and 22–24 with `few`, the rest (11–14 among them)
-    with `many`."""
-    if n % 10 == 1 and n % 100 != 11:
-        return one
-    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
-        return few
-    return many
-
-
 def relative_day(diff, runtime):
     """'today', 'in 3 days', '2 days ago' for a day offset from today.
 
-    A language that counts the Slavic way carries `in_days_few` and
+    A language whose counts take three forms carries `in_days_few` and
     `days_ago_few` beside the plain keys, and the count picks among the
-    three; every other language has a singular and a plural.
+    three by the language's rule; every other language has a singular
+    and a plural.
     """
     if diff == 0:
         return _ss("today", runtime)
     n = abs(diff)
+    lang = lang_of(runtime)
     one, many = ("in_day", "in_days") if diff > 0 else ("day_ago", "days_ago")
-    if many + "_few" in _SUNSHINE_STRINGS.get(lang_of(runtime), {}):
-        return _ss(_slavic_form(n, one, many + "_few", many), runtime, n=n)
+    if many + "_few" in _SUNSHINE_STRINGS.get(lang, {}):
+        form = plural_category(lang, n)
+        key = one if form == "one" else many + "_few" if form == "few" else many
+        return _ss(key, runtime, n=n)
     return _ss(one if n == 1 else many, runtime, n=n)
 
 

@@ -108,6 +108,9 @@ _HOURS_STRINGS = {
     "vi": {"night": "đêm", "in_time": "còn {dur}", "koku": "1 koku", "fast": "nhịn chay"},
     "eo": {"night": "nokto", "in_time": "post {dur}", "koku": "1 koku", "fast": "fasto"},
     "tr": {"night": "gece", "in_time": "{dur} sonra", "koku": "1 koku", "fast": "oruç"},
+    "ru": {"night": "ночь", "in_time": "через {dur}", "koku": "1 коку", "fast": "пост"},
+    "ro": {"night": "noapte", "in_time": "peste {dur}", "koku": "1 koku", "fast": "post"},
+    "cs": {"night": "noc", "in_time": "za {dur}", "koku": "1 koku", "fast": "půst"},
 }
 
 # The sunrise and sunset marks read in the language's own words, since

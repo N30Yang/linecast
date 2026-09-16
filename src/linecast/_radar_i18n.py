@@ -307,6 +307,51 @@ _STRINGS = {
         "radar_unavailable": "radar kullanılamıyor ({err})",
         "no_frames": "radar karesi yok",
     },
+    "ru": {
+        "loading": "загрузка…",
+        "hint": "пробел воспр./пауза · прокрутка/←→ шаг · +/- масштаб · тянуть / wasd · c темп · W ветер · t тема · S спутник · q выход",
+        "theme": "тема",
+        "now": "сейчас",
+        # "12 км к СВ от Парижа" would put the genitive on the place
+        # name; the place comes first, and the distance after a comma.
+        "near": "{name}, {dist} {unit} {dir}",
+        "unit_km": "км",
+        "compass": "С СВ В ЮВ Ю ЮЗ З СЗ",
+        "forecast": "прогноз",
+        "echo_pct": "{pct}% эхо",
+        "cloud_pct": "{pct}% облаков",
+        "radar_unavailable": "радар недоступен ({err})",
+        "no_frames": "нет кадров радара",
+    },
+    "ro": {
+        "loading": "se încarcă…",
+        "hint": "spațiu redare/pauză · scroll/←→ pas · +/- zoom · trage / wasd · c temp · W vânt · t temă · S satelit · q ieși",
+        "theme": "temă",
+        "now": "acum",
+        "near": "{dist} {unit} {dir} de {name}",
+        "compass": "N NE E SE S SV V NV",
+        "forecast": "prognoză",
+        "echo_pct": "{pct}% ecou",
+        "cloud_pct": "{pct}% nori",
+        "radar_unavailable": "radar indisponibil ({err})",
+        "no_frames": "niciun cadru radar",
+    },
+    "cs": {
+        "loading": "načítání…",
+        "hint": "mezerník přehrát/pauza · kolečko/←→ krok · +/- zoom · tažení / wasd · c teplota · W vítr · t motiv · S družice · q konec",
+        "theme": "motiv",
+        "now": "nyní",
+        # "12 km SV od Prahy" would put the genitive on the place name;
+        # the place comes first, and the distance after a comma.
+        "near": "{name}, {dist} {unit} {dir}",
+        "compass": "S SV V JV J JZ Z SZ",
+        "forecast": "předpověď",
+        # Czech sets the percent sign off with a space: 40 %.
+        "echo_pct": "{pct} % odraz",
+        "cloud_pct": "{pct} % oblačnost",
+        "radar_unavailable": "radar není k dispozici ({err})",
+        "no_frames": "žádné snímky radaru",
+    },
 }
 
 
