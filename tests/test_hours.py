@@ -634,7 +634,6 @@ class TestPainting:
         """At 44 columns a Ramadan reading and the place with its clock
         would meet: the place goes first, then the reading's second
         part, and nothing is cut mid-word."""
-        import shutil
         from linecast import sunshine
         from linecast.sunshine import render
         tz = ZoneInfo("Asia/Riyadh")
@@ -643,8 +642,9 @@ class TestPainting:
         monkeypatch.setattr(sunshine, "_local_today", lambda: date(2026, 3, 5))
         for cols, expect_place in ((44, False), (80, True)):
             monkeypatch.setattr(sunshine, "get_terminal_size", lambda c=cols: (c, 14))
-            out = render(21.4225, 39.8262, 64, 12.0, fullscreen=True, runtime=_runtime(use_24h=True),
-                         tz_offset_h=3.0, location_label="Makkah", now=now, hours=hours)
+            out = render(21.4225, 39.8262, 64, 12.0, fullscreen=True,
+                         runtime=_runtime(use_24h=True), tz_offset_h=3.0,
+                         location_label="Makkah", now=now, hours=hours)
             top = _plain(out.split("\n")[0] if isinstance(out, str) else out[0])
             assert "fast 6h 38m" in top
             assert ("Makkah" in top) == expect_place
@@ -1282,7 +1282,8 @@ class TestPrayerTimes:
         assert amman.day_end == marks["maghrib"]
         # Jordan's Maghrib is five minutes after sunset
         plain = prayer_times(date(2026, 9, 16), 31.95, 35.93, tz, "mwl", None)
-        assert marks["maghrib"] - {m.key: m.at for m in plain.marks}["maghrib"] == timedelta(minutes=5)
+        sunset = {m.key: m.at for m in plain.marks}["maghrib"]
+        assert marks["maghrib"] - sunset == timedelta(minutes=5)
 
     def test_json_carries_the_fast_and_the_arabic(self):
         from linecast._sunshine_json import build_payload
