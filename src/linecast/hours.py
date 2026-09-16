@@ -28,8 +28,21 @@ _SET = {
              "night",
     "japanese": "the six koku of day and night, 明六つ to 暮六つ, as the "
                 "Edo bells struck them",
-    "islamic": "the prayer times, Fajr to Isha, and the fast in Ramadan",
+    "islamic": "the prayer times, Fajr to Isha, by the country's "
+               "convention, and the fast in Ramadan",
+    "islamic-hanafi": "the prayer times with the Hanafi school's later Asr",
+    "islamic-shafii": "the prayer times with the Shafi'i school's Asr, "
+                      "whatever the country",
 }
+
+
+def _islamic_set(choice):
+    from linecast._hours.prayer_times import METHODS
+    method = choice.partition("-")[2]
+    if method in METHODS:
+        return (f"the prayer times by the {METHODS[method][0]} convention, "
+                f"whatever the country")
+    return _SET[choice]
 
 
 def _cmd_show():
@@ -52,6 +65,8 @@ def _cmd_set(choice):
     save_config(config)
     if choice == "none":
         print("Hours turned off; sunshine keeps the civil clock")
+    elif choice.startswith("islamic"):
+        print(f"Hours set to {choice}: sunshine reads the day in {_islamic_set(choice)}")
     else:
         print(f"Hours set to {choice}: sunshine reads the day in {_SET[choice]}")
 
@@ -82,8 +97,13 @@ def main():
                    help="不定時法 — six koku of day and six of night, by "
                         "the Edo bells")
     sub.add_parser("islamic",
-                   help="the prayer times, Fajr to Isha, and the fast in "
-                        "Ramadan")
+                   help="the prayer times, Fajr to Isha, by the country's "
+                        "convention, and the fast in Ramadan")
+    from linecast._hours.prayer_times import METHODS
+    for key, (name, _fajr, _isha, _maghrib) in METHODS.items():
+        sub.add_parser(f"islamic-{key}", help=f"the prayer times by the {name}")
+    sub.add_parser("islamic-hanafi", help="the prayer times with the Hanafi Asr")
+    sub.add_parser("islamic-shafii", help="the prayer times with the Shafi'i Asr")
     sub.add_parser("none", help="no hours, whatever the language")
     sub.add_parser("auto", help="clear the saved hours")
     args = parser.parse_args()

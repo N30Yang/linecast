@@ -213,8 +213,15 @@ WEEK_START_WEEKDAY = {"monday": 0, "saturday": 5, "sunday": 6}  # date.weekday()
 # `linecast hours` and `sunshine --hours` take. A hyphen separates a
 # tradition from an opinion or method within it: halachic-mga is the
 # Magen Avraham's day, alot to tzeit, where halachic is the Gr"a's.
+# islamic-<method> pins a prayer-time convention where the place's
+# country would pick one, and islamic-hanafi or -shafii the school
+# whose Asr is listed.
 HOURS_CHOICES = ("halachic", "halachic-mga", "roman", "japanese", "islamic",
-                 "none")
+                 "islamic-mwl", "islamic-isna", "islamic-egypt", "islamic-makkah",
+                 "islamic-karachi", "islamic-tehran", "islamic-turkey",
+                 "islamic-singapore", "islamic-jakim", "islamic-kemenag",
+                 "islamic-france", "islamic-russia", "islamic-hanafi",
+                 "islamic-shafii", "none")
 SUNDAY_FIRST_COUNTRIES = frozenset((
     "US", "CA", "BR", "MX", "IL", "IN", "JP", "KR", "PH", "SA", "TW", "HK", "ZA",
 ))
@@ -516,8 +523,13 @@ def sunshine_parser():
                          "by the Gr\"a (halachic) or the Magen Avraham "
                          "(halachic-mga), the twelve horae and four "
                          "vigiliae (roman), the Edo six koku of day and "
-                         "night (japanese), or the prayer times (islamic). "
-                         "Default: the `linecast hours` setting, else none")
+                         "night (japanese), or the prayer times by the "
+                         "country's convention (islamic), by a named one "
+                         "(islamic-mwl, -isna, -egypt, -makkah, -karachi, "
+                         "-tehran, -turkey, -singapore, -jakim, -kemenag, "
+                         "-france, -russia), or with a school's Asr "
+                         "(islamic-hanafi, -shafii). Default: the "
+                         "`linecast hours` setting, else none")
     _add_clock_flags(p)
     p.add_argument("--json", dest="json_mode", action="store_true",
                     help="machine-readable JSON output (implies --print)")

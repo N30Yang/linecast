@@ -882,12 +882,23 @@ def main():
     # for it once a day.
     from linecast._hours import hours_now, resolve_hours
     hours_system, hours_variant = resolve_hours(args.hours)
+    # The prayer-time method follows the country of the place shown.
+    # resolve_location leaves the country blank for an override, so
+    # it is reverse geocoded then (cached), as the moon does for the
+    # Hebrew holidays; still blank, the Muslim World League's angles.
+    hours_country = country
+    if hours_system == "islamic" and not hours_country:
+        try:
+            from linecast._weather_sources import _reverse_geocode
+            hours_country = _reverse_geocode(lat, lng)[1]
+        except Exception:
+            hours_country = None
 
     def _hours(now):
         if hours_system is None:
             return None
         return hours_now(hours_system, now, lat, lng, tz, hours_variant,
-                         country=country)[0]
+                         country=hours_country)[0]
 
     if runtime.json_mode:
         import json

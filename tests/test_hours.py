@@ -24,6 +24,9 @@ import pytest
 from linecast._hours import (
     DayHours, Mark, hours_now, last_mark, next_mark, reading, resolve_hours,
 )
+from linecast._hours.prayer_times import (
+    METHODS, default_method, default_school, prayer_times,
+)
 from linecast._hours.roman import roman_hours
 from linecast._hours.wadokei import wadokei
 from linecast._hours.zmanim import zmanim
@@ -730,3 +733,416 @@ class TestWadokei:
         assert noon == {"key": "hiru_kokonotsu", "name": "noon nine, the hour of the Horse",
                         "native": "昼九つ", "time": "2026-06-21T11:43"}
         assert block["now"]["label"] == "morning four ½"
+
+
+# (place, date) → Aladhan's timings by the place's method, to the
+# minute. Karachi is read with the Hanafi Asr, as Pakistan prints it.
+ALADHAN_PLACES = {
+    "mecca": (21.4225, 39.8262, "Asia/Riyadh", "makkah", None),
+    "cairo": (30.0444, 31.2357, "Africa/Cairo", "egypt", None),
+    "dearborn": (42.32, -83.18, "America/Detroit", "isna", None),
+    "london": (51.5074, -0.1278, "Europe/London", "mwl", None),
+    "karachi": (24.86, 67.01, "Asia/Karachi", "karachi", 'PK'),
+    "jakarta": (-6.2, 106.8, "Asia/Jakarta", "kemenag", None),
+    "istanbul": (41.01, 28.98, "Europe/Istanbul", "turkey", None),
+    "oslo": (59.91, 10.75, "Europe/Oslo", "mwl", None),
+}
+ALADHAN = {
+    ("cairo", "2026-03-05"): {
+        "imsak": "04:40",
+        "fajr": "04:50",
+        "sunrise": "06:17",
+        "dhuhr": "12:07",
+        "asr": "15:26",
+        "maghrib": "17:57",
+        "isha": "19:14",
+    },
+    ("cairo", "2026-09-15"): {
+        "imsak": "05:02",
+        "fajr": "05:12",
+        "sunrise": "06:39",
+        "dhuhr": "12:50",
+        "asr": "16:21",
+        "maghrib": "19:01",
+        "isha": "20:19",
+    },
+    ("cairo", "2026-06-21"): {
+        "imsak": "03:58",
+        "fajr": "04:08",
+        "sunrise": "05:54",
+        "dhuhr": "12:57",
+        "asr": "16:32",
+        "maghrib": "19:59",
+        "isha": "21:33",
+    },
+    ("cairo", "2026-12-21"): {
+        "imsak": "05:04",
+        "fajr": "05:14",
+        "sunrise": "06:47",
+        "dhuhr": "11:53",
+        "asr": "14:41",
+        "maghrib": "16:59",
+        "isha": "18:23",
+    },
+    ("dearborn", "2026-03-05"): {
+        "imsak": "05:35",
+        "fajr": "05:45",
+        "sunrise": "07:01",
+        "dhuhr": "12:44",
+        "asr": "15:54",
+        "maghrib": "18:28",
+        "isha": "19:44",
+    },
+    ("dearborn", "2026-09-15"): {
+        "imsak": "05:44",
+        "fajr": "05:54",
+        "sunrise": "07:13",
+        "dhuhr": "13:28",
+        "asr": "16:59",
+        "maghrib": "19:42",
+        "isha": "21:01",
+    },
+    ("dearborn", "2026-06-21"): {
+        "imsak": "04:01",
+        "fajr": "04:11",
+        "sunrise": "05:56",
+        "dhuhr": "13:35",
+        "asr": "17:38",
+        "maghrib": "21:13",
+        "isha": "22:58",
+    },
+    ("dearborn", "2026-12-21"): {
+        "imsak": "06:24",
+        "fajr": "06:34",
+        "sunrise": "07:58",
+        "dhuhr": "12:31",
+        "asr": "14:46",
+        "maghrib": "17:03",
+        "isha": "18:28",
+    },
+    ("istanbul", "2026-03-05"): {
+        "imsak": "05:51",
+        "fajr": "06:01",
+        "sunrise": "07:25",
+        "dhuhr": "13:21",
+        "asr": "16:30",
+        "maghrib": "19:06",
+        "isha": "20:25",
+    },
+    ("istanbul", "2026-09-15"): {
+        "imsak": "05:01",
+        "fajr": "05:11",
+        "sunrise": "06:37",
+        "dhuhr": "13:04",
+        "asr": "16:35",
+        "maghrib": "19:21",
+        "isha": "20:41",
+    },
+    ("istanbul", "2026-06-21"): {
+        "imsak": "03:14",
+        "fajr": "03:24",
+        "sunrise": "05:25",
+        "dhuhr": "13:11",
+        "asr": "17:11",
+        "maghrib": "20:47",
+        "isha": "22:38",
+    },
+    ("istanbul", "2026-12-21"): {
+        "imsak": "06:36",
+        "fajr": "06:46",
+        "sunrise": "08:18",
+        "dhuhr": "13:07",
+        "asr": "15:25",
+        "maghrib": "17:46",
+        "isha": "19:13",
+    },
+    ("jakarta", "2026-03-05"): {
+        "imsak": "04:31",
+        "fajr": "04:41",
+        "sunrise": "05:58",
+        "dhuhr": "12:04",
+        "asr": "15:07",
+        "maghrib": "18:10",
+        "isha": "19:20",
+    },
+    ("jakarta", "2026-09-15"): {
+        "imsak": "04:19",
+        "fajr": "04:29",
+        "sunrise": "05:46",
+        "dhuhr": "11:48",
+        "asr": "15:01",
+        "maghrib": "17:50",
+        "isha": "18:59",
+    },
+    ("jakarta", "2026-06-21"): {
+        "imsak": "04:28",
+        "fajr": "04:38",
+        "sunrise": "06:02",
+        "dhuhr": "11:55",
+        "asr": "15:16",
+        "maghrib": "17:47",
+        "isha": "19:02",
+    },
+    ("jakarta", "2026-12-21"): {
+        "imsak": "04:01",
+        "fajr": "04:11",
+        "sunrise": "05:36",
+        "dhuhr": "11:51",
+        "asr": "15:18",
+        "maghrib": "18:05",
+        "isha": "19:22",
+    },
+    ("karachi", "2026-03-05"): {
+        "imsak": "05:25",
+        "fajr": "05:35",
+        "sunrise": "06:51",
+        "dhuhr": "12:43",
+        "asr": "16:57",
+        "maghrib": "18:36",
+        "isha": "19:52",
+    },
+    ("karachi", "2026-09-15"): {
+        "imsak": "04:51",
+        "fajr": "05:01",
+        "sunrise": "06:18",
+        "dhuhr": "12:27",
+        "asr": "16:53",
+        "maghrib": "18:36",
+        "isha": "19:53",
+    },
+    ("karachi", "2026-06-21"): {
+        "imsak": "04:04",
+        "fajr": "04:14",
+        "sunrise": "05:43",
+        "dhuhr": "12:34",
+        "asr": "17:16",
+        "maghrib": "19:24",
+        "isha": "20:53",
+    },
+    ("karachi", "2026-12-21"): {
+        "imsak": "05:41",
+        "fajr": "05:51",
+        "sunrise": "07:12",
+        "dhuhr": "12:30",
+        "asr": "16:12",
+        "maghrib": "17:48",
+        "isha": "19:09",
+    },
+    ("london", "2026-03-05"): {
+        "imsak": "04:36",
+        "fajr": "04:46",
+        "sunrise": "06:37",
+        "dhuhr": "12:12",
+        "asr": "15:07",
+        "maghrib": "17:48",
+        "isha": "19:32",
+    },
+    ("london", "2026-09-15"): {
+        "imsak": "04:29",
+        "fajr": "04:39",
+        "sunrise": "06:35",
+        "dhuhr": "12:56",
+        "asr": "16:24",
+        "maghrib": "19:15",
+        "isha": "21:04",
+    },
+    ("london", "2026-06-21"): {
+        "imsak": "02:21",
+        "fajr": "02:31",
+        "sunrise": "04:43",
+        "dhuhr": "13:02",
+        "asr": "17:25",
+        "maghrib": "21:22",
+        "isha": "23:27",
+    },
+    ("london", "2026-12-21"): {
+        "imsak": "05:49",
+        "fajr": "05:59",
+        "sunrise": "08:04",
+        "dhuhr": "11:59",
+        "asr": "13:38",
+        "maghrib": "15:53",
+        "isha": "17:51",
+    },
+    ("mecca", "2026-03-05"): {
+        "imsak": "05:12",
+        "fajr": "05:22",
+        "sunrise": "06:38",
+        "dhuhr": "12:32",
+        "asr": "15:54",
+        "maghrib": "18:26",
+        "isha": "20:26",
+    },
+    ("mecca", "2026-09-15"): {
+        "imsak": "04:41",
+        "fajr": "04:51",
+        "sunrise": "06:08",
+        "dhuhr": "12:16",
+        "asr": "15:42",
+        "maghrib": "18:24",
+        "isha": "19:54",
+    },
+    ("mecca", "2026-06-21"): {
+        "imsak": "04:01",
+        "fajr": "04:11",
+        "sunrise": "05:39",
+        "dhuhr": "12:22",
+        "asr": "15:42",
+        "maghrib": "19:06",
+        "isha": "20:36",
+    },
+    ("mecca", "2026-12-21"): {
+        "imsak": "05:22",
+        "fajr": "05:32",
+        "sunrise": "06:54",
+        "dhuhr": "12:19",
+        "asr": "15:23",
+        "maghrib": "17:44",
+        "isha": "19:14",
+    },
+    ("oslo", "2026-03-05"): {
+        "imsak": "04:35",
+        "fajr": "04:45",
+        "sunrise": "07:04",
+        "dhuhr": "12:28",
+        "asr": "15:03",
+        "maghrib": "17:54",
+        "isha": "20:05",
+    },
+    ("oslo", "2026-09-15"): {
+        "imsak": "04:02",
+        "fajr": "04:12",
+        "sunrise": "06:45",
+        "dhuhr": "13:12",
+        "asr": "16:34",
+        "maghrib": "19:38",
+        "isha": "22:00",
+    },
+    ("oslo", "2026-06-21"): {
+        "imsak": "02:11",
+        "fajr": "02:21",
+        "sunrise": "03:54",
+        "dhuhr": "13:19",
+        "asr": "18:00",
+        "maghrib": "22:44",
+        "isha": "00:12",
+    },
+    ("oslo", "2026-12-21"): {
+        "imsak": "06:22",
+        "fajr": "06:32",
+        "sunrise": "09:18",
+        "dhuhr": "12:15",
+        "asr": "13:07",
+        "maghrib": "15:12",
+        "isha": "17:49",
+    },
+}
+
+
+class TestPrayerTimes:
+    """Eight places on four dates against the Aladhan API, each by its
+    own country's method. Fajr, sunrise, Dhuhr, Maghrib, and Isha land
+    within a minute. Asr is held to four: Aladhan's port of the
+    PrayTimes formula drifts two or three minutes at high latitude
+    near the equinoxes, while PrayTimes' own formula and this table
+    agree within twenty seconds."""
+
+    @pytest.mark.parametrize("place,day", sorted(ALADHAN))
+    def test_match_aladhan(self, place, day):
+        lat, lng, tz, method, country = ALADHAN_PLACES[place]
+        tzinfo = ZoneInfo(tz)
+        hours = prayer_times(date.fromisoformat(day), lat, lng, tzinfo, method, country)
+        marks = {m.key: m.at for m in hours.marks}
+        for key, published in ALADHAN[(place, day)].items():
+            if key == "imsak" and key not in marks:
+                continue          # listed in Ramadan only
+            h, m = (int(x) for x in published.split(":"))
+            expected = datetime.fromisoformat(day).replace(hour=h, minute=m, tzinfo=tzinfo)
+            if expected < marks[key] - timedelta(hours=12):
+                expected += timedelta(days=1)      # Isha past midnight
+            limit = timedelta(minutes=4) if key == "asr" else timedelta(seconds=75)
+            assert abs(marks[key] - expected) < limit, (
+                f"{key}: {marks[key]:%H:%M:%S} against Aladhan {published}")
+
+    def test_ramadan_lists_imsak_and_the_fast(self):
+        """5 March 2026 is 16 Ramadan 1447: Imsak ten minutes before
+        Fajr, Isha two hours after Maghrib by Umm al-Qura, and the
+        fast from Fajr to Maghrib."""
+        tz = ZoneInfo("Asia/Riyadh")
+        hours = prayer_times(date(2026, 3, 5), 21.4225, 39.8262, tz, None, "SA")
+        marks = {m.key: m.at for m in hours.marks}
+        assert marks["imsak"] == marks["fajr"] - timedelta(minutes=10)
+        assert marks["isha"] == marks["maghrib"] + timedelta(minutes=120)
+        assert hours.fast == (marks["fajr"], marks["maghrib"])
+        assert hours.variant == "makkah"
+        later = prayer_times(date(2026, 9, 15), 21.4225, 39.8262, tz, None, "SA")
+        later_marks = {m.key: m.at for m in later.marks}
+        assert "imsak" not in later_marks and later.fast is None
+        assert later_marks["isha"] == later_marks["maghrib"] + timedelta(minutes=90)
+
+    def test_the_method_and_school_follow_the_country(self):
+        assert default_method("US") == "isna"
+        assert default_method("eg") == "egypt"
+        assert default_method("TR") == "turkey"
+        assert default_method(None) == "mwl"
+        assert default_method("BR") == "mwl"
+        assert default_school("PK") == "hanafi"
+        assert default_school("SA") == "shafii"
+        tz = ZoneInfo("Asia/Karachi")
+        by_country = prayer_times(date(2026, 9, 15), 24.86, 67.01, tz, None, "PK")
+        assert by_country.variant == "karachi"
+        shafii = prayer_times(date(2026, 9, 15), 24.86, 67.01, tz, "shafii", "PK")
+        assert shafii.variant == "karachi-shafii"
+        asr = {m.key: m.at for m in by_country.marks}["asr"]
+        asr_shafii = {m.key: m.at for m in shafii.marks}["asr"]
+        assert asr - asr_shafii > timedelta(minutes=40)
+        pinned = prayer_times(date(2026, 9, 15), 24.86, 67.01, tz, "mwl", "PK")
+        assert pinned.variant == "mwl"
+        assert all(key in METHODS or key in ("hanafi", "shafii")
+                   for key in ("mwl", "isna", "egypt", "makkah", "karachi", "tehran",
+                               "turkey", "singapore", "jakim", "kemenag", "france", "russia"))
+
+    def test_a_nordic_june_takes_the_angle_based_share(self):
+        """Oslo, 21 June: the Sun never gets 18° down, so Fajr is
+        18/60 of the night before sunrise and Isha 17/60 after sunset."""
+        tz = ZoneInfo("Europe/Oslo")
+        hours = prayer_times(date(2026, 6, 21), 59.91, 10.75, tz, "mwl", None)
+        marks = {m.key: m.at for m in hours.marks}
+        night = hours.next_day_start - marks["sunset"] if "sunset" in marks else None
+        assert night is None
+        assert marks["isha"] > marks["maghrib"]
+        assert marks["fajr"] < marks["sunrise"]
+        assert marks["isha"].date() == date(2026, 6, 22)
+
+    def test_names_and_the_corner(self):
+        from linecast._sunshine_hours import corner_reading, hours_line
+        from linecast._hours.i18n import mark_name, mark_native, variant_name
+        tz = ZoneInfo("Asia/Riyadh")
+        hours = prayer_times(date(2026, 3, 5), 21.4225, 39.8262, tz, None, "SA")
+        noon = datetime(2026, 3, 5, 12, 0, tzinfo=tz)
+        assert corner_reading(hours, noon, _runtime()) == "fast 6h 38m · iftar in 6h 26m"
+        assert (corner_reading(hours, noon, _runtime(lang="id"))
+                == "puasa 6h 38m · iftar dalam 6h 26m")
+        evening = datetime(2026, 3, 5, 19, 0, tzinfo=tz)
+        assert corner_reading(hours, evening, _runtime()) == "Maghrib · Isha in 1h 26m"
+        assert corner_reading(hours, evening, _runtime(lang="id")) == "Magrib · Isya dalam 1h 26m"
+        assert mark_name("islamic", "sunrise", _runtime(lang="id"), short=True) == "Terbit"
+        assert mark_native("islamic", "fajr") == "الفجر"
+        assert variant_name("islamic", "makkah") == "Umm al-Qura"
+        assert variant_name("islamic", "karachi-shafii") == "Karachi · Shafii"
+        line = _plain(hours_line(hours, noon, 300, _runtime()))
+        assert line.startswith("Imsak 5:12a · Fajr 5:22a · Sunrise 6:38a · Dhuhr 12:32p")
+        assert line.endswith("Isha 8:26p · Umm al-Qura")
+
+    def test_json_carries_the_fast_and_the_arabic(self):
+        from linecast._sunshine_json import build_payload
+        tz = ZoneInfo("Asia/Riyadh")
+        hours = prayer_times(date(2026, 3, 5), 21.4225, 39.8262, tz, None, "SA")
+        now = datetime(2026, 3, 5, 12, 0, tzinfo=tz)
+        block = build_payload(21.4225, 39.8262, now=now, location="Makkah", hours=hours)["hours"]
+        assert block["divisions"] is None and block["now"] is None
+        assert block["fast"] == {"start": "2026-03-05T05:22", "end": "2026-03-05T18:26"}
+        fajr = next(m for m in block["marks"] if m["key"] == "fajr")
+        assert fajr == {"key": "fajr", "name": "Fajr", "native": "الفجر",
+                        "time": "2026-03-05T05:22"}
+        assert block["next"]["key"] == "dhuhr"

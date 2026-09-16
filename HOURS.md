@@ -4,7 +4,7 @@
 
 ## Choosing one
 
-`linecast sunshine --hours halachic` reads the day in one for a single run, and `linecast hours halachic` saves it for every run. `linecast hours none` turns it off and `linecast hours auto` clears the setting. No language brings a system of hours with it, so `auto` and `none` read the same. The names are `halachic`, `halachic-mga`, `roman`, and `japanese`, with `islamic` to come.
+`linecast sunshine --hours halachic` reads the day in one for a single run, and `linecast hours halachic` saves it for every run. `linecast hours none` turns it off and `linecast hours auto` clears the setting. No language brings a system of hours with it, so `auto` and `none` read the same. The names are `halachic`, `halachic-mga`, `roman`, `japanese`, and `islamic`, with a convention or a school after a hyphen for the last: `islamic-isna`, `islamic-hanafi`.
 
 With a system on, the day view's top-left corner reads the shown moment in that system's terms, with the length of the hour in force beside it, and a line under the sunrise and sunset lists the day's marks in order. The marks already past are dim, the next is in the text colour with a countdown, and the rest are muted. The line keeps as many marks as fit the window, the next first; sunrise and sunset go last, since the line above names them. Scrolling the day with the wheel moves both. `--json` carries the same facts in an `hours` block, with each mark's name in the tradition's own script where it has one, and `--oneline` ends with the reading.
 
@@ -38,4 +38,14 @@ Japanese keeps its own words. The other languages get the count and the time of 
 
 ## Islamic
 
-The prayer times, Fajr to Isha, with the fast in Ramadan, are the next table over the same engine and are not in this build yet.
+`islamic` reads the day by the prayer times: Fajr at dawn, sunrise, Dhuhr at the Sun's transit, Asr when a shadow has grown by the length of its object, Maghrib at sunset, and Isha at nightfall. There are no equal hours in it, so the corner names the prayer just past and the one to come with its countdown, "Asr · Maghrib in 1h 12m", and in Ramadan, while the fast runs, how far into it the moment is and how long to iftar. Imsak, ten minutes before Fajr, is listed in Ramadan.
+
+Fajr and Isha are read off the Sun's depression, and the angle varies by convention. The conventions are the ones the prayer-time apps offer, each named for the body that published it, and the method follows the country of the place shown, as the week's first day does: ISNA's 15° and 15° in the United States and Canada, the Egyptian General Authority's 19.5° and 17.5° in Egypt and its neighbours, Umm al-Qura's 18.5° and ninety minutes after Maghrib, a hundred and twenty in Ramadan, in Saudi Arabia and the Gulf, the University of Islamic Sciences' 18° and 18° in Pakistan, India, Bangladesh, and Afghanistan, the University of Tehran's in Iran, the Diyanet's in Turkey with the minutes of caution it prints, MUIS's in Singapore, JAKIM's in Malaysia, Kemenag's in Indonesia, the UOIF's 12° and 12° in France, the Spiritual Administration's in Russia, and the Muslim World League's 18° and 17° everywhere else. `linecast hours islamic-isna`, or any of `-mwl`, `-egypt`, `-makkah`, `-karachi`, `-tehran`, `-turkey`, `-singapore`, `-jakim`, `-kemenag`, `-france`, and `-russia`, pins a convention wherever you are. The frame names the one in force.
+
+Asr follows the school. Most print the shadow of one length; the Hanafi school waits for two, and that is the Asr listed in Turkey, South and Central Asia, the Balkans, Russia, and China. `islamic-hanafi` and `islamic-shafii` choose the school and keep the country's method.
+
+Where the Sun never reaches the angle, as in a Nordic June, the angle-based rule stands in, the one PrayTimes and Aladhan apply by default: Fajr is as far before sunrise, and Isha as far after sunset, as the angle's share of a sixty-degree night.
+
+The tests check eight places on four dates of 2026 against the [Aladhan](https://aladhan.com/prayer-times-api) API, each by its own country's method: Makkah, Cairo, Dearborn, London, Karachi with the Hanafi Asr, Jakarta, Istanbul, and Oslo. Fajr, sunrise, Dhuhr, Maghrib, and Isha land within a minute. Asr is held to four: Aladhan's port of the PrayTimes formula drifts two or three minutes at high latitude near the equinoxes, and PrayTimes' own formula and this table agree within twenty seconds. The names are transliterated in every language, with Indonesian's own spellings, Subuh, Zuhur, Asar, Magrib, Isya, as the Hijri months have theirs, and `--json` adds the Arabic.
+
+A mosque's card is the authority, and can differ from these by a minute or two: many publishers round Fajr down and Maghrib up for caution, and a country's own authority may publish angles the apps do not.

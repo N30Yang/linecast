@@ -153,6 +153,10 @@ def _hours_block(hours, now):
             "time": local_iso(coming.at),
             "in": fmt_duration((coming.at - now).total_seconds()),
         },
+        "fast": None if not hours.fast else {
+            "start": local_iso(hours.fast[0]),
+            "end": local_iso(hours.fast[1]),
+        },
         "marks": marks,
     }
 

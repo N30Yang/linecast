@@ -12,7 +12,8 @@ the same way. Only the edges, the count, and the names differ:
 - roman (roman): twelve horae by day, four vigiliae by night;
 - japanese (wadokei): six koku each, the edges at the Sun 7°21′40″
   below the horizon;
-- islamic (prayer_times): no equal hours at all, only the marks.
+- islamic (prayer_times): no equal hours at all, only the marks, by
+  a method that follows the country, and the fast in Ramadan.
 
 Each tradition is a module beside this one, and answers `day_hours`
 for a civil date at a place with a DayHours: the edges, the count, and
@@ -44,7 +45,8 @@ class DayHours:
     or None for a system that keeps marks only; the night has its own
     count, `night_divisions`, where it differs (Rome's four vigiliae
     against twelve horae). `variant` names the opinion or method the
-    table used.
+    table used. `fast` is (start, end) on a day of fasting, Fajr to
+    Maghrib in Ramadan, or None.
     """
     system: str
     date: date
@@ -56,6 +58,7 @@ class DayHours:
     marks: list = field(default_factory=list)
     variant: str | None = None
     night_divisions: int | None = None
+    fast: tuple | None = None
 
     def __post_init__(self):
         if self.night_divisions is None:

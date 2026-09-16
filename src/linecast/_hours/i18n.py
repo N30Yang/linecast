@@ -60,30 +60,44 @@ _EDO = {
     "akatsuki_nanatsu": ("暁七つ", "daybreak seven", "daybreak seven, the hour of the Tiger"),
 }
 
+# The prayers: key → (English, Indonesian, Arabic). The English
+# transliterations stand in every language but Indonesian, which has
+# its own spellings, as it has for the Hijri months.
+_PRAYERS = {
+    "imsak": ("Imsak", "Imsak", "الإمساك"),
+    "fajr": ("Fajr", "Subuh", "الفجر"),
+    "sunrise": ("Sunrise", "Terbit", "الشروق"),
+    "dhuhr": ("Dhuhr", "Zuhur", "الظهر"),
+    "asr": ("Asr", "Asar", "العصر"),
+    "maghrib": ("Maghrib", "Magrib", "المغرب"),
+    "isha": ("Isha", "Isya", "العشاء"),
+}
+
 # The strings the hours line and the corner need beyond the names:
 # "night" for the night hours, "in {dur}" for the countdown, and the
-# unit the corner measures, "1h = 62m", where a system has its own.
+# unit the corner measures, "1h = 62m", where a system has its own,
+# and "fast" for the corner's count of a day of fasting.
 _HOURS_STRINGS = {
-    "en": {"night": "night", "in_time": "in {dur}", "koku": "1 koku"},
-    "fr": {"night": "nuit", "in_time": "dans {dur}"},
-    "es": {"night": "noche", "in_time": "en {dur}"},
-    "de": {"night": "Nacht", "in_time": "in {dur}"},
-    "it": {"night": "notte", "in_time": "tra {dur}"},
-    "pt": {"night": "noite", "in_time": "em {dur}"},
-    "nl": {"night": "nacht", "in_time": "over {dur}"},
-    "pl": {"night": "noc", "in_time": "za {dur}"},
-    "no": {"night": "natt", "in_time": "om {dur}"},
-    "sv": {"night": "natt", "in_time": "om {dur}"},
-    "is": {"night": "nótt", "in_time": "eftir {dur}"},
-    "da": {"night": "nat", "in_time": "om {dur}"},
-    "fi": {"night": "yö", "in_time": "{dur} kuluttua"},
-    "ja": {"night": "夜", "in_time": "{dur}後", "koku": "1刻"},
-    "ko": {"night": "밤", "in_time": "{dur} 후"},
-    "zh": {"night": "夜", "in_time": "{dur}后"},
-    "th": {"night": "กลางคืน", "in_time": "อีก {dur}"},
-    "id": {"night": "malam", "in_time": "dalam {dur}"},
-    "uk": {"night": "ніч", "in_time": "через {dur}"},
-    "vi": {"night": "đêm", "in_time": "còn {dur}"},
+    "en": {"night": "night", "in_time": "in {dur}", "koku": "1 koku", "fast": "fast"},
+    "fr": {"night": "nuit", "in_time": "dans {dur}", "fast": "jeûne"},
+    "es": {"night": "noche", "in_time": "en {dur}", "fast": "ayuno"},
+    "de": {"night": "Nacht", "in_time": "in {dur}", "fast": "Fasten"},
+    "it": {"night": "notte", "in_time": "tra {dur}", "fast": "digiuno"},
+    "pt": {"night": "noite", "in_time": "em {dur}", "fast": "jejum"},
+    "nl": {"night": "nacht", "in_time": "over {dur}", "fast": "vasten"},
+    "pl": {"night": "noc", "in_time": "za {dur}", "fast": "post"},
+    "no": {"night": "natt", "in_time": "om {dur}", "fast": "faste"},
+    "sv": {"night": "natt", "in_time": "om {dur}", "fast": "fasta"},
+    "is": {"night": "nótt", "in_time": "eftir {dur}", "fast": "fasta"},
+    "da": {"night": "nat", "in_time": "om {dur}", "fast": "faste"},
+    "fi": {"night": "yö", "in_time": "{dur} kuluttua", "fast": "paasto"},
+    "ja": {"night": "夜", "in_time": "{dur}後", "koku": "1刻", "fast": "断食"},
+    "ko": {"night": "밤", "in_time": "{dur} 후", "fast": "금식"},
+    "zh": {"night": "夜", "in_time": "{dur}后", "fast": "斋戒"},
+    "th": {"night": "กลางคืน", "in_time": "อีก {dur}", "fast": "ถือศีลอด"},
+    "id": {"night": "malam", "in_time": "dalam {dur}", "fast": "puasa"},
+    "uk": {"night": "ніч", "in_time": "через {dur}", "fast": "піст"},
+    "vi": {"night": "đêm", "in_time": "còn {dur}", "fast": "nhịn chay"},
 }
 
 # The sunrise and sunset marks read in the language's own words, since
@@ -98,7 +112,7 @@ def hs(key, runtime, **kwargs):
 
 def mark_name(system, key, runtime, short=False):
     """The name of a mark in the display language."""
-    if key in _SUN_KEYS:
+    if key in _SUN_KEYS and system != "islamic":
         from linecast._sunshine_i18n import sky_event
         return sky_event(_SUN_KEYS[key], runtime)
     if system == "halachic":
@@ -112,6 +126,9 @@ def mark_name(system, key, runtime, short=False):
         if lang_of(runtime) == "ja":
             return japanese
         return short_name if short else full
+    if system == "islamic":
+        english, indonesian, _arabic = _PRAYERS[key]
+        return indonesian if lang_of(runtime) == "id" else english
     return key
 
 
@@ -122,6 +139,8 @@ def mark_native(system, key):
         return _ZMANIM[key][2]
     if system == "japanese":
         return _EDO[key][0]
+    if system == "islamic":
+        return _PRAYERS[key][2]
     return None
 
 
@@ -153,4 +172,9 @@ def variant_name(system, variant):
     if system == "halachic":
         from linecast._hours.zmanim import OPINION_NAMES
         return OPINION_NAMES.get(variant)
+    if system == "islamic" and variant:
+        from linecast._hours.prayer_times import METHOD_SHORT
+        method, _hyphen, school = variant.partition("-")
+        name = METHOD_SHORT.get(method, method)
+        return f"{name} · {school.capitalize()}" if school else name
     return variant

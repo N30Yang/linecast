@@ -36,6 +36,15 @@ def corner_reading(hours, now, runtime):
         # 74m on a June day, since "1h = 1h 14m" reads as a riddle.
         unit = unit_name(hours.system, runtime, r.night)
         return f"{name}{_SEP}{unit} = {int(round(r.hour_seconds / 60))}m"
+    # A day of fasting, while it runs: how far in, and how long to
+    # iftar, the meal at Maghrib.
+    if hours.fast:
+        start, end = hours.fast
+        at = _aware_like(now, start)
+        if start <= at < end:
+            left = hs('in_time', runtime, dur=fmt_duration((end - at).total_seconds()))
+            return (f"{hs('fast', runtime)} {fmt_duration((at - start).total_seconds())}"
+                    f"{_SEP}iftar {left}")
     # A system of marks alone, or a day the Sun never made the edges
     # of: the interval the moment falls in, and how long it has left.
     before, after = last_mark(hours, now), next_mark(hours, now)
