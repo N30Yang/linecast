@@ -124,6 +124,19 @@ def _hours_block(hours, now):
 
     r = reading(hours, now)
     coming = next_mark(hours, now)
+    reading_now = None
+    if r is not None:
+        reading_now = {
+            "label": reading_name(hours.system, r, runtime),
+            "night": r.night,
+            "hour": r.index,
+            "fraction": round(r.fraction, 4),
+            "hour_seconds": int(round(r.hour_seconds)),
+        }
+        # Swahili time, as it is said aloud, for a voice to read.
+        if hours.system == "swahili":
+            from linecast._hours.swahili import moment, spoken
+            reading_now["spoken"] = spoken(moment(r))
     marks = []
     for mark in hours.marks:
         entry = {"key": mark.key,
@@ -141,13 +154,7 @@ def _hours_block(hours, now):
         "day_end": local_iso(hours.day_end) if hours.day_end else None,
         "divisions": hours.divisions,
         "night_divisions": hours.night_divisions,
-        "now": None if r is None else {
-            "label": reading_name(hours.system, r, runtime),
-            "night": r.night,
-            "hour": r.index,
-            "fraction": round(r.fraction, 4),
-            "hour_seconds": int(round(r.hour_seconds)),
-        },
+        "now": reading_now,
         "next": None if coming is None else {
             "key": coming.key,
             "time": local_iso(coming.at),

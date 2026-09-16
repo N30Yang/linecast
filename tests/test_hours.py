@@ -1440,3 +1440,19 @@ class TestSwahili:
         now = datetime(2026, 9, 17, 9, 5, tzinfo=self.DAR)
         hours, now = hours_now("swahili", now, -6.792, 39.208, self.DAR)
         assert hours_line(hours, now, 120, _runtime(lang="sw")) == ""
+
+    def test_json_says_the_time_as_it_is_spoken(self):
+        from linecast._sunshine_json import _hours_block
+        expected = {
+            (3, 0): "saa tisa usiku",
+            (10, 15): "saa nne na robo asubuhi",
+            (18, 30): "saa kumi na mbili na nusu jioni",
+            (11, 45): "saa sita kasoro robo asubuhi",
+            (5, 13): "saa kumi na moja na dakika kumi na tatu alfajiri",
+        }
+        for (h, m), said in expected.items():
+            now = datetime(2026, 9, 17, h, m, tzinfo=self.DAR)
+            hours, now = hours_now("swahili", now, -6.792, 39.208, self.DAR)
+            block = _hours_block(hours, now)
+            assert block["now"]["spoken"] == said
+            assert block["now"]["label"].startswith("saa ")

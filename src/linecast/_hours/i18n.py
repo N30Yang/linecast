@@ -189,9 +189,8 @@ def reading_name(system, r, runtime):
         from linecast._hours.wadokei import koku_name
         return koku_name(r, runtime)
     if system == "swahili":
-        from linecast._hours.swahili import saa
-        from datetime import timedelta
-        return saa(r.start + timedelta(hours=r.fraction))
+        from linecast._hours.swahili import moment, saa
+        return saa(moment(r))
     clock = f"{r.index}:{int(r.fraction * 60):02d}"
     return f"{hs('night', runtime)} {clock}" if r.night else clock
 

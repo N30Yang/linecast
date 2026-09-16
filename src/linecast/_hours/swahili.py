@@ -14,6 +14,11 @@ everyone who keeps Swahili time keeps them, not the Sun's, and each
 hour is an hour of the clock. The reading follows the wall clock of
 the place shown, so a clock change moves it as it moves the digits.
 
+`--json` also carries the time as it is said, in words: "saa kumi na
+moja na dakika kumi na tatu alfajiri" for 05:13, with robo and nusu for
+the quarter and the half, and kasoro robo, a quarter short of the next
+hour, for the three-quarter.
+
 The word after the hour says which part of the day it is, and the
 parts are the ones CLDR records for Swahili and the textbooks teach:
 alfajiri from four to seven in the morning, asubuhi to noon, mchana
@@ -49,6 +54,31 @@ def swahili_hours(local_date, tzinfo=None):
                     12, [], None, wall_clock=True)
 
 
+# The numbers as they are said, one to fifty-nine. Saa and dakika are
+# both nouns of the n-class, whose numbers are the counting forms.
+_ONES = ("", "moja", "mbili", "tatu", "nne", "tano", "sita", "saba", "nane", "tisa")
+_TENS = ("", "kumi", "ishirini", "thelathini", "arobaini", "hamsini")
+
+
+def number(n):
+    """'kumi na moja' for 11, 'arobaini na tano' for 45."""
+    tens, ones = divmod(n, 10)
+    if not tens:
+        return _ONES[ones]
+    if not ones:
+        return _TENS[tens]
+    return f"{_TENS[tens]} na {_ONES[ones]}"
+
+
+def _hour(civil_hour):
+    return (civil_hour - 6) % 12 or 12
+
+
+def moment(r):
+    """The wall-clock time a reading of Swahili time was taken at."""
+    return r.start + timedelta(hours=r.fraction)
+
+
 def period(hour):
     """The part of the day a civil hour falls in: 'asubuhi' at nine."""
     name = PERIODS[0][1]
@@ -61,5 +91,24 @@ def period(hour):
 def saa(local):
     """A local wall-clock time in Swahili time: 'saa 7:13 usiku' at
     01:13, 'saa 12:14 alfajiri' at 06:14, 'saa 6:00 mchana' at noon."""
-    hour = (local.hour - 6) % 12 or 12
-    return f"saa {hour}:{local.minute:02d} {period(local.hour)}"
+    return f"saa {_hour(local.hour)}:{local.minute:02d} {period(local.hour)}"
+
+
+def spoken(local):
+    """The time as it is said: 'saa tisa usiku' at 03:00, 'saa nne na
+    robo asubuhi' at 10:15, 'saa kumi na mbili na nusu jioni' at 18:30,
+    'saa sita kasoro robo asubuhi' at 11:45, and 'saa saba na dakika
+    kumi na tatu usiku' at 01:13. The part of the day is the moment's
+    own, so 18:45 is saa moja kasoro robo jioni."""
+    hour, minute = _hour(local.hour), local.minute
+    if minute == 0:
+        said = f"saa {number(hour)}"
+    elif minute == 15:
+        said = f"saa {number(hour)} na robo"
+    elif minute == 30:
+        said = f"saa {number(hour)} na nusu"
+    elif minute == 45:
+        said = f"saa {number(hour % 12 + 1)} kasoro robo"
+    else:
+        said = f"saa {number(hour)} na dakika {number(minute)}"
+    return f"{said} {period(local.hour)}"
