@@ -25,7 +25,7 @@ from datetime import timedelta
 from functools import lru_cache
 
 from linecast._ephemeris import sun_depression_utc
-from linecast._hours import DayHours, Mark
+from linecast._hours import DayHours, Mark, elapsed, shift, utc
 
 OPINIONS = ("gra", "mga")
 OPINION_NAMES = {"gra": "Gr\"a", "mga": "Magen Avraham"}
@@ -62,7 +62,7 @@ def _edges(local_date, lat, lng, tzinfo, opinion):
     set_ = _local(sun_depression_utc(local_date, lat, lng, HORIZON_DEG, True, tzinfo), tzinfo)
     if opinion == "mga":
         pad = timedelta(minutes=MGA_MINUTES)
-        return (rise - pad if rise else None), (set_ + pad if set_ else None)
+        return (shift(rise, -pad) if rise else None), (shift(set_, pad) if set_ else None)
     return rise, set_
 
 
@@ -87,24 +87,26 @@ def zmanim(local_date, lat, lng, tzinfo=None, opinion=None):
     # The night before ends on this civil date when its middle falls
     # after midnight, which is most places; the night after, when the
     # zone runs ahead of its meridian. Each is listed on the date it
-    # falls on.
-    if prev_end and start:
-        add("chatzot_halayla", prev_end + (start - prev_end) / 2)
+    # falls on. By the Magen Avraham a short polar night can be eaten
+    # by the padding, dawn before the last dusk; that night has no
+    # middle.
+    if prev_end and start and utc(prev_end) < utc(start):
+        add("chatzot_halayla", shift(prev_end, elapsed(prev_end, start) / 2))
     sunrise = depression(HORIZON_DEG, False)
     sunset = depression(HORIZON_DEG, True)
     add("alot", start if opinion == "mga" else depression(ALOT_DEG, False))
     add("misheyakir", depression(MISHEYAKIR_DEG, False))
     add("sunrise", sunrise)
     if start and end:
-        hour = (end - start) / 12
+        hour = elapsed(start, end) / 12
         for key, n in _DAY_FRACTIONS:
-            add(key, start + hour * n)
+            add(key, shift(start, hour * n))
     if sunset and local_date.weekday() == FRIDAY:
-        add("candles", sunset - timedelta(minutes=CANDLES_MINUTES))
+        add("candles", shift(sunset, -timedelta(minutes=CANDLES_MINUTES)))
     add("sunset", sunset)
     add("tzeit", end if opinion == "mga" else depression(TZEIT_DEG, True))
-    if end and next_start:
-        add("chatzot_halayla", end + (next_start - end) / 2)
+    if end and next_start and utc(end) < utc(next_start):
+        add("chatzot_halayla", shift(end, elapsed(end, next_start) / 2))
     marks.sort(key=lambda m: m.at)
     marks = [m for m in marks
              if m.key != "chatzot_halayla" or m.at.date() == local_date]

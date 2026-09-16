@@ -17,7 +17,7 @@ fourth watches. Latin is Latin in every language.
 from functools import lru_cache
 
 from linecast._ephemeris import sun_depression_utc
-from linecast._hours import DayHours, Mark
+from linecast._hours import DayHours, Mark, elapsed, shift
 
 HORIZON_DEG = 0.833
 
@@ -53,19 +53,19 @@ def roman_hours(local_date, lat, lng, tzinfo=None):
 
     marks = []
     if start and end:
-        hour = (end - start) / 12
+        hour = elapsed(start, end) / 12
         marks.append(Mark("sunrise", start))
         for key, n in _DAY_MARKS:
-            marks.append(Mark(key, start + hour * n))
+            marks.append(Mark(key, shift(start, hour * n)))
         marks.append(Mark("sunset", end))
     # The watches of the night before that end on this date, and of
     # the night after that begin on it: each is listed on the date it
     # falls on, as the halachic chatzot halayla is.
     for night_start, night_end in ((prev_end, start), (end, next_start)):
         if night_start and night_end:
-            watch = (night_end - night_start) / 4
+            watch = elapsed(night_start, night_end) / 4
             for key, n in _NIGHT_MARKS:
-                at = night_start + watch * n
+                at = shift(night_start, watch * n)
                 if at.date() == local_date:
                     marks.append(Mark(key, at))
     marks.sort(key=lambda m: m.at)

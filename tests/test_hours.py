@@ -1147,3 +1147,83 @@ class TestPrayerTimes:
         assert fajr == {"key": "fajr", "name": "Fajr", "native": "الفجر",
                         "time": "2026-03-05T05:22"}
         assert block["next"]["key"] == "dhuhr"
+
+
+class TestClockChanges:
+    """The arithmetic on the day's moments runs in UTC: two datetimes in
+    one ZoneInfo subtract as wall-clock time, and a night that crosses
+    a clock change would come out an hour short or long."""
+
+    NY = ZoneInfo("America/New_York")
+    BROOKLYN = (40.68, -73.94)
+
+    def test_the_night_of_the_fall_back_is_an_hour_longer_than_the_clock_says(self):
+        hours = zmanim(date(2026, 11, 1), *self.BROOKLYN, self.NY)
+        from linecast._hours import elapsed
+        night = elapsed(hours.prev_day_end, hours.day_start)
+        assert timedelta(hours=13, minutes=32) < night < timedelta(hours=13, minutes=34)
+        chatzot = [m.at for m in hours.marks if m.key == "chatzot_halayla"][0]
+        # The middle of that night, an hour later than the wall clocks
+        # would put it; still EDT, the clocks go back at 02:00.
+        assert (chatzot.hour, chatzot.minute, chatzot.tzname()) == (0, 39, "EDT")
+        r = reading(hours, datetime(2026, 11, 1, 1, 30, tzinfo=self.NY, fold=0))
+        assert r.night and r.index == 6
+        assert 4060 < r.hour_seconds < 4070
+
+    def test_a_countdown_across_the_change_counts_real_time(self):
+        hours = zmanim(date(2026, 11, 1), *self.BROOKLYN, self.NY)
+        now = datetime(2026, 11, 1, 1, 0, tzinfo=self.NY, fold=0)
+        coming = next_mark(hours, now)
+        assert coming.key == "alot"
+        from linecast._hours import elapsed
+        left = elapsed(now, coming.at)
+        assert timedelta(hours=5, minutes=3) < left < timedelta(hours=5, minutes=4)
+
+    def test_the_spring_forward_night_is_an_hour_shorter(self):
+        hours = zmanim(date(2026, 3, 8), *self.BROOKLYN, self.NY)
+        r = reading(hours, datetime(2026, 3, 8, 1, 30, tzinfo=self.NY))
+        assert 3720 < r.hour_seconds < 3730
+
+    def test_every_system_places_its_night_marks_by_real_time(self):
+        from linecast._hours import elapsed
+        from linecast._hours.roman import roman_hours
+        from linecast._hours.wadokei import wadokei
+        for build in (roman_hours, wadokei):
+            hours = build(date(2026, 11, 1), *self.BROOKLYN, self.NY)
+            night = elapsed(hours.prev_day_end, hours.day_start)
+            assert night > timedelta(hours=12)
+            r = reading(hours, datetime(2026, 11, 1, 1, 30, tzinfo=self.NY, fold=0))
+            assert abs(r.hour_seconds * hours.night_divisions - night.total_seconds()) < 1
+
+
+class TestADayThatStraddlesMidnight:
+    """At Nuuk in June the Sun sets after midnight, so the small hours
+    of a date belong to the day that began the date before."""
+
+    TZ = ZoneInfo("America/Nuuk")
+    NUUK = (64.18, -51.7)
+
+    def test_the_moment_before_that_sunset_reads_in_the_day_before(self):
+        now = datetime(2026, 6, 20, 0, 10, tzinfo=self.TZ)
+        hours, now = hours_now("halachic", now, *self.NUUK, self.TZ)
+        assert hours.date == date(2026, 6, 19)
+        r = reading(hours, now)
+        assert not r.night and r.index == 11
+        coming = next_mark(hours, now)
+        assert coming.key in ("candles", "sunset")
+        assert coming.at - now < timedelta(hours=1)
+
+    def test_after_that_sunset_the_date_is_its_own(self):
+        now = datetime(2026, 6, 20, 2, 0, tzinfo=self.TZ)
+        hours, now = hours_now("halachic", now, *self.NUUK, self.TZ)
+        assert hours.date == date(2026, 6, 20)
+        assert reading(hours, now).night
+
+
+def test_magen_avraham_keeps_no_midnight_when_the_padding_eats_the_night():
+    """Tromsø in May: seventy-two minutes either side leaves dawn before
+    the last dusk, so that night has no middle to mark."""
+    hours = zmanim(date(2026, 5, 17), 69.65, 18.96, ZoneInfo("Europe/Oslo"), "mga")
+    keys = [m.key for m in hours.marks]
+    assert "chatzot_halayla" not in keys
+    assert keys[:2] == ["alot", "sunrise"]

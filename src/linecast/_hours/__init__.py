@@ -23,7 +23,7 @@ resolver that picks a system from the flag or the saved setting.
 """
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 
 HOURS_SYSTEMS = ("halachic", "roman", "japanese", "islamic")
 
@@ -101,6 +101,28 @@ def _aware(now, tzinfo):
     return now
 
 
+# The arithmetic on the day's moments runs in UTC. Two aware datetimes
+# that share a ZoneInfo subtract and compare as wall-clock time, and a
+# timedelta added to one moves the wall clock, so a night that crosses
+# a clock change would come out an hour short or long, and a mark
+# placed a fraction of the way through it would land an hour off.
+# Everything here goes through these three, and the tables do too.
+
+def utc(dt):
+    """*dt* as the instant it is, for a difference or a comparison."""
+    return dt.astimezone(timezone.utc)
+
+
+def elapsed(start, end):
+    """The time from *start* to *end*, as it passes, not as the clock reads."""
+    return utc(end) - utc(start)
+
+
+def shift(dt, delta):
+    """*dt* moved by *delta* of real time, read in *dt*'s own zone."""
+    return (utc(dt) + delta).astimezone(dt.tzinfo)
+
+
 def day_hours(system, local_date, lat, lng, tzinfo=None, variant=None,
               country=None):
     """The table's answer for a civil date at a place, or None for a
@@ -122,9 +144,25 @@ def day_hours(system, local_date, lat, lng, tzinfo=None, variant=None,
 
 
 def hours_now(system, now, lat, lng, tzinfo=None, variant=None, country=None):
-    """The DayHours for the civil date of *now*, and *now* made aware."""
+    """The DayHours whose day *now* falls in, and *now* made aware.
+
+    That is the civil date's table nearly always. At a high latitude in
+    summer the Sun can set after midnight, so the day that began on the
+    date before is still running in the small hours of this one, and a
+    moment before that sunset belongs to it: the sunset to count down
+    to is the one an hour away, not tomorrow's. The mirror case, a day
+    that begins before midnight, belongs to the date after.
+    """
     now = _aware(now, tzinfo)
-    return day_hours(system, now.date(), lat, lng, tzinfo, variant, country), now
+    hours = day_hours(system, now.date(), lat, lng, tzinfo, variant, country)
+    if hours is not None:
+        if hours.prev_day_end is not None and utc(now) < utc(hours.prev_day_end):
+            hours = day_hours(system, now.date() - timedelta(days=1), lat, lng,
+                              tzinfo, variant, country)
+        elif hours.next_day_start is not None and utc(now) >= utc(hours.next_day_start):
+            hours = day_hours(system, now.date() + timedelta(days=1), lat, lng,
+                              tzinfo, variant, country)
+    return hours, now
 
 
 def reading(hours, now):
@@ -139,13 +177,13 @@ def reading(hours, now):
         (True, hours.prev_day_end, hours.day_start),
     )
     for night, start, end in spans:
-        if start is None or end is None or not start <= now < end:
+        if start is None or end is None or not utc(start) <= utc(now) < utc(end):
             continue
         count = hours.night_divisions if night else hours.divisions
-        hour = (end - start) / count
-        elapsed = (now - start) / hour
-        index = min(count - 1, int(elapsed))
-        return Reading(night, index, elapsed - index, hour.total_seconds(),
+        hour = elapsed(start, end) / count
+        through = elapsed(start, now) / hour
+        index = min(count - 1, int(through))
+        return Reading(night, index, through - index, hour.total_seconds(),
                        start, end)
     return None
 
@@ -156,7 +194,7 @@ def next_mark(hours, now):
         return None
     now = _aware(now, hours.day_start.tzinfo if hours.day_start else None)
     for mark in hours.marks:
-        if mark.at > now:
+        if utc(mark.at) > utc(now):
             return mark
     return None
 
@@ -177,5 +215,5 @@ def last_mark(hours, now):
     if hours is None:
         return None
     now = _aware(now, hours.day_start.tzinfo if hours.day_start else None)
-    passed = [m for m in hours.marks if m.at <= now]
+    passed = [m for m in hours.marks if utc(m.at) <= utc(now)]
     return passed[-1] if passed else None

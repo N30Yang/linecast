@@ -13,7 +13,7 @@ line above names them already.
 """
 
 from linecast._graphics import RESET, fg, fmt_time_dt, visible_len
-from linecast._hours import fmt_duration, last_mark, next_mark, reading
+from linecast._hours import elapsed, fmt_duration, last_mark, next_mark, reading, utc
 from linecast._hours.i18n import hs, mark_name, reading_name, unit_name, variant_name
 
 _SEP = " · "
@@ -41,9 +41,9 @@ def corner_reading(hours, now, runtime):
     if hours.fast:
         start, end = hours.fast
         at = _aware_like(now, start)
-        if start <= at < end:
-            left = hs('in_time', runtime, dur=fmt_duration((end - at).total_seconds()))
-            return (f"{hs('fast', runtime)} {fmt_duration((at - start).total_seconds())}"
+        if utc(start) <= utc(at) < utc(end):
+            left = hs('in_time', runtime, dur=fmt_duration(elapsed(at, end).total_seconds()))
+            return (f"{hs('fast', runtime)} {fmt_duration(elapsed(start, at).total_seconds())}"
                     f"{_SEP}iftar {left}")
     # A system of marks alone, or a day the Sun never made the edges
     # of: the interval the moment falls in, and how long it has left.
@@ -52,7 +52,7 @@ def corner_reading(hours, now, runtime):
     if before is not None:
         parts.append(mark_name(hours.system, before.key, runtime, short=True))
     if after is not None:
-        left = fmt_duration((after.at - _aware_like(now, after.at)).total_seconds())
+        left = fmt_duration(elapsed(_aware_like(now, after.at), after.at).total_seconds())
         parts.append(f"{mark_name(hours.system, after.key, runtime, short=True)} "
                      f"{hs('in_time', runtime, dur=left)}")
     return _SEP.join(parts)
@@ -77,10 +77,10 @@ def hours_line(hours, now, width, runtime):
         label = (f"{mark_name(hours.system, mark.key, runtime, short=True)} "
                  f"{fmt_time_dt(mark.at, runtime.use_24h)}")
         if mark is coming:
-            left = fmt_duration((mark.at - now).total_seconds())
+            left = fmt_duration(elapsed(now, mark.at).total_seconds())
             label += f" {dim}({hs('in_time', runtime, dur=left)})"
             ink = text
-        elif mark.at <= now:
+        elif utc(mark.at) <= utc(now):
             ink = dim
         else:
             ink = muted
@@ -90,8 +90,9 @@ def hours_line(hours, now, width, runtime):
     # those past, most recent first. Sunrise and sunset after all of
     # them: the line above has them.
     first = [i for i, (m, _l, _k) in enumerate(items) if m is coming]
-    later = [i for i, (m, _l, _k) in enumerate(items) if m.at > now and m is not coming]
-    passed = [i for i, (m, _l, _k) in enumerate(items) if m.at <= now][::-1]
+    later = [i for i, (m, _l, _k) in enumerate(items)
+             if utc(m.at) > utc(now) and m is not coming]
+    passed = [i for i, (m, _l, _k) in enumerate(items) if utc(m.at) <= utc(now)][::-1]
     order = first + later + passed
     sun = [i for i in order if items[i][0].key in ("sunrise", "sunset")]
     order = [i for i in order if i not in sun] + sun

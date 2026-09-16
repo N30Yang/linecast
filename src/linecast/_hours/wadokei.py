@@ -28,7 +28,7 @@ count and the time of day, 'morning four', and the animal's hour.
 from functools import lru_cache
 
 from linecast._ephemeris import sun_depression_utc
-from linecast._hours import DayHours, Mark
+from linecast._hours import DayHours, Mark, elapsed, shift
 
 # 7°21′40″: the Sun's centre, below the horizon, at 明六つ and 暮六つ.
 DAWN_DEG = 7 + 21 / 60 + 40 / 3600
@@ -76,17 +76,17 @@ def wadokei(local_date, lat, lng, tzinfo=None):
 
     marks = []
     if start and end:
-        koku = (end - start) / 6
+        koku = elapsed(start, end) / 6
         for n, (key, _bells, _branch) in enumerate(DAY_KOKU):
-            marks.append(Mark(key, start + koku * n))
+            marks.append(Mark(key, shift(start, koku * n)))
     # The night's bells fall on this date from the night before
     # (夜九つ onward, after midnight) and the night after (暮六つ to
     # 夜九つ, before it); each is listed on the date it falls on.
     for night_start, night_end in ((prev_end, start), (end, next_start)):
         if night_start and night_end:
-            koku = (night_end - night_start) / 6
+            koku = elapsed(night_start, night_end) / 6
             for n, (key, _bells, _branch) in enumerate(NIGHT_KOKU):
-                at = night_start + koku * n
+                at = shift(night_start, koku * n)
                 if at.date() == local_date:
                     marks.append(Mark(key, at))
     marks.sort(key=lambda m: m.at)

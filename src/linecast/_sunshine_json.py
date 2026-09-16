@@ -112,7 +112,7 @@ def _hours_block(hours, now):
     and every mark with its name, in order. None with no system on."""
     if hours is None:
         return None
-    from linecast._hours import fmt_duration, next_mark, reading
+    from linecast._hours import elapsed, fmt_duration, next_mark, reading
     from linecast._hours.i18n import (
         mark_name, mark_native, reading_name, variant_name,
     )
@@ -151,7 +151,7 @@ def _hours_block(hours, now):
         "next": None if coming is None else {
             "key": coming.key,
             "time": local_iso(coming.at),
-            "in": fmt_duration((coming.at - now).total_seconds()),
+            "in": fmt_duration(elapsed(now, coming.at).total_seconds()),
         },
         "fast": None if not hours.fast else {
             "start": local_iso(hours.fast[0]),

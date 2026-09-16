@@ -32,7 +32,7 @@ from datetime import timedelta
 from functools import lru_cache
 
 from linecast._ephemeris import sun_declination, sun_depression_utc, sun_transit_utc
-from linecast._hours import DayHours, Mark
+from linecast._hours import DayHours, Mark, elapsed, shift
 
 HORIZON_DEG = 0.833
 IMSAK_MINUTES = 10
@@ -119,8 +119,8 @@ def _angle_based(at, base, angle, night, before):
     if night is None or base is None:
         return at
     portion = night * (angle / 60.0)
-    if at is None or abs(at - base) > portion:
-        return base - portion if before else base + portion
+    if at is None or abs(elapsed(base, at)) > portion:
+        return shift(base, -portion if before else portion)
     return at
 
 
@@ -149,8 +149,8 @@ def prayer_times(local_date, lat, lng, tzinfo=None, method=None, country=None):
     sunset = depression(local_date, HORIZON_DEG, True)
     next_sunrise = depression(local_date + day, HORIZON_DEG, False)
     prev_sunset = depression(local_date - day, HORIZON_DEG, True)
-    night_before = sunrise - prev_sunset if sunrise and prev_sunset else None
-    night_after = next_sunrise - sunset if next_sunrise and sunset else None
+    night_before = elapsed(prev_sunset, sunrise) if sunrise and prev_sunset else None
+    night_after = elapsed(sunset, next_sunrise) if next_sunrise and sunset else None
 
     transit = sun_transit_utc(local_date, lng, tzinfo)
     dhuhr = _local(transit, tzinfo)
@@ -160,7 +160,7 @@ def prayer_times(local_date, lat, lng, tzinfo=None, method=None, country=None):
     ramadan = is_ramadan(local_date)
     if isinstance(isha_rule, tuple):
         _min, after, after_ramadan = isha_rule
-        isha = (maghrib + timedelta(minutes=after_ramadan if ramadan else after)
+        isha = (shift(maghrib, timedelta(minutes=after_ramadan if ramadan else after))
                 if maghrib else None)
     else:
         isha = _angle_based(depression(local_date, isha_rule, True), sunset, isha_rule,
@@ -170,15 +170,15 @@ def prayer_times(local_date, lat, lng, tzinfo=None, method=None, country=None):
                      True)
 
     offsets = _OFFSETS.get(method, {})
-    imsak = fajr - timedelta(minutes=IMSAK_MINUTES) if fajr and ramadan else None
+    imsak = shift(fajr, -timedelta(minutes=IMSAK_MINUTES)) if fajr and ramadan else None
     marks = []
     for key, at in (("imsak", imsak), ("fajr", fajr), ("sunrise", sunrise),
                     ("dhuhr", dhuhr), ("asr", asr), ("maghrib", maghrib),
                     ("isha", isha)):
         if at is not None:
-            marks.append(Mark(key, at + timedelta(minutes=offsets.get(key, 0))))
+            marks.append(Mark(key, shift(at, timedelta(minutes=offsets.get(key, 0)))))
     if "maghrib" in offsets and maghrib:
-        maghrib += timedelta(minutes=offsets["maghrib"])
+        maghrib = shift(maghrib, timedelta(minutes=offsets["maghrib"]))
     marks.sort(key=lambda m: m.at)
     variant = method if school == default_school(country) else f"{method}-{school}"
     return DayHours("islamic", local_date, fajr, maghrib, prev_sunset, next_sunrise,
