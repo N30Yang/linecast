@@ -101,7 +101,7 @@ def main():
                         "convention, and the fast in Ramadan")
     from linecast._hours.prayer_times import METHODS
     for key, (name, _fajr, _isha, _maghrib) in METHODS.items():
-        sub.add_parser(f"islamic-{key}", help=f"the prayer times by the {name}")
+        sub.add_parser(f"islamic-{key}", help=f"the prayer times by the {name} convention")
     sub.add_parser("islamic-hanafi", help="the prayer times with the Hanafi Asr")
     sub.add_parser("islamic-shafii", help="the prayer times with the Shafi'i Asr")
     sub.add_parser("none", help="no hours, whatever the language")

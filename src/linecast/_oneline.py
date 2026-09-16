@@ -71,7 +71,8 @@ def sunshine_oneline(lat, lng, doy, now_hour, runtime, tz_offset_h=None,
     Example: ``sunrise 5:42a sunset 7:38p 12h34m +2m waning_crescent_icon``
 
     With *hours*, the day read in a tradition's hours, the reading of
-    *now* follows: ``4:20 1h=57m`` for the halachic hours.
+    *now* follows: ``4:20 · 1h=57m`` for the halachic hours, ``Dhuhr ·
+    Asr in 41m`` for the prayer times.
     """
     from linecast.sunshine import solar_times, moon_phase
     from datetime import datetime
@@ -114,7 +115,7 @@ def sunshine_oneline(lat, lng, doy, now_hour, runtime, tz_offset_h=None,
     )
     if hours is not None and now is not None:
         from linecast._sunshine_hours import corner_reading
-        tail = corner_reading(hours, now, runtime).replace(" \u00b7 ", " ").replace(" = ", "=")
+        tail = corner_reading(hours, now, runtime).replace(" = ", "=")
         if tail:
             line += f" {text}{tail}"
     return line + RESET

@@ -5,7 +5,8 @@ are, with the Hebrew itself kept for `--json`. Latin is Latin
 everywhere. The Edo hours keep their kanji in Japanese and take the
 bell count and the animal's hour elsewhere. The prayer names are
 transliterated, with Indonesian's own spellings, as the Hijri months
-have theirs.
+have theirs, and Turkish's own names, İmsak to Yatsı, as the Diyanet
+prints them; sunrise reads in each language's own word.
 
 Each mark has a short name for the line under the chart and a full
 name for `--json` and the help. Names that are the same in every
@@ -60,18 +61,24 @@ _EDO = {
     "akatsuki_nanatsu": ("暁七つ", "daybreak seven", "daybreak seven, the hour of the Tiger"),
 }
 
-# The prayers: key → (English, Indonesian, Arabic). The English
-# transliterations stand in every language but Indonesian, which has
-# its own spellings, as it has for the Hijri months.
+# The prayers: key → (English, Indonesian, Turkish, Arabic). The
+# English transliterations stand in every language but Indonesian,
+# which has its own spellings, as it has for the Hijri months, and
+# Turkish, whose cards read İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı.
+# The Diyanet's İmsak is the Fajr time, so Turkish reads Fajr as İmsak
+# unless the table lists a separate Imsak before it, when Fajr is
+# Sabah, the morning prayer. Sunrise reads in each language's own word
+# but where the card has one.
 _PRAYERS = {
-    "imsak": ("Imsak", "Imsak", "الإمساك"),
-    "fajr": ("Fajr", "Subuh", "الفجر"),
-    "sunrise": ("Sunrise", "Terbit", "الشروق"),
-    "dhuhr": ("Dhuhr", "Zuhur", "الظهر"),
-    "asr": ("Asr", "Asar", "العصر"),
-    "maghrib": ("Maghrib", "Magrib", "المغرب"),
-    "isha": ("Isha", "Isya", "العشاء"),
+    "imsak": ("Imsak", "Imsak", "İmsak", "الإمساك"),
+    "fajr": ("Fajr", "Subuh", "İmsak", "الفجر"),
+    "sunrise": ("Sunrise", "Terbit", "Güneş", "الشروق"),
+    "dhuhr": ("Dhuhr", "Zuhur", "Öğle", "الظهر"),
+    "asr": ("Asr", "Asar", "İkindi", "العصر"),
+    "maghrib": ("Maghrib", "Magrib", "Akşam", "المغرب"),
+    "isha": ("Isha", "Isya", "Yatsı", "العشاء"),
 }
+_PRAYER_COLUMN = {"id": 1, "tr": 2}
 
 # The strings the hours line and the corner need beyond the names:
 # "night" for the night hours, "in {dur}" for the countdown, and the
@@ -113,9 +120,11 @@ def hs(key, runtime, **kwargs):
     return lookup(_HOURS_STRINGS, key, lang_of(runtime), **kwargs)
 
 
-def mark_name(system, key, runtime, short=False):
-    """The name of a mark in the display language."""
-    if key in _SUN_KEYS and system != "islamic":
+def mark_name(system, key, runtime, short=False, hours=None):
+    """The name of a mark in the display language. *hours* is the
+    table the mark is from, where the name depends on its company."""
+    lang = lang_of(runtime)
+    if key in _SUN_KEYS and (system != "islamic" or lang not in _PRAYER_COLUMN):
         from linecast._sunshine_i18n import sky_event
         return sky_event(_SUN_KEYS[key], runtime)
     if system == "halachic":
@@ -130,8 +139,11 @@ def mark_name(system, key, runtime, short=False):
             return japanese
         return short_name if short else full
     if system == "islamic":
-        english, indonesian, _arabic = _PRAYERS[key]
-        return indonesian if lang_of(runtime) == "id" else english
+        names = _PRAYERS[key]
+        if (lang == "tr" and key == "fajr" and hours is not None
+                and any(m.key == "imsak" for m in hours.marks)):
+            return "Sabah"
+        return names[_PRAYER_COLUMN.get(lang, 0)]
     return key
 
 
@@ -143,7 +155,7 @@ def mark_native(system, key):
     if system == "japanese":
         return _EDO[key][0]
     if system == "islamic":
-        return _PRAYERS[key][2]
+        return _PRAYERS[key][3]
     return None
 
 

@@ -710,16 +710,29 @@ def render(lat, lng, doy, now_hour, fullscreen=False, offset_minutes=0, runtime=
     label = location_label
     if now is not None:
         label = corner_label(location_label, clock_label(now, runtime), graph_w)
+    # The tradition's reading of the moment in the other corner, the
+    # same dim ink: the halachic hour, the Roman hora, the Edo koku.
+    # Where the two would meet, or the reading would run past its half
+    # of the row, the place yields first, as it does to a long name,
+    # then the reading's second part, then the reading.
+    left = ""
+    if hours is not None:
+        from linecast._sunshine_hours import corner_reading
+        left = corner_reading(hours, now, runtime)
+        while left and (visible_len(left) > _corner_limit(graph_w)
+                        or visible_len(left) + visible_len(label) + 3 > graph_w):
+            if label != clock_label(now, runtime):
+                label = clock_label(now, runtime)
+            elif " \u00b7 " in left:
+                left = left.split(" \u00b7 ")[0]
+            else:
+                left = ""
     if label:
         for x, ch in corner_label_cells(label, graph_w):
             cell = fb.cell_bg(x, 0)
             overlays[(x, 0)] = (ch, corner_label_ink(cell), False)
-    # The tradition's reading of the moment in the other corner, the
-    # same dim ink: the halachic hour, the Roman hora, the Edo koku.
-    if hours is not None:
-        from linecast._sunshine_hours import corner_reading
-        for x, ch in corner_label_cells(corner_reading(hours, now, runtime),
-                                        graph_w, left=True):
+    if left:
+        for x, ch in corner_label_cells(left, graph_w, left=True):
             cell = fb.cell_bg(x, 0)
             overlays[(x, 0)] = (ch, corner_label_ink(cell), False)
     sun_cell_row = sun_spy_i // 2

@@ -13,7 +13,8 @@ half, mincha ketana nine and a half, plag hamincha ten and three
 quarters. Around them sit the moments read off the Sun's depression:
 alot hashachar at 16.1°, misheyakir at 11.5°, tzeit at 8.5° (three
 small stars), and candle lighting eighteen minutes before sunset on
-Friday. Chatzot halayla is the middle of the night. The angles are the
+Friday, forty in Jerusalem, whose custom it is and which Hebcal keeps
+for the city. Chatzot halayla is the middle of the night. The angles are the
 ones Hebcal and the KosherJava library publish, and the tests pin four
 places and four dates against Hebcal's zmanim API to the minute.
 
@@ -36,6 +37,11 @@ MISHEYAKIR_DEG = 11.5
 TZEIT_DEG = 8.5
 MGA_MINUTES = 72
 CANDLES_MINUTES = 18
+CANDLES_MINUTES_JERUSALEM = 40
+# The city: its centre, and a radius that takes in the municipality
+# and no neighbour that keeps eighteen.
+_JERUSALEM = (31.778, 35.225)
+_JERUSALEM_KM = 12.0
 FRIDAY = 4
 
 # The marks that are fractions of the day, in sha'ot zmaniyot from its
@@ -48,6 +54,16 @@ _DAY_FRACTIONS = (
     ("mincha_ketana", 9.5),
     ("plag", 10.75),
 )
+
+
+def candles_minutes(lat, lng):
+    """Minutes before sunset the candles are lit: eighteen, or forty
+    in Jerusalem."""
+    from math import cos, radians
+    dlat = (lat - _JERUSALEM[0]) * 111.2
+    dlng = (lng - _JERUSALEM[1]) * 111.2 * cos(radians(_JERUSALEM[0]))
+    return (CANDLES_MINUTES_JERUSALEM if dlat * dlat + dlng * dlng <= _JERUSALEM_KM ** 2
+            else CANDLES_MINUTES)
 
 
 def _local(dt_utc, tzinfo):
@@ -102,7 +118,7 @@ def zmanim(local_date, lat, lng, tzinfo=None, opinion=None):
         for key, n in _DAY_FRACTIONS:
             add(key, shift(start, hour * n))
     if sunset and local_date.weekday() == FRIDAY:
-        add("candles", shift(sunset, -timedelta(minutes=CANDLES_MINUTES)))
+        add("candles", shift(sunset, -timedelta(minutes=candles_minutes(lat, lng))))
     add("sunset", sunset)
     add("tzeit", end if opinion == "mga" else depression(TZEIT_DEG, True))
     if end and next_start and utc(end) < utc(next_start):

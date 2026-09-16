@@ -437,11 +437,25 @@ def test_magen_avraham_pads_the_day_by_seventy_two_minutes():
 
 def test_candle_lighting_on_friday_only():
     tz = ZoneInfo("Asia/Jerusalem")
-    friday = zmanim(date(2026, 9, 18), 31.778, 35.235, tz)
+    friday = zmanim(date(2026, 9, 18), 32.07, 34.78, tz)       # Tel Aviv
     marks = {m.key: m.at for m in friday.marks}
     assert marks["candles"] == marks["sunset"] - timedelta(minutes=18)
-    thursday = zmanim(date(2026, 9, 17), 31.778, 35.235, tz)
+    thursday = zmanim(date(2026, 9, 17), 32.07, 34.78, tz)
     assert "candles" not in {m.key for m in thursday.marks}
+
+
+def test_jerusalem_lights_candles_forty_minutes_before_sunset():
+    """The city's custom, and Hebcal's default for it; Tel Aviv and
+    Beit Shemesh keep eighteen."""
+    from linecast._hours.zmanim import candles_minutes
+    tz = ZoneInfo("Asia/Jerusalem")
+    friday = zmanim(date(2026, 9, 18), 31.778, 35.235, tz)
+    marks = {m.key: m.at for m in friday.marks}
+    assert marks["candles"] == marks["sunset"] - timedelta(minutes=40)
+    assert candles_minutes(31.778, 35.235) == 40
+    assert candles_minutes(31.75, 35.0) == 18          # Beit Shemesh
+    assert candles_minutes(32.07, 34.78) == 18         # Tel Aviv
+    assert candles_minutes(40.65, -73.95) == 18
 
 
 def test_polar_night_keeps_no_hours():
@@ -615,6 +629,35 @@ class TestPainting:
         assert lines[-1].endswith("? keys")
         # The chart gave up a row for the line: 24 rows, two of text.
         assert len(lines) == 24
+
+    def test_the_corners_yield_to_each_other_in_a_narrow_window(self, monkeypatch):
+        """At 44 columns a Ramadan reading and the place with its clock
+        would meet: the place goes first, then the reading's second
+        part, and nothing is cut mid-word."""
+        import shutil
+        from linecast import sunshine
+        from linecast.sunshine import render
+        tz = ZoneInfo("Asia/Riyadh")
+        now = datetime(2026, 3, 5, 12, 0, tzinfo=tz)
+        hours, now = hours_now("islamic", now, 21.4225, 39.8262, tz, None, "SA")
+        monkeypatch.setattr(sunshine, "_local_today", lambda: date(2026, 3, 5))
+        for cols, expect_place in ((44, False), (80, True)):
+            monkeypatch.setattr(sunshine, "get_terminal_size", lambda c=cols: (c, 14))
+            out = render(21.4225, 39.8262, 64, 12.0, fullscreen=True, runtime=_runtime(use_24h=True),
+                         tz_offset_h=3.0, location_label="Makkah", now=now, hours=hours)
+            top = _plain(out.split("\n")[0] if isinstance(out, str) else out[0])
+            assert "fast 6h 38m" in top
+            assert ("Makkah" in top) == expect_place
+            assert "iftar in" not in top or "iftar in 6h 26m" in top
+
+    def test_the_oneline_keeps_the_reading_whole(self):
+        from linecast._oneline import sunshine_oneline
+        tz = ZoneInfo("Asia/Riyadh")
+        now = datetime(2026, 9, 16, 15, 0, tzinfo=tz)
+        hours, now = hours_now("islamic", now, 21.4225, 39.8262, tz, None, "SA")
+        line = _plain(sunshine_oneline(21.4225, 39.8262, 259, 15.0, _runtime(use_24h=True),
+                                       3.0, hours, now))
+        assert line.endswith("Dhuhr · Asr in 41m")
 
     def test_a_marks_only_day_reads_the_interval(self):
         """With no divisions the corner names the marks either side."""
@@ -1132,8 +1175,114 @@ class TestPrayerTimes:
         assert variant_name("islamic", "makkah") == "Umm al-Qura"
         assert variant_name("islamic", "karachi-shafii") == "Karachi · Shafii"
         line = _plain(hours_line(hours, noon, 300, _runtime()))
-        assert line.startswith("Imsak 5:12a · Fajr 5:22a · Sunrise 6:38a · Dhuhr 12:32p")
+        assert line.startswith("Imsak 5:12a · Fajr 5:22a · sunrise 6:38a · Dhuhr 12:32p")
         assert line.endswith("Isha 8:26p · Umm al-Qura")
+
+    def test_sunrise_reads_in_the_languages_own_word(self):
+        """The prayer names are transliterated but sunrise is not a
+        name: French reads it as the line above does. Indonesian and
+        Turkish cards have a word of their own for it."""
+        from linecast._hours.i18n import mark_name
+        assert mark_name("islamic", "sunrise", _runtime(lang="fr")) == "lever du soleil"
+        assert mark_name("islamic", "sunrise", _runtime(lang="de")) == "Sonnenaufgang"
+        assert mark_name("islamic", "sunrise", _runtime(lang="id")) == "Terbit"
+        assert mark_name("islamic", "sunrise", _runtime(lang="tr")) == "Güneş"
+        assert mark_name("islamic", "fajr", _runtime(lang="fr")) == "Fajr"
+
+    def test_turkish_reads_the_diyanets_names(self):
+        """İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı: the Diyanet's
+        İmsak is the Fajr time, and Fajr reads as Sabah only where a
+        separate Imsak is listed before it."""
+        from linecast._sunshine_hours import hours_line
+        tz = ZoneInfo("Europe/Istanbul")
+        hours = prayer_times(date(2026, 3, 5), 41.01, 28.98, tz, None, "TR")   # Ramadan
+        noon = datetime(2026, 3, 5, 12, 0, tzinfo=tz)
+        line = _plain(hours_line(hours, noon, 300, _runtime(lang="tr", use_24h=True)))
+        assert line.startswith("İmsak 06:01 · Güneş 07:25 · Öğle 13:20")
+        assert " · İkindi " in line and " · Akşam " in line and " · Yatsı " in line
+        assert "Imsak" not in line
+        # By another method a Turkish reader sees the ten-minute Imsak
+        # and the morning prayer after it.
+        mwl = prayer_times(date(2026, 3, 5), 41.01, 28.98, tz, "mwl", "TR")
+        line = _plain(hours_line(mwl, noon, 300, _runtime(lang="tr", use_24h=True)))
+        assert line.startswith("İmsak ") and " · Sabah " in line
+
+    def test_turkey_prints_the_one_shadow_asr(self):
+        """The Diyanet's Istanbul table for the week of 16 September
+        2026, read from namazvakitleri.diyanet.gov.tr: İmsak, Güneş,
+        Öğle, İkindi, Akşam, Yatsı. Turkey is Hanafi, but the İkindi
+        printed is asr-ı evvel, the one-shadow time; the Hanafi Asr
+        would be fifty minutes later. Three minutes' tolerance: the
+        Diyanet's coordinates for the city are its own."""
+        published = {
+            "2026-09-16": ("05:12", "06:38", "13:04", "16:34", "19:20", "20:41"),
+            "2026-09-19": ("05:15", "06:41", "13:03", "16:31", "19:15", "20:35"),
+            "2026-09-22": ("05:19", "06:44", "13:02", "16:27", "19:10", "20:30"),
+        }
+        tz = ZoneInfo("Europe/Istanbul")
+        for day, times in published.items():
+            hours = prayer_times(date.fromisoformat(day), 41.01, 28.98, tz, None, "TR")
+            assert hours.variant == "turkey"
+            marks = {m.key: m.at for m in hours.marks}
+            assert "imsak" not in marks
+            for key, text in zip(("fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"), times):
+                h, m = (int(x) for x in text.split(":"))
+                expected = datetime.fromisoformat(day).replace(hour=h, minute=m, tzinfo=tz)
+                assert abs(marks[key] - expected) <= timedelta(minutes=3), (
+                    f"{day} {key}: {marks[key]:%H:%M} against the Diyanet's {text}")
+        assert default_school("TR") == "shafii"
+
+    def test_the_night_after_isha_counts_down_to_fajr(self):
+        """Once the day's marks are past, the next day's first is the
+        one to come: Fajr, or Imsak in Ramadan, on the corner and at
+        the end of the line."""
+        from linecast._sunshine_hours import corner_reading, hours_line
+        tz = ZoneInfo("Asia/Riyadh")
+        night = datetime(2026, 9, 16, 23, 30, tzinfo=tz)
+        hours, now = hours_now("islamic", night, 21.4225, 39.8262, tz, None, "SA")
+        assert hours.date == date(2026, 9, 16)
+        coming = next_mark(hours, now)
+        assert coming is hours.after and coming.key == "fajr"
+        assert coming.at.date() == date(2026, 9, 17)
+        assert corner_reading(hours, now, _runtime()) == "Isha · Fajr in 5h 22m"
+        line = _plain(hours_line(hours, now, 300, _runtime()))
+        assert line.endswith("Isha 7:52p · Fajr 4:51a (in 5h 22m) · Umm al-Qura")
+        assert [m.key for m in hours.marks].count("fajr") == 1
+        ramadan = prayer_times(date(2026, 3, 5), 21.4225, 39.8262, tz, None, "SA")
+        assert ramadan.after.key == "imsak"
+
+    def test_an_isha_past_midnight_is_listed_on_the_date_it_falls_on(self):
+        """Oslo, 21 June by the Muslim World League: Isha at 00:12 on
+        the 22nd. The 21st lists it as its own, and the 22nd lists it
+        first, so at 00:05 the countdown is seven minutes, not two
+        hours to Fajr."""
+        from linecast._sunshine_hours import corner_reading
+        tz = ZoneInfo("Europe/Oslo")
+        hours, now = hours_now("islamic", datetime(2026, 6, 22, 0, 5, tzinfo=tz),
+                               59.91, 10.75, tz, "mwl", None)
+        assert hours.date == date(2026, 6, 22)
+        assert hours.marks[0].key == "isha"
+        assert hours.marks[0].at.date() == date(2026, 6, 22)
+        assert corner_reading(hours, now, _runtime()).startswith("Isha in ")
+        assert [m.key for m in hours.marks].count("isha") == 2
+        before = prayer_times(date(2026, 6, 21), 59.91, 10.75, tz, "mwl", None)
+        assert before.marks[-1].key == "isha"
+        assert before.marks[-1].at.date() == date(2026, 6, 22)
+
+    def test_every_named_convention_is_a_choice(self):
+        from linecast._runtime import HOURS_CHOICES
+        for key in METHODS:
+            assert f"islamic-{key}" in HOURS_CHOICES
+        assert default_method("KW") == "kuwait" and default_method("AE") == "dubai"
+        assert default_method("QA") == "qatar" and default_method("JO") == "jordan"
+        assert default_method("MA") == "morocco"
+        tz = ZoneInfo("Asia/Amman")
+        amman = prayer_times(date(2026, 9, 16), 31.95, 35.93, tz, None, "JO")
+        marks = {m.key: m.at for m in amman.marks}
+        assert amman.day_end == marks["maghrib"]
+        # Jordan's Maghrib is five minutes after sunset
+        plain = prayer_times(date(2026, 9, 16), 31.95, 35.93, tz, "mwl", None)
+        assert marks["maghrib"] - {m.key: m.at for m in plain.marks}["maghrib"] == timedelta(minutes=5)
 
     def test_json_carries_the_fast_and_the_arabic(self):
         from linecast._sunshine_json import build_payload

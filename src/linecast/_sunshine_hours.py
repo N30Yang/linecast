@@ -50,10 +50,10 @@ def corner_reading(hours, now, runtime):
     before, after = last_mark(hours, now), next_mark(hours, now)
     parts = []
     if before is not None:
-        parts.append(mark_name(hours.system, before.key, runtime, short=True))
+        parts.append(mark_name(hours.system, before.key, runtime, short=True, hours=hours))
     if after is not None:
         left = fmt_duration(elapsed(_aware_like(now, after.at), after.at).total_seconds())
-        parts.append(f"{mark_name(hours.system, after.key, runtime, short=True)} "
+        parts.append(f"{mark_name(hours.system, after.key, runtime, short=True, hours=hours)} "
                      f"{hs('in_time', runtime, dur=left)}")
     return _SEP.join(parts)
 
@@ -72,9 +72,14 @@ def hours_line(hours, now, width, runtime):
     now = _aware_like(now, hours.marks[0].at)
     coming = next_mark(hours, now)
 
+    # The next day's first mark joins the line once it is the one to
+    # come, so the night after the last mark counts down to the dawn.
+    listed = list(hours.marks)
+    if coming is not None and coming is hours.after:
+        listed.append(coming)
     items = []
-    for mark in hours.marks:
-        label = (f"{mark_name(hours.system, mark.key, runtime, short=True)} "
+    for mark in listed:
+        label = (f"{mark_name(hours.system, mark.key, runtime, short=True, hours=hours)} "
                  f"{fmt_time_dt(mark.at, runtime.use_24h)}")
         if mark is coming:
             left = fmt_duration(elapsed(now, mark.at).total_seconds())

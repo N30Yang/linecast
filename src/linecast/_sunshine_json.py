@@ -127,7 +127,7 @@ def _hours_block(hours, now):
     marks = []
     for mark in hours.marks:
         entry = {"key": mark.key,
-                 "name": mark_name(hours.system, mark.key, runtime),
+                 "name": mark_name(hours.system, mark.key, runtime, hours=hours),
                  "time": local_iso(mark.at)}
         native = mark_native(hours.system, mark.key)
         if native:

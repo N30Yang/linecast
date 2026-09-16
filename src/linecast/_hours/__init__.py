@@ -46,7 +46,9 @@ class DayHours:
     count, `night_divisions`, where it differs (Rome's four vigiliae
     against twelve horae). `variant` names the opinion or method the
     table used. `fast` is (start, end) on a day of fasting, Fajr to
-    Maghrib in Ramadan, or None.
+    Maghrib in Ramadan, or None. `after` is the first mark of the next
+    day where the table names one, so a night with no hours of its own
+    still counts down to the dawn.
     """
     system: str
     date: date
@@ -59,6 +61,7 @@ class DayHours:
     variant: str | None = None
     night_divisions: int | None = None
     fast: tuple | None = None
+    after: Mark | None = None
 
     def __post_init__(self):
         if self.night_divisions is None:
@@ -189,13 +192,16 @@ def reading(hours, now):
 
 
 def next_mark(hours, now):
-    """The first mark still to come, or None once the day's are past."""
+    """The first mark still to come; once the day's are past, the next
+    day's first where the table names it, else None."""
     if hours is None:
         return None
     now = _aware(now, hours.day_start.tzinfo if hours.day_start else None)
     for mark in hours.marks:
         if utc(mark.at) > utc(now):
             return mark
+    if hours.after is not None and utc(hours.after.at) > utc(now):
+        return hours.after
     return None
 
 
