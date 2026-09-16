@@ -58,6 +58,11 @@ _CPR_QUERY = _term.CPR_QUERY.decode("ascii")
 _ACK_WAIT_S = 1.0
 _ACK_FIRST_WAIT_S = 0.25
 
+# A hover chip goes once the mouse has been still this long, as though the
+# pointer had left the window: a view left open on the desk should not
+# keep a chip up because the pointer came to rest over it.
+_HOVER_IDLE_S = 7.0
+
 
 def frame_body(text):
     r"""A frame with every row addressed, so no row can shift the ones below.
@@ -589,7 +594,8 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
     help_panel: optional _help.HelpPanel for the view's controls. It owns
                 `?` and input while open, without changing the view's state.
                 Text fields still receive a literal question mark.
-    Re-renders immediately on terminal resize or input.
+    Re-renders immediately on terminal resize or input.  A mouse_pos
+    with no mouse input for _HOVER_IDLE_S seconds goes back to None.
 
     While idle, re-probes the terminal's colours now and then (see
     _theme.poll_interval / watch_path) and repaints when they change,
@@ -643,6 +649,7 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
     playing = auto_play
     play_frame = 0
     mouse_pos = None
+    hover_until = 0.0    # monotonic time mouse_pos is forgotten
     drag_start = None    # (col, row) of left-button press while on_drag is set
     drag_delta = (0, 0)  # last displayed drag, to finish before opening help
     active_alert = None  # index of alert whose modal is open, or None
@@ -677,8 +684,10 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
         be the terminal's reply to the last frame, which changes nothing.
         """
         nonlocal offset, playing, play_frame, mouse_pos, drag_start, drag_delta
-        nonlocal active_alert, modal_scroll, acks_owed
+        nonlocal active_alert, modal_scroll, acks_owed, hover_until
         action = _read_key(fd, text=bool(text_mode is not None and text_mode()))
+        if isinstance(action, tuple) and action[0] == 'mouse':
+            hover_until = _time.monotonic() + _HOVER_IDLE_S
         if action == 'ack':
             _term.mark_answered()
             acks_owed = max(0, acks_owed - 1)
@@ -899,6 +908,10 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                     if auto_play and playing and (play_gate is None
                                                   or play_gate()):
                         play_frame += 1  # advance the animation
+                    break
+                if (mouse_pos is not None and drag_start is None
+                        and _time.monotonic() >= hover_until):
+                    mouse_pos = None  # the mouse has been still: drop the chip
                     break
                 event = term.wait(min(0.1, remaining))
                 if event == 'wake':

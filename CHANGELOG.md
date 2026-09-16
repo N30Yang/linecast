@@ -25,6 +25,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Live views: A wheel notch, key, or mouse movement that arrives while the terminal is still drawing the previous frame is painted as soon as the terminal catches up. Since 2.5.2 it could sit unpainted until the next input or the view's own refresh, a minute later in weather and tides.
 - Live views: A second ctrl-C or a second termination signal while linecast is handing the terminal back no longer leaves the shell without echo. Quitting while a frame is still being drawn no longer leaves the terminal's reply on the command line.
 - Live views: The theme and tradition pickers no longer hang on a window narrower than four columns.
+- Live views: A hover chip goes away once the mouse has been still for seven seconds, so a view left open on the desk, such as `sunshine --year`, does not keep one up.
 - Piping `--print` output into a reader that closes early, such as `head`, ends quietly instead of with a broken-pipe traceback.
 - Weather: An hour or a day the forecast has no value for no longer ends the view in a traceback. Open-Meteo leaves a null where a station has no reading; the curve, the bars, the daily rows, the prose, `--json` and `--oneline` now skip it. A null current temperature is left off the header rather than shown as 0°.
 - Weather: A warning feed that answers in a shape the parser does not expect costs only the alerts. It used to take the air quality and the climate scale down with it.
