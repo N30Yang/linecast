@@ -15,7 +15,7 @@
 
 ![linecast weather, radar, the moon, the year, and sunshine at dusk tiled on an Omarchy desktop](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/hero.png)
 
-linecast turns free public data into seven live, mouse-friendly terminal apps for macOS, Linux, and Windows. It is pure Python with no dependencies, takes its colors from your terminal theme, and needs no accounts or API keys.
+linecast turns free public data into seven live, mouse-friendly terminal apps for macOS, Linux, and Windows. It is pure Python with no dependencies, takes its colors from your terminal theme, and needs no accounts or API keys. It runs over SSH, in tmux, and anywhere else a terminal does.
 
 | Command | What it shows |
 | --- | --- |
@@ -240,7 +240,7 @@ linecast weather --location "Bar Harbor"  # just this once
 
 A name is looked up once and the first match is saved; `search` shows the other matches if that was the wrong place.
 
-If you don't save a location or pass one in a flag, linecast asks [ipinfo.io](https://ipinfo.io/) where your network connection is. That is usually the right city, sometimes the wrong one, and far off on a VPN or corporate network. The answer is cached for an hour. Save a location and the request is never made.
+If you don't save a location or pass one in a flag, linecast asks [ipinfo.io](https://ipinfo.io/) where your network connection is. That is usually the right city, sometimes the wrong one, and far off on a VPN or corporate network. Over SSH the guess is the server's, so save a location there. The answer is cached for an hour. Save a location and the request is never made.
 
 ### Units and clock
 
