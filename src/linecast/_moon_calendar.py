@@ -27,12 +27,12 @@ from linecast._graphics import (
     Framebuffer, bg, fg, get_terminal_size, overlay, visible_len,
 )
 from linecast._i18n import lang_of
-from linecast._lunisolar import (
+from linecast._calendars.lunisolar import (
     CALENDAR_MERIDIAN_HOURS, CALENDAR_NATIVE_LANG, lunisolar_date,
     resolve_calendar,
 )
-from linecast._hebrew import hebrew_date, holiday_key, rosh_chodesh
-from linecast._hijri import hijri_date, observance_key
+from linecast._calendars.hebrew import hebrew_date, holiday_key, rosh_chodesh
+from linecast._calendars.hijri import hijri_date, observance_key
 from linecast._moon_i18n import (
     MONTHS_I18N, _day_abbrev, _fmt_month_day, _moon_name, _ms, _zh_day_name,
     _ZH_MONTHS, anahulu_name, festival_table, hebrew_date_label,
@@ -42,8 +42,8 @@ from linecast._moon_i18n import (
     thai_festival_name, thai_lunar_label, thai_month_label,
     vi_month_label, wan_phra_label,
 )
-from linecast._pacific import PACIFIC_CALENDARS, pacific_night
-from linecast._thai_lunar import (
+from linecast._calendars.pacific import PACIFIC_CALENDARS, pacific_night
+from linecast._calendars.thai_lunar import (
     _festival_key as thai_festival_key, is_wan_phra, thai_lunar_date,
 )
 from linecast._seasons import full_moon_name

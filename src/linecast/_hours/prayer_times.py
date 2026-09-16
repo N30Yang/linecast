@@ -125,7 +125,7 @@ def _angle_based(at, base, angle, night, before):
 
 
 def is_ramadan(local_date):
-    from linecast._hijri import hijri_date
+    from linecast._calendars.hijri import hijri_date
     return hijri_date(local_date)[1] == RAMADAN
 
 

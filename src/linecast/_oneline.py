@@ -141,7 +141,7 @@ def moon_oneline(now_local, lat, lng, runtime, calendar=None):
         moon_phase, INFO_AMBER_RGB, INFO_PURPLE_RGB, INFO_TEXT_RGB,
     )
     from linecast._i18n import lang_of
-    from linecast._lunisolar import resolve_calendar
+    from linecast._calendars.lunisolar import resolve_calendar
     from linecast._tides_i18n import _moon_name
 
     idx, _name, icon = moon_phase(now_local, runtime)

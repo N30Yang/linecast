@@ -33,7 +33,7 @@ from linecast._ephemeris import _sun_ecliptic, next_moon_phase_utc
 # calendar at UTC+7 since 1968 (the whole country since 1975); the
 # years before that were reckoned at UTC+8. The Thai calendar is also
 # native to its language but is arithmetic, not astronomical — it
-# lives in _thai_lunar and needs no meridian.
+# lives in thai_lunar and needs no meridian.
 CALENDAR_MERIDIAN_HOURS = {"chinese": 8, "japanese": 9, "korean": 9,
                            "vietnamese": 7}
 CALENDAR_OF_LANG = {"zh": "chinese", "ja": "japanese", "ko": "korean",

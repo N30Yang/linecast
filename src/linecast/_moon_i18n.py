@@ -473,7 +473,7 @@ def _day_abbrev(dt, runtime):
 
 
 # ---------------------------------------------------------------------------
-# The lunisolar calendar's names (see _lunisolar.py for the calendar
+# The lunisolar calendar's names (see _calendars/lunisolar.py for the calendar
 # itself). Each calendar reads in its own script for its own language;
 # every other UI language gets the customary English renderings, the
 # same fallback the string tables use.
@@ -638,7 +638,7 @@ def ja_night_name(day):
 
 
 # ---------------------------------------------------------------------------
-# The Thai calendar's names (see _thai_lunar.py for the calendar
+# The Thai calendar's names (see _calendars/thai_lunar.py for the calendar
 # itself). Thai lunar dates are traditionally printed in Thai numerals
 # — ขึ้น ๘ ค่ำ เดือน ๓ — so the native labels keep them; the rest of
 # the UI stays with Arabic digits, as modern Thai print does.
@@ -697,7 +697,7 @@ def wan_phra_label(today, lang):
     return "Wan Phra today" if today else "Wan Phra"
 
 
-# Festival names by the keys _thai_lunar's next_thai_festival returns,
+# Festival names by the keys thai_lunar's next_thai_festival returns,
 # (native, customary English).
 _TH_FESTIVALS = {
     "makha": ("มาฆบูชา", "Makha Bucha"),
@@ -829,7 +829,7 @@ def anahulu_name(night):
 
 
 # ---------------------------------------------------------------------------
-# The Islamic calendar's names (see _hijri.py for the calendar itself).
+# The Islamic calendar's names (see _calendars/hijri.py for the calendar itself).
 # Arabic is not a UI language, so the months are transliterated for
 # every reader; Indonesian, the one UI language of a Muslim-majority
 # country, gets the spellings its dictionary standardizes.
@@ -844,7 +844,7 @@ _HIJRI_MONTHS = {
            "Ramadan", "Syawal", "Zulkaidah", "Zulhijah"),
 }
 
-# Observance names by the keys _hijri's next_observance returns.
+# Observance names by the keys hijri's next_observance returns.
 _HIJRI_OBSERVANCES = {
     "new_year": ("Islamic New Year", "Tahun Baru Islam"),
     "ashura": ("Ashura", "Asyura"),
@@ -878,7 +878,7 @@ def hijri_observance_name(key, lang):
 
 
 # ---------------------------------------------------------------------------
-# The Hebrew calendar's names (see _hebrew.py for the calendar itself).
+# The Hebrew calendar's names (see _calendars/hebrew.py for the calendar itself).
 # Hebrew is not a UI language and terminals lay its script out
 # unreliably, so the months and holidays are transliterated, one
 # spelling for every reader: Tishrei, Cheshvan, Pesach.
@@ -901,7 +901,7 @@ _GEMATRIA = ((400, "ת"), (300, "ש"), (200, "ר"), (100, "ק"), (90, "צ"),
              (2, "ב"), (1, "א"))
 _GERESH, _GERSHAYIM = "\u05f3", "\u05f4"
 
-# Holiday names by the keys _hebrew's next_holiday returns.
+# Holiday names by the keys hebrew's next_holiday returns.
 _HEBREW_HOLIDAYS = {
     "rosh_hashanah": "Rosh Hashanah",
     "yom_kippur": "Yom Kippur",
@@ -921,7 +921,7 @@ _HEBREW_HOLIDAYS = {
 
 def hebrew_month_name(year, month):
     """The month's name; the twelfth is Adar I in a year with two Adars."""
-    from linecast._hebrew import is_leap_year
+    from linecast._calendars.hebrew import is_leap_year
     if month == 12 and is_leap_year(year):
         return "Adar I"
     return _HEBREW_MONTHS[month - 1]
@@ -963,7 +963,7 @@ def hebrew_year_numeral(year):
 
 def hebrew_date_hebrew(year, month, day):
     """כ״ג תשרי תשפ״ז — the date in Hebrew letters, for --json."""
-    from linecast._hebrew import is_leap_year
+    from linecast._calendars.hebrew import is_leap_year
     name = _HEBREW_MONTHS_HE[month - 1]
     if month == 12 and is_leap_year(year):
         name = "אדר א׳"

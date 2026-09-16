@@ -408,7 +408,7 @@ def _collect_preferences():
     from linecast._runtime import resolve_lang
     language, language_source = resolve_lang(None, env)
     from linecast._config import saved_calendar
-    from linecast._lunisolar import CALENDAR_OF_LANG
+    from linecast._calendars.lunisolar import CALENDAR_OF_LANG
     saved_cal = saved_calendar()
     if saved_cal is not None:
         calendar, calendar_source = saved_cal, "config"

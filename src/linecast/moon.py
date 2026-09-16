@@ -40,13 +40,13 @@ from linecast._i18n import lang_of
 from linecast._location import (
     country_for_defaults, location_is_pinned, location_tzinfo, resolve_location,
 )
-from linecast._lunisolar import (
+from linecast._calendars.lunisolar import (
     CALENDAR_MERIDIAN_HOURS, CALENDAR_NATIVE_LANG, current_term,
     lunisolar_date, next_lunar_event, next_term, resolve_calendar,
 )
-from linecast._hebrew import hebrew_date, next_holiday
-from linecast._hebrew import next_month_start as next_hebrew_month
-from linecast._hijri import (
+from linecast._calendars.hebrew import hebrew_date, next_holiday
+from linecast._calendars.hebrew import next_month_start as next_hebrew_month
+from linecast._calendars.hijri import (
     after_sunset, hijri_date, next_month_start, next_observance,
 )
 from linecast._moon_i18n import (
@@ -57,11 +57,11 @@ from linecast._moon_i18n import (
     pacific_night_label, term_label, thai_festival_name, thai_lunar_label,
     thai_year_label, wan_phra_label,
 )
-from linecast._pacific import (
+from linecast._calendars.pacific import (
     ANAHULU_COUNSEL, COUNSEL_SOURCE_LINE, PACIFIC_CALENDARS, night_note,
     pacific_night,
 )
-from linecast._thai_lunar import (
+from linecast._calendars.thai_lunar import (
     is_wan_phra, next_thai_festival, next_wan_phra, thai_lunar_date,
     year_animal_index,
 )
