@@ -911,6 +911,15 @@ class WeatherRuntime(RuntimeConfig):
         return _s("unit_kmh", self)
 
     @property
+    def precip_unit_label(self):
+        """The precipitation unit as the display language writes it
+        (Ukrainian reads мм); `precip_unit` is the JSON's and stays mm."""
+        if not self.metric:
+            return "\u2033"
+        from linecast._weather_i18n import _s
+        return _s("unit_mm", self)
+
+    @property
     def precip_unit(self):
         return "mm" if self.metric else "\u2033"
 

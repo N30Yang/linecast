@@ -31,6 +31,7 @@ from linecast._runtime import (
     WeatherRuntime, install_banner, log_failure, set_current, weather_parser,
 )
 from linecast._weather_i18n import (
+    fmt_wind,
     FULL_DAY_NAMES,
     WMO_NAMES,
     WMO_NAMES_I18N,
@@ -207,7 +208,7 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     if wind > wind_threshold:
         sector = int((wind_dir + 22.5) / 45) % 8
         arrow = WIND_ARROWS[sector]
-        lines.append(f"{TBG}{TFG} {arrow} {wind:.0f}{runtime.wind_unit_label} ")
+        lines.append(f"{TBG}{TFG} {arrow} {fmt_wind(wind, runtime)} ")
 
     if not lines:
         return ""
@@ -361,9 +362,9 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
         speed = day_value("wind_speed_10m_max")
         gust = day_value("wind_gusts_10m_max")
         if speed is not None:
-            lines.append(f"{TBG}{TFG} {_s('wind', runtime)} {speed:.0f}{runtime.wind_unit_label} ")
+            lines.append(f"{TBG}{TFG} {_s('wind', runtime)} {fmt_wind(speed, runtime)} ")
         if gust is not None and speed is not None and gust > speed:
-            line = f"{TBG}{TFG} {_s('gusts', runtime)} {gust:.0f}{runtime.wind_unit_label}"
+            line = f"{TBG}{TFG} {_s('gusts', runtime)} {fmt_wind(gust, runtime)}"
             gusts = hour_values("wind_gusts_10m")
             if gusts:
                 at = when(max(gusts, key=lambda jv: jv[1])[0])

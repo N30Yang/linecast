@@ -98,7 +98,7 @@ class TestUkrainianWeather:
         now = datetime(2026, 8, 24, 12)
         hourly = {"time": ["2026-08-24T11:00"], "precipitation": [4.0],
                   "snowfall": [0], "weather_code": [63]}
-        assert "4.0 mm дощу за останні 24 год" in _past_precip_line(hourly, now, runtime)
+        assert "4.0 мм дощу за останні 24 год" in _past_precip_line(hourly, now, runtime)
 
     def test_weekdays_use_standard_abbreviations(self):
         assert DAY_NAMES["uk"] == ["пн", "вт", "ср", "чт", "пт", "сб", "нд"]
@@ -224,6 +224,33 @@ class TestTurkishPercentAndUnits:
         assert english.wind_unit_label == "km/h"
         imperial = WeatherRuntime(lang="tr", **{**defaults, "metric": False})
         assert imperial.wind_unit_label == "mph"
+
+
+class TestUnitLabels:
+    def _runtime(self, lang, metric=True):
+        from linecast._runtime import WeatherRuntime
+        return WeatherRuntime(live=False, icons="emoji", oneline=False, celsius=metric,
+                              metric=metric, shading=False, lang=lang)
+
+    def test_the_wind_reads_as_the_language_writes_it(self):
+        from linecast._weather_i18n import fmt_wind
+        assert fmt_wind(12, self._runtime("en")) == "12km/h"
+        assert fmt_wind(12, self._runtime("nl")) == "12km/u"
+        assert fmt_wind(12, self._runtime("da")) == "12km/t"
+        assert fmt_wind(12, self._runtime("tr")) == "12 km/sa"
+        assert fmt_wind(12, self._runtime("eo")) == "12 km/h"
+        assert fmt_wind(12, self._runtime("uk")) == "12 км/год"
+        assert fmt_wind(12, self._runtime("th")) == "12 กม./ชม."
+        assert fmt_wind(12, self._runtime("tr", metric=False)) == "12mph"
+
+    def test_the_rain_and_the_radar_distance_follow(self):
+        from linecast._radar_i18n import rs
+        assert self._runtime("uk").precip_unit_label == "мм"
+        assert self._runtime("uk").precip_unit == "mm"
+        assert self._runtime("fr").precip_unit_label == "mm"
+        assert rs("unit_km", "uk") == "км" and rs("unit_km", "fr") == "km"
+        near = rs("near", "uk", dist=12, unit=rs("unit_km", "uk"), dir="ПнС", name="Київ")
+        assert near == "12 км на ПнС від Київ"
 
 
 class TestWeatherLocaleImprovements:

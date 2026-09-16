@@ -9,6 +9,7 @@ from linecast._graphics import RESET, visible_len
 from linecast._runtime import WeatherRuntime, current_runtime, log_failure, log_skipped
 from linecast._textwidth import wrap_display_width
 from linecast._weather_i18n import (
+    fmt_wind,
     DAY_NAMES, WMO_NAMES, WMO_NAMES_I18N, _PRECIP_DESCS_I18N, _s, _wmo_icons,
 )
 from linecast._weather_style import (MUTED, TEXT, WIND_COLOR, _aqi_color,
@@ -104,9 +105,9 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     # Right side: wind info + location (progressively droppable)
     wind_part = ""
     if wind > (15 if runtime.metric else 10) or gusts > (30 if runtime.metric else 20):
-        parts = [f"{_s('wind', runtime)} {wind:.0f}{runtime.wind_unit_label}"]
+        parts = [f"{_s('wind', runtime)} {fmt_wind(wind, runtime)}"]
         if gusts > (30 if runtime.metric else 20):
-            parts.append(f"{_s('gusts', runtime)} {gusts:.0f}{runtime.wind_unit_label}")
+            parts.append(f"{_s('gusts', runtime)} {fmt_wind(gusts, runtime)}")
         wind_part = f"{WIND_COLOR}{'  '.join(parts)}"
     loc_part = f"{MUTED}{location_name}" if location_name else ""
 
@@ -542,7 +543,7 @@ def past_precip_sentence(hourly, now, runtime):
     if snow_hours >= rain_hours and snow_hours >= mix_hours:
         # Show snow accumulation (Open-Meteo snowfall is in cm)
         if runtime.metric:
-            amt = f"{total_snow_cm:.1f}{metric_sep}cm"
+            amt = f"{total_snow_cm:.1f}{metric_sep}{_s('unit_cm', runtime)}"
         else:
             inches = total_snow_cm / 2.54
             unit = _s("precip_inch", runtime)
@@ -550,13 +551,13 @@ def past_precip_sentence(hourly, now, runtime):
         ptype = _s("snow", runtime)
     elif mix_hours >= rain_hours:
         if runtime.metric:
-            amt = f"{total_precip:.1f}{metric_sep}mm"
+            amt = f"{total_precip:.1f}{metric_sep}{_s('unit_mm', runtime)}"
         else:
             amt = f"{total_precip:.2f}{_s('precip_inch', runtime)}"
         ptype = _s("mixed_precip", runtime)
     else:
         if runtime.metric:
-            amt = f"{total_precip:.1f}{metric_sep}mm"
+            amt = f"{total_precip:.1f}{metric_sep}{_s('unit_mm', runtime)}"
         else:
             amt = f"{total_precip:.2f}{_s('precip_inch', runtime)}"
         ptype = _s("rain", runtime)

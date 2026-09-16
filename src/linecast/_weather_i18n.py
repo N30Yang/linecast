@@ -599,6 +599,8 @@ _STRINGS = {
         "credit_alerts": 'Alerts by {source}',
         "metric_unit_sep": "",
         "unit_kmh": "km/h",
+        "unit_mm": "mm",
+        "unit_cm": "cm",
         "feels": "feels",
         "wind": "Wind",
         "gusts": "gusts",
@@ -912,6 +914,7 @@ _STRINGS = {
         "retry_key": "Trykk r for \u00e5 pr\u00f8ve igjen.",
         "credit_forecast": 'Værdata fra {source}',
         "credit_alerts": 'Varsler fra {source}',
+        "unit_kmh": "km/t",
         "feels": "f\u00f8les",
         "wind": "Vind",
         "gusts": "kast",
@@ -990,6 +993,7 @@ _STRINGS = {
         "retry_key": "\u00ddttu \u00e1 r til a\u00f0 reyna \u00e1 n\u00fd.",
         "credit_forecast": 'Veðurgögn frá {source}',
         "credit_alerts": 'Viðvaranir frá {source}',
+        "unit_kmh": "km/klst.",
         "feels": "finnst",
         "wind": "Vindur",
         "gusts": "kast",
@@ -1068,6 +1072,7 @@ _STRINGS = {
         "retry_key": "Tryk r for at pr\u00f8ve igen.",
         "credit_forecast": 'Vejrdata fra {source}',
         "credit_alerts": 'Varsler fra {source}',
+        "unit_kmh": "km/t",
         "feels": "f\u00f8les",
         "wind": "Vind",
         "gusts": "kast",
@@ -1303,6 +1308,7 @@ _STRINGS = {
         "retry_key": "Druk op r om het opnieuw te proberen.",
         "credit_forecast": 'Weerdata van {source}',
         "credit_alerts": 'Waarschuwingen van {source}',
+        "unit_kmh": "km/u",
         "feels": "voelt",
         "wind": "Wind",
         "gusts": "stoten",
@@ -1850,6 +1856,9 @@ _STRINGS = {
         "retry_key": "กด r เพื่อลองใหม่",
         "credit_forecast": 'ข้อมูลสภาพอากาศจาก {source}',
         "credit_alerts": 'การแจ้งเตือนจาก {source}',
+        "unit_kmh": "กม./ชม.",
+        "unit_mm": "มม.",
+        "unit_cm": "ซม.",
         "feels": "รู้สึกเหมือน",
         "wind": "ลม",
         "gusts": "กระโชก",
@@ -1931,6 +1940,7 @@ _STRINGS = {
         "retry_key": "Tekan r untuk mencoba lagi.",
         "credit_forecast": 'Data cuaca dari {source}',
         "credit_alerts": 'Peringatan dari {source}',
+        "unit_kmh": "km/jam",
         "feels": "terasa",
         "wind": "Angin",
         "gusts": "hemb.",
@@ -2010,6 +2020,9 @@ _STRINGS = {
         "credit_forecast": "Дані про погоду: {source}",
         "credit_alerts": "Попередження: {source}",
         "metric_unit_sep": " ",
+        "unit_kmh": "км/год",
+        "unit_mm": "мм",
+        "unit_cm": "см",
         "feels": "відч.",
         "wind": "Вітер",
         "gusts": "пориви",
@@ -2298,6 +2311,13 @@ _STRINGS = {
         "hist_below_avg": "ortalamanın {diff} altında",
     },
 }
+
+
+def fmt_wind(speed, runtime):
+    """A wind speed with its unit as the display language writes it:
+    "12km/h", "12 km/sa", "12mph"."""
+    sep = _s("metric_unit_sep", runtime) if runtime.metric else ""
+    return f"{speed:.0f}{sep}{runtime.wind_unit_label}"
 
 
 def _s(key, runtime, **kwargs):
