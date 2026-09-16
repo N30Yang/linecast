@@ -102,7 +102,7 @@ WIKIDATA_LANG = {
     "fr": "fr", "es": "es", "de": "de", "it": "it", "pt": "pt", "nl": "nl",
     "pl": "pl", "no": "nb", "sv": "sv", "is": "is", "da": "da", "fi": "fi",
     "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id", "uk": "uk",
-    "vi": "vi", "eo": "eo", "tr": "tr",
+    "vi": "vi", "eo": "eo", "tr": "tr", "ru": "ru", "ro": "ro", "cs": "cs",
 }
 
 # The traditional form of each simplified character the Chinese names use,

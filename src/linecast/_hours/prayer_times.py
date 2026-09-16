@@ -52,7 +52,9 @@ RAMADAN = 9
 
 # key → (name, fajr depression, isha: depression or ("min", after
 # Maghrib, in Ramadan), maghrib depression). The parameters are the
-# ones Aladhan publishes for each method (api.aladhan.com/v1/methods).
+# ones Aladhan publishes for each method (api.aladhan.com/v1/methods),
+# and Oman's are its Ministry of Endowments' own, which Aladhan has no
+# method for.
 METHODS = {
     "mwl": ("Muslim World League", 18.0, 17.0, HORIZON_DEG),
     "isna": ("Islamic Society of North America", 15.0, 15.0, HORIZON_DEG),
@@ -73,6 +75,7 @@ METHODS = {
     "morocco": ("Morocco", 19.0, 17.0, HORIZON_DEG),
     "algeria": ("Algeria", 18.0, 17.0, HORIZON_DEG),
     "tunisia": ("Tunisia", 18.0, 18.0, HORIZON_DEG),
+    "oman": ("Oman", 18.0, 18.0, HORIZON_DEG),
 }
 METHOD_SHORT = {
     "mwl": "MWL", "isna": "ISNA", "egypt": "Egypt", "makkah": "Umm al-Qura",
@@ -80,7 +83,7 @@ METHOD_SHORT = {
     "singapore": "MUIS", "jakim": "JAKIM", "kemenag": "Kemenag",
     "france": "UOIF", "russia": "Russia", "kuwait": "Kuwait", "qatar": "Qatar",
     "dubai": "Dubai", "jordan": "Jordan", "morocco": "Morocco",
-    "algeria": "Algeria", "tunisia": "Tunisia",
+    "algeria": "Algeria", "tunisia": "Tunisia", "oman": "Oman",
 }
 SCHOOLS = ("shafii", "hanafi")
 
@@ -103,7 +106,8 @@ _COUNTRY_METHOD = {
     "US": "isna", "CA": "isna",
     "EG": "egypt", "SD": "egypt", "LY": "egypt", "SY": "egypt", "IQ": "egypt",
     "LB": "egypt", "PS": "egypt",
-    "SA": "makkah", "YE": "makkah", "BH": "makkah", "OM": "makkah",
+    "SA": "makkah", "YE": "makkah", "BH": "makkah",
+    "OM": "oman",
     "KW": "kuwait",
     "QA": "qatar",
     "AE": "dubai",
@@ -120,11 +124,12 @@ _COUNTRY_METHOD = {
     "FR": "france",
     "RU": "russia",
 }
-# Where the timetables print the Hanafi school's later Asr. Turkey is
-# Hanafi but the Diyanet prints asr-ı evvel, the one-shadow time, so
-# it is not here.
-_HANAFI_COUNTRIES = {"PK", "IN", "BD", "AF", "UZ", "KZ", "KG", "TJ",
-                     "TM", "BA", "AL", "XK", "MK", "RU", "CN"}
+# Where the timetables print the Hanafi school's later Asr: South and
+# Central Asia, and China. Turkey, the Balkans, and Russia's Spiritual
+# Administration are Hanafi but print the one-shadow time, the
+# Diyanet's asr-ı evvel; Tatarstan's tables keep the Hanafi Asr, and
+# islamic-hanafi reads it there.
+_HANAFI_COUNTRIES = {"PK", "IN", "BD", "AF", "UZ", "KZ", "KG", "TJ", "TM", "CN"}
 
 
 def default_method(country):

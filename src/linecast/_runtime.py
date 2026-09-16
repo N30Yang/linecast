@@ -223,7 +223,7 @@ HOURS_CHOICES = ("halachic", "halachic-mga", "roman", "japanese", "islamic",
                  "islamic-france", "islamic-russia", "islamic-kuwait",
                  "islamic-qatar", "islamic-dubai", "islamic-jordan",
                  "islamic-morocco", "islamic-algeria", "islamic-tunisia",
-                 "islamic-hanafi", "islamic-shafii", "none")
+                 "islamic-oman", "islamic-hanafi", "islamic-shafii", "none")
 SUNDAY_FIRST_COUNTRIES = frozenset((
     "US", "CA", "BR", "MX", "IL", "IN", "JP", "KR", "PH", "SA", "TW", "HK", "ZA",
 ))
@@ -545,7 +545,8 @@ def sunshine_parser():
                          "(islamic-mwl, -isna, -egypt, -makkah, -karachi, "
                          "-tehran, -turkey, -singapore, -jakim, -kemenag, "
                          "-france, -russia, -kuwait, -qatar, -dubai, "
-                         "-jordan, -morocco, -algeria, -tunisia), or with "
+                         "-jordan, -morocco, -algeria, -tunisia, -oman), or "
+                         "with "
                          "a school's Asr "
                          "(islamic-hanafi, -shafii). Default: the "
                          "`linecast hours` setting, else none")

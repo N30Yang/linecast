@@ -1131,7 +1131,11 @@ class TestPrayerTimes:
         assert default_method(None) == "mwl"
         assert default_method("BR") == "mwl"
         assert default_school("PK") == "hanafi"
+        assert default_school("CN") == "hanafi"
         assert default_school("SA") == "shafii"
+        # Hanafi countries whose timetables print the one-shadow Asr
+        for country in ("TR", "BA", "AL", "XK", "MK", "RU"):
+            assert default_school(country) == "shafii", country
         tz = ZoneInfo("Asia/Karachi")
         by_country = prayer_times(date(2026, 9, 15), 24.86, 67.01, tz, None, "PK")
         assert by_country.variant == "karachi"
@@ -1275,7 +1279,7 @@ class TestPrayerTimes:
             assert f"islamic-{key}" in HOURS_CHOICES
         assert default_method("KW") == "kuwait" and default_method("AE") == "dubai"
         assert default_method("QA") == "qatar" and default_method("JO") == "jordan"
-        assert default_method("MA") == "morocco"
+        assert default_method("MA") == "morocco" and default_method("OM") == "oman"
         tz = ZoneInfo("Asia/Amman")
         amman = prayer_times(date(2026, 9, 16), 31.95, 35.93, tz, None, "JO")
         marks = {m.key: m.at for m in amman.marks}
