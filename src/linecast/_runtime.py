@@ -328,16 +328,27 @@ LOCALE_VARS = ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG")
 
 
 def language_of(value):
-    """The two-letter language a locale-style value names, or None.
+    """The language a locale-style value names, as the tables know it, or
+    None.
 
     "fr", "fr-FR", "de_DE.UTF-8", and "EN_us" name their language in the
-    leading letters; "nb_NO" and "nn_NO" name Norwegian.  "C", "POSIX",
-    "C.UTF-8", and three-letter codes such as "fil_PH" name none linecast
-    could act on, and neither does junk.
+    leading letters; "nb_NO" and "nn_NO" name Norwegian.  Chinese is two
+    scripts, told apart by the subtags: "zh_TW", "zh_HK", "zh_MO", and
+    "zh-Hant" name the traditional, "zh", "zh_CN", "zh_SG", and "zh-Hans"
+    the simplified.  "C", "POSIX", "C.UTF-8", and three-letter codes such
+    as "fil_PH" name none linecast could act on, and neither does junk.
     """
-    from linecast._i18n import canonical_language
-    letters = re.match(r"[a-z]*", (value or "").strip().lower()).group()
-    return canonical_language(letters) if len(letters) == 2 else None
+    from linecast._i18n import LANGUAGE_ALIASES, canonical_language
+    m = re.match(r"([a-z]+)((?:[-_][a-z0-9]+)*)", (value or "").strip().lower())
+    if m is None or len(m.group(1)) != 2:
+        return None
+    parts = [m.group(1), *re.findall(r"[-_]([a-z0-9]+)", m.group(2))]
+    # The longest prefix the aliases know, else the language alone.
+    for n in range(len(parts), 1, -1):
+        tag = "-".join(parts[:n])
+        if tag in LANGUAGE_ALIASES:
+            return canonical_language(tag)
+    return canonical_language(parts[0])
 
 
 def resolve_lang(namespace=None, environ=None):
@@ -347,7 +358,7 @@ def resolve_lang(namespace=None, environ=None):
     the name of the locale variable that decided it (one of LOCALE_VARS),
     or "default".  Precedence: --lang, LINECAST_LANG, the `language` key
     in config.json (`linecast language fr`), the terminal's locale, then
-    English.  A value that does not name a two-letter language is ignored.
+    English.  A value that does not name a language is ignored.
     """
     env = _environ(environ)
     candidates = (
@@ -432,8 +443,8 @@ def _base_parser(prog, description):
                     help="use standard emoji icons (same as --icons emoji)")
     p.add_argument("--lang", default=None,
                     help="language code (en, fr, es, de, it, pt, nl, pl, "
-                         "no, sv, is, da, fi, ja, ko, zh, th, id, uk, vi, eo, or tr); "
-                         "'linecast language' saves one")
+                         "no, sv, is, da, fi, ja, ko, zh, zh-Hant, th, id, uk, vi, "
+                         "eo, or tr); 'linecast language' saves one")
     p.add_argument("--classic-colors", action="store_true",
                     help="use pre-theme fixed color palette")
     p.add_argument("--legacy-colors", action="store_true",
@@ -566,7 +577,7 @@ def moon_parser():
                          "month, and holiday (hebrew); or the Old Farmer's "
                          "gardening rule and solunar periods (almanac). "
                          "Default: the calendar native to "
-                         "--lang zh, ja, ko, vi, or th; none otherwise")
+                         "--lang zh, zh-Hant, ja, ko, vi, or th; none otherwise")
     _add_clock_flags(p)
     p.add_argument("--week-start", choices=WEEK_STARTS, default=None,
                     help="the day the calendar's week opens on (default: "
@@ -600,7 +611,7 @@ def sky_parser():
                     help="draw another tradition's constellations and star "
                          "names in place of the IAU's (t steps through them "
                          "live; 'linecast culture' saves one). Default: "
-                         "chinese with --lang zh; the IAU sky otherwise")
+                         "chinese with --lang zh or zh-Hant; the IAU sky otherwise")
     _add_clock_flags(p)
     p.add_argument("--json", dest="json_mode", action="store_true",
                     help="machine-readable JSON output (implies --print)")

@@ -49,13 +49,19 @@ _theme.on_reload(_rebuild)
 _DATA = None
 
 
+# The vendored names are keyed by Natural Earth's suffixes; its traditional
+# Chinese is "zht", kept only where it differs from the simplified "zh".
+_NAME_KEYS = {"zh-Hant": ("zht", "zh")}
+
+
 def _localized(entry, lang):
     """Resolve a city entry's display name for ``lang``, falling back to the
     default Latin name when no translation is stored."""
     if len(entry) > 4 and entry[4]:
-        localized = entry[4].get(lang)
-        if localized:
-            return localized
+        for key in _NAME_KEYS.get(lang, (lang,)):
+            localized = entry[4].get(key)
+            if localized:
+                return localized
     return entry[3]
 
 

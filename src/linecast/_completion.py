@@ -32,6 +32,7 @@ LANG_CODES = (
     "ja",
     "ko",
     "zh",
+    "zh-Hant",
     "th",
     "id",
     "uk",

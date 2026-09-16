@@ -28,19 +28,19 @@ from linecast._graphics import (
 )
 from linecast._i18n import lang_of
 from linecast._calendars.lunisolar import (
-    CALENDAR_MERIDIAN_HOURS, CALENDAR_NATIVE_LANG, lunisolar_date,
+    CALENDAR_MERIDIAN_HOURS, calendar_is_native, lunisolar_date,
     resolve_calendar,
 )
 from linecast._calendars.hebrew import hebrew_date, holiday_key, rosh_chodesh
 from linecast._calendars.hijri import hijri_date, observance_key
 from linecast._moon_i18n import (
     MONTHS_I18N, _day_abbrev, _fmt_month_day, _moon_name, _ms, _zh_day_name,
-    _ZH_MONTHS, anahulu_name, festival_table, hebrew_date_label,
+    anahulu_name, festival_table, hebrew_date_label,
     hebrew_holiday_name, hebrew_month_name, hijri_date_label,
     hijri_lang, hijri_month_name, hijri_observance_name, ja_night_name, lunar_date_label,
     pacific_night_label, pacific_night_name, rosh_chodesh_label,
     thai_festival_name, thai_lunar_label, thai_month_label,
-    vi_month_label, wan_phra_label,
+    vi_month_label, wan_phra_label, zh_month_label,
 )
 from linecast._calendars.pacific import PACIFIC_CALENDARS, pacific_night
 from linecast._calendars.thai_lunar import (
@@ -76,7 +76,7 @@ def _week_start(runtime):
 
 def _month_title(year, month, lang):
     """`Sep 2026`, `2026年9月` — the grid's headline, in the UI language."""
-    if lang in ("ja", "zh"):
+    if lang in ("ja", "zh", "zh-Hant"):
         return f"{year}年{month}月"
     if lang == "ko":
         return f"{year}년 {month}월"
@@ -191,7 +191,7 @@ def _cell_label(day, cal, native, fest, lang="en", israel=False):
         return fest[(m, d)], True
     if cal == "chinese" and native:
         if d == 1:
-            return ("闰" if leap else "") + _ZH_MONTHS[m - 1], False
+            return zh_month_label(m, leap, lang), False
         return _zh_day_name(d), False
     if d == 1:
         if cal == "japanese" and native:
@@ -249,8 +249,8 @@ def render_calendar(now_local, lat, lng, runtime, month_offset=0,
 
     lang = lang_of(runtime)
     cal = resolve_calendar(calendar_name, lang)
-    native = cal is not None and CALENDAR_NATIVE_LANG.get(cal) == lang
-    fest = (festival_table(cal, native)
+    native = cal is not None and calendar_is_native(cal, lang)
+    fest = (festival_table(cal, lang if native else "en")
             if cal in CALENDAR_MERIDIAN_HOURS else {})
     tzinfo = now_local.tzinfo
     today = now_local.date()

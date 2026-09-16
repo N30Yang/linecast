@@ -69,7 +69,7 @@ def build_payload(now_local, lat, lng, runtime, location=None, calendar=None,
     # it, so the two agree; null when no calendar is in effect.
     from linecast._i18n import lang_of
     from linecast._calendars.lunisolar import (
-        CALENDAR_MERIDIAN_HOURS, CALENDAR_NATIVE_LANG, current_term,
+        CALENDAR_MERIDIAN_HOURS, calendar_is_native, current_term,
         lunisolar_date, next_lunar_event, next_term, resolve_calendar,
     )
     from linecast._moon_i18n import (
@@ -243,13 +243,12 @@ def build_payload(now_local, lat, lng, runtime, location=None, calendar=None,
         }
     elif cal is not None:
         cal_tz = CALENDAR_MERIDIAN_HOURS[cal]
-        native = CALENDAR_NATIVE_LANG[cal] == lang
-        label_lang = lang if native else "en"
+        label_lang = lang if calendar_is_native(cal, lang) else "en"
         lunar = lunisolar_date(now_local.date(), cal_tz)
         cur_k, _cur_start = current_term(moment_utc)
         nxt_k, nxt_start = next_term(moment_utc)
         fest = next_lunar_event(now_local.date(), cal_tz,
-                                festival_table(cal, native))
+                                festival_table(cal, label_lang))
         calendar_block = {
             "name": cal,
             "month": lunar[0] if lunar else None,

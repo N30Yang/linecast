@@ -70,7 +70,8 @@ def main():
     parser = argparse.ArgumentParser(
         prog="linecast language",
         description="Show or set the language linecast speaks",
-        epilog=f"Languages: {codes}. Another two-letter code is kept for the "
+        epilog=f"Languages: {codes}. A locale's name works too (zh-TW is "
+               "zh-Hant), and another two-letter code is kept for the "
                "providers that publish in it (India's alerts, for one) while "
                "the rest stays in English.",
     )
@@ -78,7 +79,7 @@ def main():
     parser.add_argument("action", nargs="?", default="show",
                         metavar="show|<code>|auto",
                         help="show the current language (default), save a "
-                             "two-letter code, or auto to follow the "
+                             "language code, or auto to follow the "
                              "terminal's language")
     args = parser.parse_args()
 
@@ -90,7 +91,7 @@ def main():
     elif is_language_code(action):
         _cmd_set(action)
     else:
-        parser.error(f"'{args.action}' is not a two-letter language code; "
+        parser.error(f"'{args.action}' is not a language code; "
                      f"choose from {codes}")
 
 

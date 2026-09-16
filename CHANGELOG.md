@@ -4,6 +4,8 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Language: linecast speaks Traditional Chinese. `linecast language zh-Hant`, or a Taiwan, Hong Kong, or Macau terminal locale, puts every view in the traditional characters; the Chinese calendar and the Chinese sky come with it as they do with `zh`, and the sky names its stars and constellations in the traditional script. `zh` is the simplified script, as before.
+- Weather: Hong Kong's warnings read in Chinese, in either script, when linecast does. They were fetched in English whatever the language.
 - Weather: Units read as the language writes them: km/u in Dutch, km/t in Norwegian and Danish, km/klst. in Icelandic, km/jam in Indonesian, км/год and мм in Ukrainian, กม./ชม. and มม. in Thai, and km/sa in Turkish. The wind speed takes the space before its unit that the language's other figures already had.
 - Language: linecast speaks Turkish. `linecast language tr` or a Turkish terminal locale puts every view in Turkish, and the sky names its constellations and brightest stars in Turkish. Its search takes a dotless ı or a dotted i alike: `yildiz` finds Yıldız names.
 - Language: linecast speaks Esperanto. `linecast language eo` or an Esperanto terminal locale puts every view in Esperanto, and the sky names its constellations and brightest stars in Esperanto. Its search takes the x-system too: `gxemeloj` finds Ĝemeloj.

@@ -308,6 +308,24 @@ _MOON_STRINGS = {
         "autumn_equinox": "秋分",
         "winter_solstice": "冬至",
     },
+    "zh-Hant": {
+        "illuminated": "亮面 {pct}%",
+        "age": "月齡 {age} / {total}",
+        "lunar_age": "月齡 {age}",
+        "up_now": "現在已升起",
+        "above_horizon": "高度 {alt}°",
+        "below_horizon": "在地平線下",
+        "moonrise": "月出",
+        "moonset": "月落",
+        "in_days": "{days}天後",
+        "begins_at_sunset": "日落開始",
+        "in_time": "{dur}後",
+        "year_day": "今年第 {n} 天 / {total} 天",
+        "spring_equinox": "春分",
+        "summer_solstice": "夏至",
+        "autumn_equinox": "秋分",
+        "winter_solstice": "冬至",
+    },
     "th": {
         "illuminated": "สว่าง {pct}%",
         "age": "คืนที่ {age} / {total}",
@@ -468,6 +486,7 @@ _DATE_MD = {
     "fi": "{day}.{mnum}.",
     "ja": "{mnum}月{day}日",
     "zh": "{mnum}月{day}日",
+    "zh-Hant": "{mnum}月{day}日",
     "ko": "{mnum}월 {day}일",
 }
 _DATE_MD_DEFAULT = "{day} {month}"
@@ -488,7 +507,7 @@ _SEASON_KEYS_NORTH = ("spring_equinox", "summer_solstice",
                       "autumn_equinox", "winter_solstice")
 _SEASON_KEYS_SOUTH = ("autumn_equinox", "winter_solstice",
                       "spring_equinox", "summer_solstice")
-_SEASON_ABSOLUTE_LANGS = frozenset({"ja", "ko", "zh", "vi", "th"})
+_SEASON_ABSOLUTE_LANGS = frozenset({"ja", "ko", "zh", "zh-Hant", "vi", "th"})
 
 
 def _season_label(event, lat, runtime):
@@ -535,6 +554,10 @@ SOLAR_TERMS_I18N = {
            "夏至", "小暑", "大暑", "立秋", "处暑", "白露",
            "秋分", "寒露", "霜降", "立冬", "小雪", "大雪",
            "冬至", "小寒", "大寒", "立春", "雨水", "惊蛰"],
+    "zh-Hant": ["春分", "清明", "穀雨", "立夏", "小滿", "芒種",
+                "夏至", "小暑", "大暑", "立秋", "處暑", "白露",
+                "秋分", "寒露", "霜降", "立冬", "小雪", "大雪",
+                "冬至", "小寒", "大寒", "立春", "雨水", "驚蟄"],
     "ja": ["春分", "清明", "穀雨", "立夏", "小満", "芒種",
            "夏至", "小暑", "大暑", "立秋", "処暑", "白露",
            "秋分", "寒露", "霜降", "立冬", "小雪", "大雪",
@@ -549,58 +572,64 @@ SOLAR_TERMS_I18N = {
            "Đông chí", "Tiểu hàn", "Đại hàn", "Lập xuân", "Vũ thủy", "Kinh trập"],
 }
 
-# Festivals dated by the lunar calendar, (month, day) → (native name,
-# English name), per calendar. Japan moved its festivals to Gregorian
-# dates in 1873; the two moon-viewing nights are what remains on the
-# old calendar. Vietnam's are the public holidays and the days every
-# household keeps: the Hùng Kings' day is a holiday by law, and the
+# Festivals dated by the lunar calendar, (month, day) → {lang: name}, per
+# calendar: the name in the calendar's own language (Chinese in both its
+# scripts) and the customary English one. Japan moved its festivals to
+# Gregorian dates in 1873; the two moon-viewing nights are what remains
+# on the old calendar. Vietnam's are the public holidays and the days
+# every household keeps: the Hùng Kings' day is a holiday by law, and the
 # Kitchen Gods' departure a week before Tết opens the new year's rites.
 _FESTIVALS = {
     "chinese": {
-        (1, 1): ("春节", "Chinese New Year"),
-        (1, 15): ("元宵节", "Lantern Festival"),
-        (5, 5): ("端午节", "Dragon Boat Festival"),
-        (7, 7): ("七夕", "Qixi"),
-        (8, 15): ("中秋节", "Mid-Autumn Festival"),
-        (9, 9): ("重阳节", "Double Ninth"),
+        (1, 1): {"zh": "春节", "zh-Hant": "春節", "en": "Chinese New Year"},
+        (1, 15): {"zh": "元宵节", "zh-Hant": "元宵節", "en": "Lantern Festival"},
+        (5, 5): {"zh": "端午节", "zh-Hant": "端午節", "en": "Dragon Boat Festival"},
+        (7, 7): {"zh": "七夕", "zh-Hant": "七夕", "en": "Qixi"},
+        (8, 15): {"zh": "中秋节", "zh-Hant": "中秋節", "en": "Mid-Autumn Festival"},
+        (9, 9): {"zh": "重阳节", "zh-Hant": "重陽節", "en": "Double Ninth"},
     },
     "japanese": {
-        (8, 15): ("十五夜", "Tsukimi"),
-        (9, 13): ("十三夜", "Jūsan'ya"),
+        (8, 15): {"ja": "十五夜", "en": "Tsukimi"},
+        (9, 13): {"ja": "十三夜", "en": "Jūsan'ya"},
     },
     "korean": {
-        (1, 1): ("설날", "Seollal"),
-        (1, 15): ("정월대보름", "Daeboreum"),
-        (5, 5): ("단오", "Dano"),
-        (8, 15): ("추석", "Chuseok"),
+        (1, 1): {"ko": "설날", "en": "Seollal"},
+        (1, 15): {"ko": "정월대보름", "en": "Daeboreum"},
+        (5, 5): {"ko": "단오", "en": "Dano"},
+        (8, 15): {"ko": "추석", "en": "Chuseok"},
     },
     "vietnamese": {
-        (1, 1): ("Tết Nguyên Đán", "Tết"),
-        (1, 15): ("Rằm tháng Giêng", "Tết Nguyên Tiêu"),
-        (3, 10): ("Giỗ Tổ Hùng Vương", "Hùng Kings' Day"),
-        (5, 5): ("Tết Đoan Ngọ", "Tết Đoan Ngọ"),
-        (7, 15): ("Lễ Vu Lan", "Vu Lan"),
-        (8, 15): ("Tết Trung Thu", "Mid-Autumn Festival"),
-        (12, 23): ("Ông Táo về trời", "Kitchen Gods' Day"),
+        (1, 1): {"vi": "Tết Nguyên Đán", "en": "Tết"},
+        (1, 15): {"vi": "Rằm tháng Giêng", "en": "Tết Nguyên Tiêu"},
+        (3, 10): {"vi": "Giỗ Tổ Hùng Vương", "en": "Hùng Kings' Day"},
+        (5, 5): {"vi": "Tết Đoan Ngọ", "en": "Tết Đoan Ngọ"},
+        (7, 15): {"vi": "Lễ Vu Lan", "en": "Vu Lan"},
+        (8, 15): {"vi": "Tết Trung Thu", "en": "Mid-Autumn Festival"},
+        (12, 23): {"vi": "Ông Táo về trời", "en": "Kitchen Gods' Day"},
     },
 }
 
 
-def festival_table(calendar, native):
-    """(month, day) → name for a calendar's festivals.
-
-    *native* picks the calendar's own script; otherwise the customary
-    English names.
-    """
-    return {md: names[0] if native else names[1]
+def festival_table(calendar, lang):
+    """(month, day) → name for a calendar's festivals, in *lang* where
+    that is the calendar's own language, else the customary English."""
+    return {md: names.get(lang, names["en"])
             for md, names in _FESTIVALS[calendar].items()}
 
 # Chinese months and days have names, not numbers: the eleventh and
 # twelfth months are 冬月 and 腊月, the first ten days take 初, the
-# twenties 廿.
+# twenties 廿. The traditional script writes 臘月 and 閏 for a leap month.
 _ZH_MONTHS = ["正月", "二月", "三月", "四月", "五月", "六月",
               "七月", "八月", "九月", "十月", "冬月", "腊月"]
+_ZH_MONTHS_HANT = [*_ZH_MONTHS[:11], "臘月"]
 _ZH_DIGITS = "一二三四五六七八九十"
+
+
+def zh_month_label(month, leap, lang):
+    """The Chinese month's name, 正月, 闰六月, 臘月, in either script."""
+    if lang == "zh-Hant":
+        return ("閏" if leap else "") + _ZH_MONTHS_HANT[month - 1]
+    return ("闰" if leap else "") + _ZH_MONTHS[month - 1]
 
 
 def _zh_day_name(day):
@@ -641,8 +670,9 @@ def lunar_date_label(month, day, leap, lang):
             day_name = f"ngày {day}"
         return f"{day_name} {vi_month_label(month, leap)} âm lịch"
     if lang == "zh":
-        leap_mark = "闰" if leap else ""
-        return f"农历{leap_mark}{_ZH_MONTHS[month - 1]}{_zh_day_name(day)}"
+        return f"农历{zh_month_label(month, leap, lang)}{_zh_day_name(day)}"
+    if lang == "zh-Hant":
+        return f"農曆{zh_month_label(month, leap, lang)}{_zh_day_name(day)}"
     if lang == "ja":
         leap_mark = "閏" if leap else ""
         return f"旧暦{leap_mark}{month}月{day}日"

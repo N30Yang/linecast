@@ -28,7 +28,9 @@ matches Hipparcos stars to ours by HD number for the star names.
   native language, credits and licence, the constellations (english and
   native names, the IAU code where the culture keeps the IAU figures,
   the label position, and the figure as polylines of [ra, dec] in
-  hundredths of a degree) and the star names by index into stars.bin.
+  hundredths of a degree), the star names by index into stars.bin, and
+  the native names again in another script where the culture has one
+  (the Chinese sky in the traditional characters, under "zh-Hant").
 
 Writes three files under src/linecast/data/:
 
@@ -88,9 +90,13 @@ DATA = Path(__file__).resolve().parent.parent / "src/linecast/data"
 
 # The languages linecast speaks that the d3-celestial data names.
 OUR_LANGS = ("fr", "es", "de", "it", "fi", "ja", "ko", "zh")
-# Every language linecast speaks but English, and the Wikidata label
-# language behind each: Norwegian is filed as Bokmål, and linecast's
-# Chinese is the simplified script.
+# Every language linecast speaks but English and Traditional Chinese, and
+# the Wikidata label language behind each: Norwegian is filed as Bokmål,
+# and "zh" is the simplified script. Traditional Chinese is not asked for:
+# Wikidata labels a sixth of the constellations and few of the stars in
+# it, so its names are the simplified ones written in the traditional
+# characters (see TRADITIONAL below), and the constellations an OVERRIDES
+# table checked against the Chinese Wikipedia's zh-tw titles.
 WIKIDATA = "https://query.wikidata.org/sparql"
 WIKIDATA_LANG = {
     "fr": "fr", "es": "es", "de": "de", "it": "it", "pt": "pt", "nl": "nl",
@@ -98,6 +104,32 @@ WIKIDATA_LANG = {
     "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id", "uk": "uk",
     "vi": "vi", "eo": "eo", "tr": "tr",
 }
+
+# The traditional form of each simplified character the Chinese names use,
+# as Stellarium's zh_TW translation of the Chinese sky culture and the
+# Chinese Wikipedia's zh-tw titles write them: 鉤 and 衛 in Taiwan's
+# forms, 積屍 as the modern texts have it. 台 is the same character in
+# both scripts in 三台 and its steps but 臺 in the terraces 漸臺 and 靈臺,
+# so those two are whole-word rules; 尸, 斗, 咸, 床, and 杠 in these names
+# are the same character in both scripts, and the 里 of a transliteration
+# (葛羅姆布里吉) stays a 里. The axe 鈇 is 𫓧 in the simplified index. Any
+# other character passes through unchanged.
+TRADITIONAL_WORDS = {"渐台": "漸臺", "灵台": "靈臺", "积尸": "積屍"}
+TRADITIONAL = str.maketrans(
+    "万东乌书云从仓传关内军农刍势华卫厕厨厩参吴园国坟垒夹娄孙宝宫将尔师库廪开异张执摄摇"
+    "晋权极枢枪楼毕渊渎渐灵玑电盖砺禄离积红纪纲纳织罗罚节虚记说诸谒谗贤败贯贲赵车轩轸辅"
+    "辇辐辕辖进郑钤钩钱钺锧键长门闭间阁阙阳阴阵阶陈雳韩顽顿飞马骑鱼鳖鸟鸡鹤齐龟𫓧",
+    "萬東烏書雲從倉傳關內軍農芻勢華衛廁廚廄參吳園國墳壘夾婁孫寶宮將爾師庫廩開異張執攝搖"
+    "晉權極樞槍樓畢淵瀆漸靈璣電蓋礪祿離積紅紀綱納織羅罰節虛記說諸謁讒賢敗貫賁趙車軒軫輔"
+    "輦輻轅轄進鄭鈐鉤錢鉞鑕鍵長門閉間閣闕陽陰陣階陳靂韓頑頓飛馬騎魚鱉鳥雞鶴齊龜鈇",
+)
+
+
+def traditional(text):
+    """`text`, a Chinese name in the simplified script, in the traditional."""
+    for word, hant in TRADITIONAL_WORDS.items():
+        text = text.replace(word, hant)
+    return text.translate(TRADITIONAL)
 
 GREEK = {
     "Alp": "α", "Bet": "β", "Gam": "γ", "Del": "δ", "Eps": "ε", "Zet": "ζ",
@@ -277,7 +309,7 @@ def bake_names(stars, genitives, src):
     for row in rows:
         labels.setdefault(int(row["code"][3:]), {})[row["lang"]] = row["l"]
     names = []
-    counts = {lang: 0 for lang in WIKIDATA_LANG}
+    counts = {lang: 0 for lang in (*WIKIDATA_LANG, "zh-Hant")}
     for i, s in enumerate(stars):
         entry = by_hd.get(s["hd"]) if s["hd"] is not None else None
         proper = entry["name"] if entry else ""
@@ -297,6 +329,13 @@ def bake_names(stars, genitives, src):
                 if text and text != proper:
                     translated[lang] = text
                     counts[lang] += 1
+            # The traditional script writes the same Chinese name.
+            mine = OVERRIDES["stars"]["zh-Hant"]
+            text = mine.get(s["desig"] or "-",
+                            mine.get(proper, traditional(translated.get("zh", ""))))
+            if text and text != proper:
+                translated["zh-Hant"] = text
+                counts["zh-Hant"] += 1
             if translated:
                 record.append(translated)
         names.append(record)
@@ -516,6 +555,13 @@ OVERRIDES = {
             "ζ Per": "卷舌四", "κ Cyg": "奚仲一", "κ Hya": "张宿五", "λ Cet": "天囷三",
             "τ¹ Hya": "星宿二",
         },
+        # The traditional script's exceptions to the character table: the
+        # names that are transliterations, and one that is a description
+        # in either script.
+        "zh-Hant": {
+            "Abt's Star": "阿布特星", "Pearce's Star": "皮爾斯星",
+            "Plaskett's Star": "普拉斯基特星",
+        },
     },
     "constellations": {
         "de": {
@@ -621,6 +667,33 @@ OVERRIDES = {
             "Tri": "三角座", "Tuc": "杜鹃座", "UMa": "大熊座", "UMi": "小熊座",
             "Vel": "船帆座", "Vir": "室女座", "Vol": "飞鱼座", "Vul": "狐狸座",
         },
+        # The same names in the traditional script, as the Chinese
+        # Wikipedia titles the articles for a reader in Taiwan or Hong
+        # Kong (the two variants agree on all eighty-eight).
+        "zh-Hant": {
+            "And": "仙女座", "Ant": "唧筒座", "Aps": "天燕座", "Aql": "天鷹座",
+            "Aqr": "寶瓶座", "Ara": "天壇座", "Ari": "白羊座", "Aur": "御夫座",
+            "Boo": "牧夫座", "CMa": "大犬座", "CMi": "小犬座", "CVn": "獵犬座",
+            "Cae": "雕具座", "Cam": "鹿豹座", "Cap": "摩羯座", "Car": "船底座",
+            "Cas": "仙后座", "Cen": "半人馬座", "Cep": "仙王座", "Cet": "鯨魚座",
+            "Cha": "蝘蜓座", "Cir": "圓規座", "Cnc": "巨蟹座", "Col": "天鴿座",
+            "Com": "后髮座", "CrA": "南冕座", "CrB": "北冕座", "Crt": "巨爵座",
+            "Cru": "南十字座", "Crv": "烏鴉座", "Cyg": "天鵝座", "Del": "海豚座",
+            "Dor": "劍魚座", "Dra": "天龍座", "Equ": "小馬座", "Eri": "波江座",
+            "For": "天爐座", "Gem": "雙子座", "Gru": "天鶴座", "Her": "武仙座",
+            "Hor": "時鐘座", "Hya": "長蛇座", "Hyi": "水蛇座", "Ind": "印第安座",
+            "LMi": "小獅座", "Lac": "蝎虎座", "Leo": "獅子座", "Lep": "天兔座",
+            "Lib": "天秤座", "Lup": "豺狼座", "Lyn": "天貓座", "Lyr": "天琴座",
+            "Men": "山案座", "Mic": "顯微鏡座", "Mon": "麒麟座", "Mus": "蒼蠅座",
+            "Nor": "矩尺座", "Oct": "南極座", "Oph": "蛇夫座", "Ori": "獵戶座",
+            "Pav": "孔雀座", "Peg": "飛馬座", "Per": "英仙座", "Phe": "鳳凰座",
+            "Pic": "繪架座", "PsA": "南魚座", "Psc": "雙魚座", "Pup": "船尾座",
+            "Pyx": "羅盤座", "Ret": "網罟座", "Scl": "玉夫座", "Sco": "天蠍座",
+            "Sct": "盾牌座", "Ser": "巨蛇座", "Sex": "六分儀座", "Sge": "天箭座",
+            "Sgr": "人馬座", "Tau": "金牛座", "Tel": "望遠鏡座", "TrA": "南三角座",
+            "Tri": "三角座", "Tuc": "杜鵑座", "UMa": "大熊座", "UMi": "小熊座",
+            "Vel": "船帆座", "Vir": "室女座", "Vol": "飛魚座", "Vul": "狐狸座",
+        },
         # Turkish Wikipedia titles the articles by the Latin name, "Ursa
         # Major (takımyıldız)", and opens each with the Turkish name,
         # "Büyükayı"; Wikidata carries only two of those as labels. The
@@ -715,7 +788,7 @@ def bake_constellations(src):
     # The data sets its multi-word names with four-per-em spaces, which
     # no one types into a search; every name goes out with plain ones.
     records = []
-    counts = {lang: 0 for lang in WIKIDATA_LANG}
+    counts = {lang: 0 for lang in (*WIKIDATA_LANG, "zh-Hant")}
     for f in features:
         p = f["properties"]
         # Serpens is one constellation in two parts; the data carries the
@@ -731,6 +804,10 @@ def bake_constellations(src):
             if text and text != latin:
                 names[lang] = text
                 counts[lang] += 1
+        text = OVERRIDES["constellations"]["zh-Hant"].get(f["id"].rstrip("12"))
+        if text:
+            names["zh-Hant"] = text
+            counts["zh-Hant"] += 1
         ra, dec = f["geometry"]["coordinates"]
         records.append({
             "id": f["id"], "name": latin,
@@ -838,7 +915,8 @@ def section(markdown, heading):
 # stars named for themselves alone ("Crown Prince", 太子), come from the
 # culture's own zh_CN translation. The contemporary culture has the same
 # star names and is given the same language, so a Chinese reader sees
-# them in Chinese there too.
+# them in Chinese there too. The traditional script's names are the same
+# names in the traditional characters, kept as a variant of the culture.
 CHINESE_CULTURES = ("chinese", "chinese_contemporary")
 _CHINESE_DIGITS = "零一二三四五六七八九"
 
@@ -946,6 +1024,12 @@ def bake_cultures(stars, src):
             if name in CHINESE_CULTURES and not native:
                 native = chinese_native(english, asterisms, translated)
             star_names[str(by_hd[hd])] = [english, native]
+        variants = {}
+        if name in CHINESE_CULTURES:
+            variants["zh-Hant"] = {
+                "constellations": [traditional(e["native"]) for e in constellations],
+                "star_names": {k: traditional(n) for k, (_e, n) in star_names.items()},
+            }
         cultures.append({
             "id": name, "title": md.split("\n", 1)[0].strip("# ").strip(),
             "region": index.get("region", ""),
@@ -953,6 +1037,7 @@ def bake_cultures(stars, src):
             "fallback": bool(index.get("fallback_to_international_names")),
             "authors": section(md, "Author"), "license": section(md, "License"),
             "constellations": constellations, "star_names": star_names,
+            "variants": variants,
         })
         print(f"  {name:24} {len(constellations):3} figures, {len(star_names):4} star names"
               f"  [{cultures[-1]['license'][:40]}]")

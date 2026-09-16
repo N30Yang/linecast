@@ -24,6 +24,7 @@ import urllib.parse
 from linecast import user_agent
 from linecast._cache import read_cache, read_stale, write_cache
 from linecast._http import fetch_json
+from linecast._i18n import accept_language
 from linecast._paths import cache_dir
 from linecast._runtime import debug_log, log_failure
 
@@ -192,7 +193,7 @@ def nominatim_search(query: str, lang: str = "en", limit: int = 8,
         return _nominatim_results(cached)
 
     params = [("q", query), ("format", "jsonv2"), ("limit", int(limit)),
-              ("addressdetails", 1), ("accept-language", lang)]
+              ("addressdetails", 1), ("accept-language", accept_language(lang))]
     url = f"{NOMINATIM_URL}?{urllib.parse.urlencode(params)}"
     headers = {"User-Agent": user_agent()}
     _throttle()

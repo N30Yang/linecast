@@ -94,6 +94,7 @@ _HOURS_STRINGS = {
     "ja": {"night": "夜", "in_time": "{dur}後", "koku": "1刻", "fast": "断食"},
     "ko": {"night": "밤", "in_time": "{dur} 후", "fast": "금식"},
     "zh": {"night": "夜", "in_time": "{dur}后", "fast": "斋戒"},
+    "zh-Hant": {"night": "夜", "in_time": "{dur}後", "fast": "齋戒"},
     "th": {"night": "กลางคืน", "in_time": "อีก {dur}", "fast": "ถือศีลอด"},
     "id": {"night": "malam", "in_time": "dalam {dur}", "fast": "puasa"},
     "uk": {"night": "ніч", "in_time": "через {dur}", "fast": "піст"},

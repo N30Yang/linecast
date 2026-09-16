@@ -94,7 +94,7 @@ class LanguageCommandTests(ConfigDirMixin):
             with self.assertRaises(SystemExit) as cm:
                 language.main()
         self.assertEqual(cm.exception.code, 2)
-        self.assertIn("two-letter", err.getvalue())
+        self.assertIn("is not a language code", err.getvalue())
 
 
 class ResolveLangTests(ConfigDirMixin):
@@ -134,6 +134,32 @@ class ResolveLangTests(ConfigDirMixin):
         self.assertTrue(is_language_code("eo"))
         for value in ("\u011d\u011d", "e", "eng", "e1", 7, None):
             self.assertFalse(is_language_code(value), repr(value))
+
+    def test_a_code_may_carry_a_script_or_be_a_locale_s_name(self):
+        from linecast._i18n import is_language_code
+        for value in ("zh-Hant", "zh-hant", "zh-TW", "zh-tw", "zh-HK", "zh-MO"):
+            self.assertTrue(is_language_code(value), value)
+        self.assertFalse(is_language_code("fr-CA"))
+
+    def test_chinese_locales_name_their_script(self):
+        # Taiwan, Hong Kong, and Macau write the traditional characters;
+        # the mainland and Singapore the simplified.
+        for value in ("zh_TW.UTF-8", "zh_HK", "zh_MO.UTF-8", "zh-Hant", "zh_Hant_TW", "ZH-tw"):
+            self.assertEqual(resolve_lang(None, {"LANG": value}), ("zh-Hant", "LANG"), value)
+        for value in ("zh_CN.UTF-8", "zh_SG", "zh-Hans", "zh"):
+            self.assertEqual(resolve_lang(None, {"LANG": value}), ("zh", "LANG"), value)
+        self.assertEqual(resolve_lang(None, {"LANGUAGE": "zh_HK:en_US"}), ("zh-Hant", "LANGUAGE"))
+        self.assertEqual(resolve_lang(None, {"LANG": "fil_PH.UTF-8"}), ("en", "default"))
+
+    def test_setting_traditional_chinese_by_any_of_its_names(self):
+        for value in ("zh-hant", "zh-tw", "zh-hk"):
+            with redirect_stdout(io.StringIO()):
+                language._cmd_set(value)
+            self.assertEqual(_config.saved_language(), "zh-Hant", value)
+        out = io.StringIO()
+        with redirect_stdout(out):
+            language._cmd_show()
+        self.assertIn("zh-Hant  Traditional Chinese  [fixed]", out.getvalue())
 
     def test_setting_an_alias_saves_the_language_it_names(self):
         with redirect_stdout(io.StringIO()):
@@ -204,7 +230,8 @@ class LanguageListTests(unittest.TestCase):
         found = set()
         for path in glob.glob(os.path.join(here, "src", "linecast", "_*_i18n.py")):
             with open(path, encoding="utf-8") as f:
-                found.update(re.findall(r'^    "([a-z]{2})": \{', f.read(), re.M))
+                found.update(re.findall(r'^    "([a-z]{2}(?:-[A-Z][a-z]{3})?)": \{',
+                                        f.read(), re.M))
         self.assertEqual(found, set(LANGUAGE_CODES))
 
 

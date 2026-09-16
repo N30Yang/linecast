@@ -156,6 +156,14 @@ class TestCalendars:
         assert "初二" in text
         assert "中秋节" in text
 
+    def test_traditional_chinese_reads_the_same_grid_in_its_script(self):
+        now = datetime(2026, 9, 1, 14, 30, tzinfo=timezone(timedelta(hours=8)))
+        body, _chip = _render(100, 32, lang="zh-Hant", calendar="chinese", now=now)
+        text = "\n".join(body)
+        assert "2026年9月" in body[0]
+        assert "初二" in text
+        assert "中秋節" in text and "中秋节" not in text
+
     def test_hawaiian_names_the_nights(self):
         body, _chip = _render(120, 34, calendar="hawaiian")
         text = "\n".join(body)

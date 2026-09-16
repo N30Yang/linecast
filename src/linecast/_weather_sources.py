@@ -7,6 +7,7 @@ from typing import Any
 
 from linecast._cache import read_cache, write_cache, location_cache_key
 from linecast._http import fetch_json, fetch_json_cached
+from linecast._i18n import accept_language, geocoder_language
 from linecast._paths import cache_dir
 from linecast._runtime import WeatherRuntime, current_runtime, log_failure
 
@@ -38,7 +39,9 @@ _ALERT_SOURCE_NAMES = {
     ("NO", "no"): "Meteorologisk institutt",
     ("JP", "ja"): "気象庁",
     ("HK", "zh"): "香港天文台",
+    ("HK", "zh-Hant"): "香港天文台",
     ("CN", "zh"): "中国气象局",
+    ("CN", "zh-Hant"): "中國氣象局",
 }
 
 
@@ -119,7 +122,7 @@ def _reverse_geocode(lat, lng, lang=None):
             f"?lat={lat}&lon={lng}&format=json&zoom=10"
         )
         if lang:
-            url += f"&accept-language={lang}"
+            url += f"&accept-language={accept_language(lang)}"
         data = fetch_json(url, timeout=10)
         addr = data.get("address", {})
         # Nominatim files small places under keys all the way down to
@@ -417,7 +420,7 @@ def _fetch_alerts_routed(lat, lng, country_code, lang, address):
     if country_code == "JP":
         return _fetch_alerts_jma(lat, lng, lang=lang)
     if country_code == "HK":
-        return _fetch_alerts_hko()
+        return _fetch_alerts_hko(lang=lang)
     if country_code == "CN":
         return _fetch_alerts_cma(lat, lng, lang=lang)
     if country_code == "IN":
@@ -1230,9 +1233,11 @@ def _fetch_alerts_jma(lat, lng, lang="en"):
 
 # The warnsum feed is a dict keyed by warning type; each entry names the
 # warning and carries a code, which for rainstorms and tropical cyclones
-# says how bad (amber/red/black; signal 1/3/8/9/10).
+# says how bad (amber/red/black; signal 1/3/8/9/10). The Observatory
+# publishes it in English and in both Chinese scripts.
 HKO_WARNINGS_URL = ("https://data.weather.gov.hk/weatherAPI/opendata/"
-                    "weather.php?dataType=warnsum&lang=en")
+                    "weather.php?dataType=warnsum&lang={lang}")
+_HKO_LANG = {"zh": "sc", "zh-Hant": "tc"}
 
 _HKO_WARNING_INFO = {
     "WFIRE": ("Fire Danger Warning", "Moderate"),
@@ -1258,8 +1263,9 @@ _HKO_CODE_SEV = {
 }
 
 
-def _parse_hko_warnsum(data):
+def _parse_hko_warnsum(data, lang="en"):
     """Parse HKO warnsum JSON dict into normalised alert list."""
+    site = _HKO_LANG.get(lang, "en")
     alerts = []
     for key, info in _HKO_WARNING_INFO.items():
         entry = data.get(key)
@@ -1279,7 +1285,7 @@ def _parse_hko_warnsum(data):
             "effective": entry.get("issueTime", ""),
             "expires": entry.get("expireTime", ""),
             "severity": severity,
-            "url": "https://www.hko.gov.hk/en/detail.htm",
+            "url": f"https://www.hko.gov.hk/{site}/detail.htm",
         })
 
     severity_order = {"Extreme": 0, "Severe": 1, "Moderate": 2, "Minor": 3}
@@ -1287,15 +1293,17 @@ def _parse_hko_warnsum(data):
     return alerts
 
 
-def _fetch_alerts_hko():
-    """Fetch active HKO weather warnings (Hong Kong). Cached 10min."""
-    cache_file = cache_dir("weather") / "alerts_hk.json"
-    url = HKO_WARNINGS_URL
+def _fetch_alerts_hko(lang="en"):
+    """Fetch active HKO weather warnings (Hong Kong), in the reader's
+    language where the Observatory speaks it. Cached 10min."""
+    feed = _HKO_LANG.get(lang, "en")
+    cache_file = cache_dir("weather") / f"alerts_hk_{feed}.json"
+    url = HKO_WARNINGS_URL.format(lang=feed)
     data = fetch_json_cached(cache_file, 600, url, timeout=10, fallback=[])
     if isinstance(data, list):
         return data
 
-    alerts = _parse_hko_warnsum(data)
+    alerts = _parse_hko_warnsum(data, lang)
     write_cache(cache_file, alerts)
     return alerts
 
@@ -1444,7 +1452,9 @@ def _parse_cma_data(data, provinces, lang="en"):
     entries = page.get("list") or []
     province_alarms = body.get("provinceAlarms") or []
 
-    use_zh = lang == "zh"
+    # The titles are in the simplified script; a traditional-script
+    # reader gets them rather than the English.
+    use_zh = lang in ("zh", "zh-Hant")
     alerts = []
     seen = set()
 
@@ -1976,7 +1986,7 @@ def _geocode_query(query, lang="en"):
 
     url = (
         "https://geocoding-api.open-meteo.com/v1/search"
-        f"?name={urllib.parse.quote(query)}&count=10&language={lang}"
+        f"?name={urllib.parse.quote(query)}&count=10&language={geocoder_language(lang)}"
     )
     try:
         data = fetch_json(url, timeout=10)

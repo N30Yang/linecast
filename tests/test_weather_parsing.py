@@ -760,9 +760,20 @@ class TestHKOAlerts:
         from linecast._weather_sources import fetch_alerts
         with patch("linecast._weather_sources._fetch_alerts_hko",
                    return_value=[{"event": "x"}]) as mock_fn:
-            result = fetch_alerts(22.3, 114.2, country_code="HK")
-        mock_fn.assert_called_once_with()
+            result = fetch_alerts(22.3, 114.2, country_code="HK", lang="zh-Hant")
+        mock_fn.assert_called_once_with(lang="zh-Hant")
         assert result == [{"event": "x"}]
+
+    def test_the_feed_and_the_links_follow_the_script(self):
+        # The Observatory publishes the feed in English and both Chinese
+        # scripts; the reader's language picks the one to ask for, and
+        # the detail page to link.
+        from linecast._weather_sources import HKO_WARNINGS_URL, _HKO_LANG, _parse_hko_warnsum
+        assert _HKO_LANG == {"zh": "sc", "zh-Hant": "tc"}
+        assert HKO_WARNINGS_URL.format(lang="tc").endswith("lang=tc")
+        assert _parse_hko_warnsum(self.data, "zh-Hant")[0]["url"] == "https://www.hko.gov.hk/tc/detail.htm"
+        assert _parse_hko_warnsum(self.data, "zh")[0]["url"] == "https://www.hko.gov.hk/sc/detail.htm"
+        assert _parse_hko_warnsum(self.data)[0]["url"] == "https://www.hko.gov.hk/en/detail.htm"
 
 
 class TestReverseGeocodeCountry:

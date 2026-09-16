@@ -370,6 +370,7 @@ class TestTwilightDirection:
             "de": ("bürgerliche Morgendämmerung",
                    "bürgerliche Abenddämmerung"),
             "zh": ("民用晨光", "民用昏影"),
+            "zh-Hant": ("民用晨光", "民用昏影"),
             "uk": ("цивільний світанок", "цивільні сутінки"),
             "vi": ("bình minh dân dụng", "hoàng hôn dân dụng"),
         }

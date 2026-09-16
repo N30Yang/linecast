@@ -317,6 +317,29 @@ _SUNSHINE_STRINGS = {
         "sunrise": "日出",
         "sunset": "日落",
     },
+    "zh-Hant": {
+        "today": "今天",
+        "in_day": "{n}天後",
+        "in_days": "{n}天後",
+        "day_ago": "{n}天前",
+        "days_ago": "{n}天前",
+        "sky_night": "夜晚",
+        "sky_astronomical": "天文曙暮光",
+        "sky_nautical": "航海曙暮光",
+        "sky_civil": "民用曙暮光",
+        "sky_astronomical_dawn": "天文晨光",
+        "sky_nautical_dawn": "航海晨光",
+        "sky_civil_dawn": "民用晨光",
+        "sky_astronomical_dusk": "天文昏影",
+        "sky_nautical_dusk": "航海昏影",
+        "sky_civil_dusk": "民用昏影",
+        "sky_day": "白天",
+        "midnight_sun": "永晝",
+        "polar_night": "永夜",
+        "solar_noon": "太陽正午",
+        "sunrise": "日出",
+        "sunset": "日落",
+    },
     "th": {
         "today": "วันนี้",
         "in_day": "อีก {n} วัน",
@@ -448,6 +471,7 @@ _AXIS_MONTHS = {
     "ja": [f"{m}月" for m in range(1, 13)],
     "ko": [f"{m}월" for m in range(1, 13)],
     "zh": [f"{m}月" for m in range(1, 13)],
+    "zh-Hant": [f"{m}月" for m in range(1, 13)],
     # Thai's dotted abbreviations (ม.ค.) truncate badly at three
     # characters; the dotless short forms are the ones used where
     # space is tight.
@@ -456,7 +480,7 @@ _AXIS_MONTHS = {
     # T1 … T12, as Vietnamese charts letter their months.
     "vi": [f"T{m}" for m in range(1, 13)],
 }
-_NUMERIC_AXIS_LANGS = frozenset({"ja", "ko", "zh", "vi"})
+_NUMERIC_AXIS_LANGS = frozenset({"ja", "ko", "zh", "zh-Hant", "vi"})
 
 
 def _ss(key, runtime, **kwargs):
