@@ -27,6 +27,8 @@ Settings (run alone to show, give a value to set):
                        hawaiian, samoan, chamorro, refaluwasch, islamic, hebrew, almanac, or none
   linecast culture     Whose constellations the sky draws: chinese, hawaiian, norse, maori,
                        boorong, and seventeen more, or none for the IAU sky
+  linecast hours       Which hours sunshine reads the day in: halachic, roman, japanese,
+                       islamic, or none
   For one run, a flag: --location "Québec" or 41.88,-87.63, --lang fr, --imperial, --24h
 
 Housekeeping:
@@ -80,6 +82,7 @@ COMMANDS = {
     # library module the rest of the code imports.
     "calendar": "linecast.calendar_cmd",
     "culture": "linecast.culture_cmd",
+    "hours": "linecast.hours",
     "link": "linecast.link",
     "doctor": "linecast.doctor",
 }

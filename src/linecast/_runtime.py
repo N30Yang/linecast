@@ -208,6 +208,13 @@ def default_clock(country=None):
 # where their calendars mostly are whatever CLDR says.
 WEEK_STARTS = ("monday", "sunday", "saturday")
 WEEK_START_WEEKDAY = {"monday": 0, "saturday": 5, "sunday": 6}  # date.weekday()
+
+# The systems of hours sunshine can read the day in, by the names
+# `linecast hours` and `sunshine --hours` take. A hyphen separates a
+# tradition from an opinion or method within it: halachic-mga is the
+# Magen Avraham's day, alot to tzeit, where halachic is the Gr"a's.
+HOURS_CHOICES = ("halachic", "halachic-mga", "roman", "japanese", "islamic",
+                 "none")
 SUNDAY_FIRST_COUNTRIES = frozenset((
     "US", "CA", "BR", "MX", "IL", "IN", "JP", "KR", "PH", "SA", "TW", "HK", "ZA",
 ))
@@ -504,6 +511,13 @@ def sunshine_parser():
                     help="in the year view, plot each day in its own UTC "
                          "offset so clock changes show as steps (default: "
                          "the location's current offset all year)")
+    p.add_argument("--hours", choices=HOURS_CHOICES, default=None,
+                    help="read the day in a tradition's hours: the zmanim "
+                         "by the Gr\"a (halachic) or the Magen Avraham "
+                         "(halachic-mga), the twelve horae and four "
+                         "vigiliae (roman), the Edo six koku of day and "
+                         "night (japanese), or the prayer times (islamic). "
+                         "Default: the `linecast hours` setting, else none")
     _add_clock_flags(p)
     p.add_argument("--json", dest="json_mode", action="store_true",
                     help="machine-readable JSON output (implies --print)")

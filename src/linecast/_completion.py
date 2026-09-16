@@ -10,7 +10,7 @@ subcommands, and the value lists for flags whose parsers accept free text.
 
 from __future__ import annotations
 
-from linecast._config import CALENDAR_CHOICES, CULTURE_CHOICES
+from linecast._config import CALENDAR_CHOICES, CULTURE_CHOICES, HOURS_CHOICES
 from linecast._i18n import LANGUAGE_CODES
 
 # --lang accepts any code; the parser lists these in its help text but
@@ -47,7 +47,7 @@ GLOBAL_FLAGS = ("--help", "-h", "--version", "-v")
 TOP_LEVEL_COMMANDS = ("weather", "sunshine", "moon", "sky", "tides", "radar", "maps",
                       "location", "language", "units", "clock", "week", "icons",
                       "calendar",
-                      "culture", "link", "doctor",
+                      "culture", "hours", "link", "doctor",
                       "completion")
 LOCATION_SUBCOMMANDS = ("show", "set", "auto", "search")
 LOCATION_FLAGS = ("--help", "-h", "--version")
@@ -71,6 +71,10 @@ CALENDAR_FLAGS = ("--help", "-h", "--version")
 # and auto; the list is _config's so the two cannot drift.
 CULTURE_SUBCOMMANDS = ("show", *CULTURE_CHOICES, "auto")
 CULTURE_FLAGS = ("--help", "-h", "--version")
+# `linecast hours` takes the same names as sunshine's --hours, plus show
+# and auto; the list is _runtime's so the two cannot drift.
+HOURS_SUBCOMMANDS = ("show", *HOURS_CHOICES, "auto")
+HOURS_FLAGS = ("--help", "-h", "--version")
 DOCTOR_FLAGS = ("--help", "-h", "--version", "--offline", "--json", "--debug")
 COMPLETION_FLAGS = ("--help", "-h")
 
@@ -226,6 +230,8 @@ def _bash_script(flags_by_command):
     calendar_sub = _SPACE.join(CALENDAR_SUBCOMMANDS)
     culture = _SPACE.join(CULTURE_FLAGS)
     culture_sub = _SPACE.join(CULTURE_SUBCOMMANDS)
+    hours = _SPACE.join(HOURS_FLAGS)
+    hours_sub = _SPACE.join(HOURS_SUBCOMMANDS)
     doctor = _SPACE.join(DOCTOR_FLAGS)
     link = _words(link_flags)
     shells = _SPACE.join(SHELLS)
@@ -363,6 +369,10 @@ _linecast_complete_command() {{
       _linecast_complete_flags {culture}
       COMPREPLY+=( $(compgen -W "{culture_sub}" -- "$cur") )
       ;;
+    hours)
+      _linecast_complete_flags {hours}
+      COMPREPLY+=( $(compgen -W "{hours_sub}" -- "$cur") )
+      ;;
     doctor)
       _linecast_complete_flags {doctor}
       ;;
@@ -392,7 +402,7 @@ _linecast_complete() {{
 
   cmd="${{COMP_WORDS[1]}}"
   case "$cmd" in
-    weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|week|icons|calendar|culture|link|doctor|completion)
+    weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|week|icons|calendar|culture|hours|link|doctor|completion)
       _linecast_complete_command "$cmd"
       ;;
   esac
@@ -427,6 +437,8 @@ def _zsh_script(flags_by_command):
     calendar_sub = _SPACE.join(CALENDAR_SUBCOMMANDS)
     culture = _SPACE.join(CULTURE_FLAGS)
     culture_sub = _SPACE.join(CULTURE_SUBCOMMANDS)
+    hours = _SPACE.join(HOURS_FLAGS)
+    hours_sub = _SPACE.join(HOURS_SUBCOMMANDS)
     doctor = _SPACE.join(DOCTOR_FLAGS)
     link = _words(link_flags)
     shells = _SPACE.join(SHELLS)
@@ -561,6 +573,10 @@ _linecast_complete_command() {{
       _linecast_add_flags {culture}
       compadd -- {culture_sub}
       ;;
+    hours)
+      _linecast_add_flags {hours}
+      compadd -- {hours_sub}
+      ;;
     doctor)
       _linecast_add_flags {doctor}
       ;;
@@ -585,7 +601,7 @@ _linecast() {{
     fi
     cmd="${{words[2]}}"
     case "$cmd" in
-      weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|week|icons|calendar|culture|link|doctor|completion)
+      weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|week|icons|calendar|culture|hours|link|doctor|completion)
         _linecast_complete_command "$cmd"
         ;;
     esac
@@ -631,6 +647,7 @@ def _fish_script(flags_by_command):
     icons_sub = _SPACE.join(ICONS_SUBCOMMANDS)
     calendar_sub = _SPACE.join(CALENDAR_SUBCOMMANDS)
     culture_sub = _SPACE.join(CULTURE_SUBCOMMANDS)
+    hours_sub = _SPACE.join(HOURS_SUBCOMMANDS)
     lines = [
         "# fish completion for linecast",
         f"complete -c linecast -f -n '__fish_use_subcommand' -a '{commands}'",
@@ -654,6 +671,8 @@ def _fish_script(flags_by_command):
         "complete -c linecast -f -n '__fish_seen_subcommand_from calendar' -l help -s h",
         f"complete -c linecast -f -n '__fish_seen_subcommand_from culture' -a '{culture_sub}'",
         "complete -c linecast -f -n '__fish_seen_subcommand_from culture' -l help -s h",
+        f"complete -c linecast -f -n '__fish_seen_subcommand_from hours' -a '{hours_sub}'",
+        "complete -c linecast -f -n '__fish_seen_subcommand_from hours' -l help -s h",
         "complete -c linecast -f -n '__fish_seen_subcommand_from doctor' -l help -s h",
         "complete -c linecast -f -n '__fish_seen_subcommand_from doctor' -l version",
         "complete -c linecast -f -n '__fish_seen_subcommand_from doctor' -l offline",
@@ -738,6 +757,8 @@ def _nu_script(flags_by_command):
                                 CALENDAR_SUBCOMMANDS))
     lines.extend(_nu_value_list("linecast-culture-subcommands",
                                 CULTURE_SUBCOMMANDS))
+    lines.extend(_nu_value_list("linecast-hours-subcommands",
+                                HOURS_SUBCOMMANDS))
     lines.extend([
         'export extern "linecast" [',
         "    --version(-v) # Show version",
@@ -812,6 +833,13 @@ def _nu_script(flags_by_command):
         ))
         for sub in CULTURE_SUBCOMMANDS:
             lines.extend(_nu_extern(f"{prefix}culture {sub}", version_only))
+        lines.extend(_nu_extern(
+            f"{prefix}hours",
+            version_only,
+            ['subcommand?: string@"nu-complete linecast-hours-subcommands"'],
+        ))
+        for sub in HOURS_SUBCOMMANDS:
+            lines.extend(_nu_extern(f"{prefix}hours {sub}", version_only))
         lines.extend(_nu_extern(f"{prefix}doctor", [
             *version_only, "    --offline", "    --json", "    --debug"]))
 

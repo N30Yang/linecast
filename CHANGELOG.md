@@ -4,6 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Sunshine: The day can be read in the halachic hours, the sha'ot zmaniyot, beside the civil clock. `sunshine --hours halachic` or `linecast hours halachic` puts the hour and its length in the corner of the day view and lists the day's zmanim under the chart, from alot hashachar to tzeit, with the next one counted down; `halachic-mga` reads the day by the Magen Avraham. `--json` and `--oneline` carry the same. Checked against Hebcal to the minute. HOURS.md describes it. Suggested by [@ylub](https://github.com/ylub) in [#95](https://github.com/ashuttl/linecast/discussions/95).
 - Weather: The ten-year climate archive behind the "warmer than usual" line and the hourly graph's scale downloads at a quarter of its former size, as do the forecast and air quality. Every download now asks the server to compress its answer.
 
 ## 2.6.0 — 2026-09-15

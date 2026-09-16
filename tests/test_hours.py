@@ -1,0 +1,621 @@
+"""The traditional hours: the halachic table against Hebcal, and the frame.
+
+The ground truth for the zmanim is Hebcal's zmanim API, read with
+seconds on for four places (Jerusalem, Brooklyn, Helsinki at 60°
+north, Melbourne) on four dates of 2026 (the March equinox week, both
+solstices, and mid-September). Hebcal uses the NOAA sunrise algorithm
+and the same angles this table does, 16.1° for alot, 11.5° for
+misheyakir, 8.5° for tzeit, so the checks are that the ephemeris,
+the crossing solver, and the fractions of the day land within half a
+minute of a published table. Hebcal's output is CC BY 4.0.
+
+The rest checks the frame: the reading of a moment, the resolver,
+the setting, the corner, and the marks line.
+"""
+
+import io
+import re
+from contextlib import redirect_stdout
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
+
+import pytest
+
+from linecast._hours import (
+    DayHours, Mark, hours_now, last_mark, next_mark, reading, resolve_hours,
+)
+from linecast._hours.zmanim import zmanim
+from linecast._runtime import RuntimeConfig
+
+PLACES = {
+    "jerusalem": (31.778, 35.235, "Asia/Jerusalem"),
+    "brooklyn": (40.65, -73.95, "America/New_York"),
+    "helsinki": (60.17, 24.94, "Europe/Helsinki"),
+    "melbourne": (-37.81, 144.96, "Australia/Melbourne"),
+}
+
+# (place, date) → Hebcal's zmanim, local time to the second; None where
+# the Sun never reaches the angle that day.
+PUBLISHED = {
+    ("brooklyn", "2026-03-05"): {
+        "chatzotNight": "2026-03-05T00:06:58",
+        "alotHaShachar": "2026-03-05T05:02:47",
+        "misheyakir": "2026-03-05T05:27:04",
+        "sunrise": "2026-03-05T06:23:21",
+        "sofZmanShmaMGA": "2026-03-05T08:39:26",
+        "sofZmanShma": "2026-03-05T09:15:26",
+        "sofZmanTfillaMGA": "2026-03-05T09:48:48",
+        "sofZmanTfilla": "2026-03-05T10:12:48",
+        "chatzot": "2026-03-05T12:07:31",
+        "minchaGedola": "2026-03-05T12:36:12",
+        "minchaGedolaMGA": "2026-03-05T12:42:12",
+        "minchaKetana": "2026-03-05T15:28:17",
+        "minchaKetanaMGA": "2026-03-05T16:10:17",
+        "plagHaMincha": "2026-03-05T16:39:59",
+        "sunset": "2026-03-05T17:51:42",
+        "tzeit85deg": "2026-03-05T18:32:15",
+        "tzeit72min": "2026-03-05T19:03:42",
+    },
+    ("brooklyn", "2026-06-21"): {
+        "chatzotNight": "2026-06-21T00:57:33",
+        "alotHaShachar": "2026-06-21T03:35:56",
+        "misheyakir": "2026-06-21T04:12:48",
+        "sunrise": "2026-06-21T05:25:01",
+        "sofZmanShmaMGA": "2026-06-21T08:35:20",
+        "sofZmanShma": "2026-06-21T09:11:20",
+        "sofZmanTfillaMGA": "2026-06-21T10:02:46",
+        "sofZmanTfilla": "2026-06-21T10:26:46",
+        "chatzot": "2026-06-21T12:57:39",
+        "minchaGedola": "2026-06-21T13:35:22",
+        "minchaGedolaMGA": "2026-06-21T13:41:22",
+        "minchaKetana": "2026-06-21T17:21:41",
+        "minchaKetanaMGA": "2026-06-21T18:03:41",
+        "plagHaMincha": "2026-06-21T18:55:59",
+        "sunset": "2026-06-21T20:30:18",
+        "tzeit85deg": "2026-06-21T21:20:49",
+        "tzeit72min": "2026-06-21T21:42:18",
+    },
+    ("brooklyn", "2026-09-15"): {
+        "chatzotNight": "2026-09-15T00:51:27",
+        "alotHaShachar": "2026-09-15T05:14:10",
+        "misheyakir": "2026-09-15T05:39:28",
+        "sunrise": "2026-09-15T06:36:34",
+        "sofZmanShmaMGA": "2026-09-15T09:07:35",
+        "sofZmanShma": "2026-09-15T09:43:35",
+        "sofZmanTfillaMGA": "2026-09-15T10:21:55",
+        "sofZmanTfilla": "2026-09-15T10:45:55",
+        "chatzot": "2026-09-15T12:50:36",
+        "minchaGedola": "2026-09-15T13:21:46",
+        "minchaGedolaMGA": "2026-09-15T13:27:46",
+        "minchaKetana": "2026-09-15T16:28:47",
+        "minchaKetanaMGA": "2026-09-15T17:10:47",
+        "plagHaMincha": "2026-09-15T17:46:43",
+        "sunset": "2026-09-15T19:04:39",
+        "tzeit85deg": "2026-09-15T19:45:25",
+        "tzeit72min": "2026-09-15T20:16:39",
+    },
+    ("brooklyn", "2026-12-21"): {
+        "chatzotNight": "2026-12-20T23:53:44",
+        "alotHaShachar": "2026-12-21T05:47:51",
+        "misheyakir": "2026-12-21T06:13:33",
+        "sunrise": "2026-12-21T07:16:07",
+        "sofZmanShmaMGA": "2026-12-21T08:59:02",
+        "sofZmanShma": "2026-12-21T09:35:02",
+        "sofZmanTfillaMGA": "2026-12-21T09:57:21",
+        "sofZmanTfilla": "2026-12-21T10:21:21",
+        "chatzot": "2026-12-21T11:53:58",
+        "minchaGedola": "2026-12-21T12:17:07",
+        "minchaGedolaMGA": "2026-12-21T12:23:07",
+        "minchaKetana": "2026-12-21T14:36:02",
+        "minchaKetanaMGA": "2026-12-21T15:18:02",
+        "plagHaMincha": "2026-12-21T15:33:55",
+        "sunset": "2026-12-21T16:31:49",
+        "tzeit85deg": "2026-12-21T17:17:17",
+        "tzeit72min": "2026-12-21T17:43:49",
+    },
+    ("helsinki", "2026-03-05"): {
+        "chatzotNight": "2026-03-05T00:31:04",
+        "alotHaShachar": "2026-03-05T05:03:44",
+        "misheyakir": "2026-03-05T05:41:31",
+        "sunrise": "2026-03-05T07:07:30",
+        "sofZmanShmaMGA": "2026-03-05T09:13:54",
+        "sofZmanShma": "2026-03-05T09:49:54",
+        "sofZmanTfillaMGA": "2026-03-05T10:20:03",
+        "sofZmanTfilla": "2026-03-05T10:44:03",
+        "chatzot": "2026-03-05T12:32:19",
+        "minchaGedola": "2026-03-05T12:59:23",
+        "minchaGedolaMGA": "2026-03-05T13:05:23",
+        "minchaKetana": "2026-03-05T15:41:48",
+        "minchaKetanaMGA": "2026-03-05T16:23:48",
+        "plagHaMincha": "2026-03-05T16:49:28",
+        "sunset": "2026-03-05T17:57:09",
+        "tzeit85deg": "2026-03-05T18:59:10",
+        "tzeit72min": "2026-03-05T19:09:09",
+    },
+    ("helsinki", "2026-06-21"): {
+        "chatzotNight": "2026-06-21T01:21:56",
+        "alotHaShachar": None,
+        "misheyakir": None,
+        "sunrise": "2026-06-21T03:54:03",
+        "sofZmanShmaMGA": "2026-06-21T08:02:02",
+        "sofZmanShma": "2026-06-21T08:38:02",
+        "sofZmanTfillaMGA": "2026-06-21T09:48:42",
+        "sofZmanTfilla": "2026-06-21T10:12:42",
+        "chatzot": "2026-06-21T13:22:02",
+        "minchaGedola": "2026-06-21T14:09:22",
+        "minchaGedolaMGA": "2026-06-21T14:15:22",
+        "minchaKetana": "2026-06-21T18:53:22",
+        "minchaKetanaMGA": "2026-06-21T19:35:22",
+        "plagHaMincha": "2026-06-21T20:51:42",
+        "sunset": "2026-06-21T22:50:02",
+        "tzeit85deg": None,
+        "tzeit72min": "2026-06-22T00:02:02",
+    },
+    ("helsinki", "2026-09-15"): {
+        "chatzotNight": "2026-09-15T01:16:18",
+        "alotHaShachar": "2026-09-15T04:32:51",
+        "misheyakir": "2026-09-15T05:17:00",
+        "sunrise": "2026-09-15T06:47:35",
+        "sofZmanShmaMGA": "2026-09-15T09:25:10",
+        "sofZmanShma": "2026-09-15T10:01:10",
+        "sofZmanTfillaMGA": "2026-09-15T10:41:42",
+        "sofZmanTfilla": "2026-09-15T11:05:42",
+        "chatzot": "2026-09-15T13:14:45",
+        "minchaGedola": "2026-09-15T13:47:01",
+        "minchaGedolaMGA": "2026-09-15T13:53:01",
+        "minchaKetana": "2026-09-15T17:00:36",
+        "minchaKetanaMGA": "2026-09-15T17:42:36",
+        "plagHaMincha": "2026-09-15T18:21:16",
+        "sunset": "2026-09-15T19:41:56",
+        "tzeit85deg": "2026-09-15T20:45:32",
+        "tzeit72min": "2026-09-15T20:53:56",
+    },
+    ("helsinki", "2026-12-21"): {
+        "chatzotNight": "2026-12-21T00:18:04",
+        "alotHaShachar": "2026-12-21T06:52:17",
+        "misheyakir": "2026-12-21T07:32:37",
+        "sunrise": "2026-12-21T09:23:45",
+        "sofZmanShmaMGA": "2026-12-21T10:15:00",
+        "sofZmanShma": "2026-12-21T10:51:00",
+        "sofZmanTfillaMGA": "2026-12-21T10:56:05",
+        "sofZmanTfilla": "2026-12-21T11:20:05",
+        "chatzot": "2026-12-21T12:18:16",
+        "minchaGedola": "2026-12-21T12:32:48",
+        "minchaGedolaMGA": "2026-12-21T12:38:48",
+        "minchaKetana": "2026-12-21T14:00:04",
+        "minchaKetanaMGA": "2026-12-21T14:42:04",
+        "plagHaMincha": "2026-12-21T14:36:25",
+        "sunset": "2026-12-21T15:12:47",
+        "tzeit85deg": "2026-12-21T16:35:56",
+        "tzeit72min": "2026-12-21T16:24:47",
+    },
+    ("jerusalem", "2026-03-05"): {
+        "chatzotNight": "2026-03-04T23:50:24",
+        "alotHaShachar": "2026-03-05T04:49:50",
+        "misheyakir": "2026-03-05T05:11:29",
+        "sunrise": "2026-03-05T06:01:44",
+        "sofZmanShmaMGA": "2026-03-05T08:20:15",
+        "sofZmanShma": "2026-03-05T08:56:15",
+        "sofZmanTfillaMGA": "2026-03-05T09:30:25",
+        "sofZmanTfilla": "2026-03-05T09:54:25",
+        "chatzot": "2026-03-05T11:50:46",
+        "minchaGedola": "2026-03-05T12:19:51",
+        "minchaGedolaMGA": "2026-03-05T12:25:51",
+        "minchaKetana": "2026-03-05T15:14:22",
+        "minchaKetanaMGA": "2026-03-05T15:56:22",
+        "plagHaMincha": "2026-03-05T16:27:05",
+        "sunset": "2026-03-05T17:39:48",
+        "tzeit85deg": "2026-03-05T18:15:59",
+        "tzeit72min": "2026-03-05T18:51:48",
+    },
+    ("jerusalem", "2026-06-21"): {
+        "chatzotNight": "2026-06-21T00:40:45",
+        "alotHaShachar": "2026-06-21T04:06:18",
+        "misheyakir": "2026-06-21T04:34:20",
+        "sunrise": "2026-06-21T05:34:03",
+        "sofZmanShmaMGA": "2026-06-21T08:31:27",
+        "sofZmanShma": "2026-06-21T09:07:27",
+        "sofZmanTfillaMGA": "2026-06-21T09:54:35",
+        "sofZmanTfilla": "2026-06-21T10:18:35",
+        "chatzot": "2026-06-21T12:40:51",
+        "minchaGedola": "2026-06-21T13:16:25",
+        "minchaGedolaMGA": "2026-06-21T13:22:25",
+        "minchaKetana": "2026-06-21T16:49:49",
+        "minchaKetanaMGA": "2026-06-21T17:31:49",
+        "plagHaMincha": "2026-06-21T18:18:44",
+        "sunset": "2026-06-21T19:47:40",
+        "tzeit85deg": "2026-06-21T20:29:59",
+        "tzeit72min": "2026-06-21T20:59:40",
+    },
+    ("jerusalem", "2026-09-15"): {
+        "chatzotNight": "2026-09-15T00:34:44",
+        "alotHaShachar": "2026-09-15T05:10:04",
+        "misheyakir": "2026-09-15T05:32:15",
+        "sunrise": "2026-09-15T06:22:56",
+        "sofZmanShmaMGA": "2026-09-15T08:52:30",
+        "sofZmanShma": "2026-09-15T09:28:30",
+        "sofZmanTfillaMGA": "2026-09-15T10:06:21",
+        "sofZmanTfilla": "2026-09-15T10:30:21",
+        "chatzot": "2026-09-15T12:34:04",
+        "minchaGedola": "2026-09-15T13:05:00",
+        "minchaGedolaMGA": "2026-09-15T13:11:00",
+        "minchaKetana": "2026-09-15T16:10:34",
+        "minchaKetanaMGA": "2026-09-15T16:52:34",
+        "plagHaMincha": "2026-09-15T17:27:53",
+        "sunset": "2026-09-15T18:45:13",
+        "tzeit85deg": "2026-09-15T19:21:30",
+        "tzeit72min": "2026-09-15T19:57:13",
+    },
+    ("jerusalem", "2026-12-21"): {
+        "chatzotNight": "2026-12-20T23:36:50",
+        "alotHaShachar": "2026-12-21T05:16:59",
+        "misheyakir": "2026-12-21T05:39:55",
+        "sunrise": "2026-12-21T06:34:50",
+        "sofZmanShmaMGA": "2026-12-21T08:29:57",
+        "sofZmanShma": "2026-12-21T09:05:57",
+        "sofZmanTfillaMGA": "2026-12-21T09:32:19",
+        "sofZmanTfilla": "2026-12-21T09:56:19",
+        "chatzot": "2026-12-21T11:37:04",
+        "minchaGedola": "2026-12-21T12:02:15",
+        "minchaGedolaMGA": "2026-12-21T12:08:15",
+        "minchaKetana": "2026-12-21T14:33:22",
+        "minchaKetanaMGA": "2026-12-21T15:15:22",
+        "plagHaMincha": "2026-12-21T15:36:20",
+        "sunset": "2026-12-21T16:39:19",
+        "tzeit85deg": "2026-12-21T17:19:04",
+        "tzeit72min": "2026-12-21T17:51:19",
+    },
+    ("melbourne", "2026-03-05"): {
+        "chatzotNight": "2026-03-05T01:32:06",
+        "alotHaShachar": "2026-03-05T05:47:58",
+        "misheyakir": "2026-03-05T06:12:41",
+        "sunrise": "2026-03-05T07:08:10",
+        "sofZmanShmaMGA": "2026-03-05T09:43:46",
+        "sofZmanShma": "2026-03-05T10:19:46",
+        "sofZmanTfillaMGA": "2026-03-05T10:59:38",
+        "sofZmanTfilla": "2026-03-05T11:23:38",
+        "chatzot": "2026-03-05T13:31:22",
+        "minchaGedola": "2026-03-05T14:03:18",
+        "minchaGedolaMGA": "2026-03-05T14:09:18",
+        "minchaKetana": "2026-03-05T17:14:54",
+        "minchaKetanaMGA": "2026-03-05T17:56:54",
+        "plagHaMincha": "2026-03-05T18:34:44",
+        "sunset": "2026-03-05T19:54:35",
+        "tzeit85deg": "2026-03-05T20:34:08",
+        "tzeit72min": "2026-03-05T21:06:35",
+    },
+    ("melbourne", "2026-06-21"): {
+        "chatzotNight": "2026-06-21T00:21:47",
+        "alotHaShachar": "2026-06-21T06:11:15",
+        "misheyakir": "2026-06-21T06:35:54",
+        "sunrise": "2026-06-21T07:35:38",
+        "sofZmanShmaMGA": "2026-06-21T09:22:45",
+        "sofZmanShma": "2026-06-21T09:58:45",
+        "sofZmanTfillaMGA": "2026-06-21T10:22:28",
+        "sofZmanTfilla": "2026-06-21T10:46:28",
+        "chatzot": "2026-06-21T12:21:53",
+        "minchaGedola": "2026-06-21T12:45:44",
+        "minchaGedolaMGA": "2026-06-21T12:51:44",
+        "minchaKetana": "2026-06-21T15:08:51",
+        "minchaKetanaMGA": "2026-06-21T15:50:51",
+        "plagHaMincha": "2026-06-21T16:08:29",
+        "sunset": "2026-06-21T17:08:08",
+        "tzeit85deg": "2026-06-21T17:51:29",
+        "tzeit72min": "2026-06-21T18:20:08",
+    },
+    ("melbourne", "2026-09-15"): {
+        "chatzotNight": "2026-09-15T00:15:24",
+        "alotHaShachar": "2026-09-15T05:03:47",
+        "misheyakir": "2026-09-15T05:27:13",
+        "sunrise": "2026-09-15T06:21:13",
+        "sofZmanShmaMGA": "2026-09-15T08:42:31",
+        "sofZmanShma": "2026-09-15T09:18:31",
+        "sofZmanTfillaMGA": "2026-09-15T09:53:37",
+        "sofZmanTfilla": "2026-09-15T10:17:37",
+        "chatzot": "2026-09-15T12:15:49",
+        "minchaGedola": "2026-09-15T12:45:22",
+        "minchaGedolaMGA": "2026-09-15T12:51:22",
+        "minchaKetana": "2026-09-15T15:42:40",
+        "minchaKetanaMGA": "2026-09-15T16:24:40",
+        "plagHaMincha": "2026-09-15T16:56:33",
+        "sunset": "2026-09-15T18:10:26",
+        "tzeit85deg": "2026-09-15T18:49:18",
+        "tzeit72min": "2026-09-15T19:22:26",
+    },
+    ("melbourne", "2026-12-21"): {
+        "chatzotNight": "2026-12-21T01:17:47",
+        "alotHaShachar": "2026-12-21T04:14:00",
+        "misheyakir": "2026-12-21T04:47:06",
+        "sunrise": "2026-12-21T05:54:20",
+        "sofZmanShmaMGA": "2026-12-21T09:00:11",
+        "sofZmanShma": "2026-12-21T09:36:11",
+        "sofZmanTfillaMGA": "2026-12-21T10:26:08",
+        "sofZmanTfilla": "2026-12-21T10:50:08",
+        "chatzot": "2026-12-21T13:18:02",
+        "minchaGedola": "2026-12-21T13:55:00",
+        "minchaGedolaMGA": "2026-12-21T14:01:00",
+        "minchaKetana": "2026-12-21T17:36:51",
+        "minchaKetanaMGA": "2026-12-21T18:18:51",
+        "plagHaMincha": "2026-12-21T19:09:17",
+        "sunset": "2026-12-21T20:41:44",
+        "tzeit85deg": "2026-12-21T21:29:01",
+        "tzeit72min": "2026-12-21T21:53:44",
+    },
+}
+
+# This table's mark → Hebcal's key, by opinion.
+GRA_KEYS = {
+    "alot": "alotHaShachar", "misheyakir": "misheyakir", "sunrise": "sunrise",
+    "shema": "sofZmanShma", "tefillah": "sofZmanTfilla", "chatzot": "chatzot",
+    "mincha_gedola": "minchaGedola", "mincha_ketana": "minchaKetana",
+    "plag": "plagHaMincha", "sunset": "sunset", "tzeit": "tzeit85deg",
+}
+MGA_KEYS = {
+    "shema": "sofZmanShmaMGA", "tefillah": "sofZmanTfillaMGA",
+    "mincha_gedola": "minchaGedolaMGA", "mincha_ketana": "minchaKetanaMGA",
+    "tzeit": "tzeit72min",
+}
+TOLERANCE = timedelta(seconds=30)
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
+def _plain(text):
+    return _ANSI.sub("", text)
+
+
+def _runtime(**kw):
+    args = dict(live=False, icons="emoji", lang="en", oneline=False, use_24h=False)
+    args.update(kw)
+    return RuntimeConfig(**args)
+
+
+def _published(place, day, key):
+    text = PUBLISHED[(place, day)][key]
+    if text is None:
+        return None
+    return datetime.fromisoformat(text).replace(tzinfo=ZoneInfo(PLACES[place][2]))
+
+
+@pytest.mark.parametrize("place,day", sorted(PUBLISHED))
+@pytest.mark.parametrize("opinion,keys", [("gra", GRA_KEYS), ("mga", MGA_KEYS)])
+def test_zmanim_match_hebcal(place, day, opinion, keys):
+    lat, lng, tz = PLACES[place]
+    hours = zmanim(date.fromisoformat(day), lat, lng, ZoneInfo(tz), opinion)
+    marks = {m.key: m.at for m in hours.marks}
+    for key, hebcal_key in keys.items():
+        expected = _published(place, day, hebcal_key)
+        if expected is None:
+            assert key not in marks, f"{key} listed where Hebcal has none"
+            continue
+        assert key in marks, f"{key} missing"
+        assert abs(marks[key] - expected) <= TOLERANCE, (
+            f"{key}: {marks[key]:%H:%M:%S} against Hebcal {expected:%H:%M:%S}")
+
+
+@pytest.mark.parametrize("place,day", sorted(PUBLISHED))
+def test_chatzot_halayla_is_listed_on_the_date_it_falls_on(place, day):
+    """Hebcal lists the middle of the night leading into the date; the
+    table lists whichever middle falls on the date, which is that one
+    wherever the zone runs behind its meridian, and the next night's
+    where it runs ahead."""
+    lat, lng, tz = PLACES[place]
+    hours = zmanim(date.fromisoformat(day), lat, lng, ZoneInfo(tz))
+    listed = [m.at for m in hours.marks if m.key == "chatzot_halayla"]
+    assert len(listed) == 1
+    assert listed[0].date() == date.fromisoformat(day)
+    expected = _published(place, day, "chatzotNight")
+    if expected.date() == date.fromisoformat(day):
+        assert abs(listed[0] - expected) <= TOLERANCE
+
+
+def test_helsinki_in_june_has_no_dawn_or_nightfall():
+    """At 60° north in June the Sun never gets 16.1° down, so alot,
+    misheyakir, and tzeit are absent; the day's fractions stand."""
+    hours = zmanim(date(2026, 6, 21), 60.17, 24.94, ZoneInfo("Europe/Helsinki"))
+    keys = [m.key for m in hours.marks]
+    assert "alot" not in keys and "misheyakir" not in keys and "tzeit" not in keys
+    assert "shema" in keys and "plag" in keys
+
+
+def test_magen_avraham_pads_the_day_by_seventy_two_minutes():
+    tz = ZoneInfo("Asia/Jerusalem")
+    gra = zmanim(date(2026, 9, 15), 31.778, 35.235, tz)
+    mga = zmanim(date(2026, 9, 15), 31.778, 35.235, tz, "mga")
+    assert mga.day_start == gra.day_start - timedelta(minutes=72)
+    assert mga.day_end == gra.day_end + timedelta(minutes=72)
+    assert mga.variant == "mga"
+    marks = {m.key: m.at for m in mga.marks}
+    assert marks["alot"] == mga.day_start
+    assert marks["tzeit"] == mga.day_end
+
+
+def test_candle_lighting_on_friday_only():
+    tz = ZoneInfo("Asia/Jerusalem")
+    friday = zmanim(date(2026, 9, 18), 31.778, 35.235, tz)
+    marks = {m.key: m.at for m in friday.marks}
+    assert marks["candles"] == marks["sunset"] - timedelta(minutes=18)
+    thursday = zmanim(date(2026, 9, 17), 31.778, 35.235, tz)
+    assert "candles" not in {m.key for m in thursday.marks}
+
+
+def test_polar_night_keeps_no_hours():
+    """Longyearbyen in December: no sunrise, so no edges and no marks
+    but the night's middle, and the reading is None."""
+    tz = ZoneInfo("Arctic/Longyearbyen")
+    hours = zmanim(date(2026, 12, 21), 78.22, 15.63, tz)
+    assert hours.day_start is None and hours.day_end is None
+    assert reading(hours, datetime(2026, 12, 21, 12, tzinfo=tz)) is None
+
+
+class TestReading:
+    TZ = ZoneInfo("Asia/Jerusalem")
+
+    def _hours(self):
+        return zmanim(date(2026, 9, 15), 31.778, 35.235, self.TZ)
+
+    def test_an_afternoon_hour(self):
+        """Sunrise 6:22:56, sunset 18:45:13: 2:30pm is 8h 07m into a
+        day of twelve 61m 51s hours, so the eighth hour, 52/60 through."""
+        r = reading(self._hours(), datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ))
+        assert not r.night
+        assert r.index == 7
+        assert int(r.fraction * 60) == 52
+        assert round(r.hour_seconds) == 3711
+
+    def test_the_night_after_sunset(self):
+        r = reading(self._hours(), datetime(2026, 9, 15, 23, 12, tzinfo=self.TZ))
+        assert r.night
+        assert r.index == 4
+        assert r.end == self._hours().next_day_start
+
+    def test_the_night_before_dawn(self):
+        r = reading(self._hours(), datetime(2026, 9, 15, 5, 0, tzinfo=self.TZ))
+        assert r.night
+        assert r.index == 10
+        assert r.start == self._hours().prev_day_end
+
+    def test_a_naive_now_is_the_machines_own_time(self):
+        """sunshine passes a naive now for an unpinned location, which
+        is the machine's own zone; the reading takes it as such."""
+        naive = datetime(2026, 9, 15, 14, 30)
+        assert reading(self._hours(), naive) == reading(self._hours(), naive.astimezone())
+
+    def test_next_and_last_marks(self):
+        now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
+        assert next_mark(self._hours(), now).key == "mincha_ketana"
+        assert last_mark(self._hours(), now).key == "mincha_gedola"
+        late = datetime(2026, 9, 15, 23, 59, tzinfo=self.TZ)
+        assert next_mark(self._hours(), late) is None
+
+    def test_hours_now_builds_the_table_for_the_moment(self):
+        hours, now = hours_now("halachic", datetime(2026, 9, 15, 14, 30),
+                               31.778, 35.235, self.TZ, "mga")
+        assert hours.date == date(2026, 9, 15)
+        assert hours.variant == "mga"
+        assert now.tzinfo is not None
+
+
+class TestResolver:
+    def test_flag_beats_everything(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("LINECAST_CONFIG_DIR", str(tmp_path))
+        assert resolve_hours("halachic-mga") == ("halachic", "mga")
+        assert resolve_hours("roman") == ("roman", None)
+        assert resolve_hours("none") == (None, None)
+
+    def test_saved_setting_stands_in_for_the_flag(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("LINECAST_CONFIG_DIR", str(tmp_path))
+        from linecast._config import write_config
+        assert resolve_hours(None) == (None, None)
+        write_config({"hours": "halachic"})
+        assert resolve_hours(None) == ("halachic", None)
+        write_config({"hours": "none"})
+        assert resolve_hours(None) == (None, None)
+        write_config({"hours": "mayan"})
+        assert resolve_hours(None) == (None, None)
+
+
+class TestCommand:
+    def test_set_show_and_auto(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("LINECAST_CONFIG_DIR", str(tmp_path))
+        from linecast import hours
+        from linecast._config import saved_hours
+        out = io.StringIO()
+        with redirect_stdout(out):
+            hours._cmd_set("halachic")
+            hours._cmd_show()
+        assert saved_hours() == "halachic"
+        assert "halachic  [fixed]" in out.getvalue()
+        with redirect_stdout(io.StringIO()):
+            hours._cmd_set("none")
+        assert saved_hours() == "none"
+        out = io.StringIO()
+        with redirect_stdout(out):
+            hours._cmd_auto()
+            hours._cmd_show()
+        assert saved_hours() is None
+        assert out.getvalue().startswith("Hours set to auto")
+        assert "auto  [none" in out.getvalue()
+
+    def test_every_choice_has_a_confirmation(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("LINECAST_CONFIG_DIR", str(tmp_path))
+        from linecast import hours
+        from linecast._runtime import HOURS_CHOICES
+        for choice in HOURS_CHOICES:
+            out = io.StringIO()
+            with redirect_stdout(out):
+                hours._cmd_set(choice)
+            assert ("turned off" if choice == "none" else choice) in out.getvalue()
+
+
+class TestPainting:
+    TZ = ZoneInfo("Asia/Jerusalem")
+
+    def _hours(self, opinion=None):
+        return zmanim(date(2026, 9, 15), 31.778, 35.235, self.TZ, opinion)
+
+    def test_corner_reads_the_hour_and_its_length(self):
+        from linecast._sunshine_hours import corner_reading
+        now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
+        assert corner_reading(self._hours(), now, _runtime()) == "7:52 · 1h = 62m"
+        night = datetime(2026, 9, 15, 23, 12, tzinfo=self.TZ)
+        assert corner_reading(self._hours(), night, _runtime()) == "night 4:35 · 1h = 58m"
+        assert corner_reading(self._hours(), night, _runtime(lang="fr")).startswith("nuit ")
+
+    def test_line_keeps_the_next_mark_and_fills_in_order(self):
+        from linecast._sunshine_hours import hours_line
+        now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
+        wide = _plain(hours_line(self._hours(), now, 300, _runtime()))
+        assert wide.startswith(
+            "chatzot halayla 12:34a · alot 5:10a · misheyakir 5:32a · sunrise 6:22a")
+        assert "mincha ketana 4:10p (in 1h 41m)" in wide
+        assert wide.endswith('tzeit 7:21p · Gr"a')
+        narrow = _plain(hours_line(self._hours(), now, 46, _runtime()))
+        assert narrow == "mincha ketana 4:10p (in 1h 41m) · plag 5:27p"
+        # Too narrow for plag, but the opinion fits in its place.
+        narrower = _plain(hours_line(self._hours(), now, 40, _runtime()))
+        assert narrower == 'mincha ketana 4:10p (in 1h 41m) · Gr"a'
+        tiny = _plain(hours_line(self._hours(), now, 20, _runtime()))
+        assert tiny == ""
+
+    def test_sunrise_and_sunset_yield_to_the_marks(self):
+        """The line above names them, so they are the first dropped."""
+        from linecast._sunshine_hours import hours_line
+        now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
+        line = _plain(hours_line(self._hours(), now, 110, _runtime()))
+        assert "sunrise" not in line and "sunset" not in line
+        assert "chatzot 12:34p" in line
+
+    def test_the_opinion_is_named_when_it_fits(self):
+        from linecast._sunshine_hours import hours_line
+        now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
+        assert _plain(hours_line(self._hours("mga"), now, 300, _runtime())).endswith(
+            "Magen Avraham")
+
+    def test_the_day_view_paints_both_corners_and_the_line(self):
+        from unittest.mock import patch
+        from linecast.sunshine import render
+        now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
+        with patch("linecast.sunshine.get_terminal_size", return_value=(80, 24)):
+            out = _plain(render(31.778, 35.235, now.timetuple().tm_yday, 14.5,
+                                fullscreen=True, runtime=_runtime(), tz_offset_h=3,
+                                location_label="Jerusalem", now=now,
+                                hours=self._hours()))
+        lines = out.split("\n")
+        # Each corner label sits one cell in from its edge of the sky.
+        assert lines[0][1:].startswith("7:52 · 1h = 62m")
+        assert lines[0][:-1].endswith("Jerusalem · 2:30p")
+        assert "mincha ketana 4:10p (in 1h 41m)" in lines[-1]
+        assert lines[-1].endswith("? keys")
+        # The chart gave up a row for the line: 24 rows, two of text.
+        assert len(lines) == 24
+
+    def test_a_marks_only_day_reads_the_interval(self):
+        """With no divisions the corner names the marks either side."""
+        from linecast._sunshine_hours import corner_reading
+        marks = [Mark("sunrise", datetime(2026, 9, 15, 6, 22, tzinfo=self.TZ)),
+                 Mark("sunset", datetime(2026, 9, 15, 18, 45, tzinfo=self.TZ))]
+        hours = DayHours("halachic", date(2026, 9, 15), None, None, None, None,
+                         None, marks, "gra")
+        now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
+        assert corner_reading(hours, now, _runtime()) == "sunrise · sunset in 4h 15m"

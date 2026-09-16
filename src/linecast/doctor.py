@@ -425,6 +425,12 @@ def _collect_preferences():
         native = CULTURE_OF_LANG.get(language)
         culture = native or "none"
         culture_source = f"auto: {language}" if native else "auto"
+    from linecast._config import saved_hours
+    saved_hours_ = saved_hours()
+    if saved_hours_ is not None:
+        hours, hours_source = saved_hours_, "config"
+    else:
+        hours, hours_source = "none", "auto"
     return {
         "units": weather,
         "units_source": weather_source,
@@ -442,6 +448,8 @@ def _collect_preferences():
         "calendar_source": calendar_source,
         "culture": culture,
         "culture_source": culture_source,
+        "hours": hours,
+        "hours_source": hours_source,
     }
 
 
@@ -572,6 +580,7 @@ def render(report):
         ("language", f"{prefs['language']} ({prefs['language_source']})"),
         ("calendar", f"{prefs['calendar']} ({prefs['calendar_source']})"),
         ("culture", f"{prefs['culture']} ({prefs['culture_source']})"),
+        ("hours", f"{prefs['hours']} ({prefs['hours_source']})"),
     ]
     out += [""] + _section("preferences", rows)
 

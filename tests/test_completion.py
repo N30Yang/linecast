@@ -43,7 +43,8 @@ class CompletionScriptTests(unittest.TestCase):
         self.assertIn('--lang', script)
         # --help and -h must be omitted so Nushell does not hijack help display
         self.assertNotIn('--help', script)
-        self.assertNotIn('-h', script)
+        # -h as a flag, not the "-h" inside "linecast-hours"
+        self.assertNotRegex(script, r'(?<![\w-])-h\b')
 
     def test_bash_completion_includes_namespace_and_standalone_commands(self):
         script = render_completion("bash")
@@ -65,7 +66,7 @@ class CompletionScriptTests(unittest.TestCase):
         self.assertIn(
             "complete -c linecast -f -n '__fish_use_subcommand' "
             "-a 'weather sunshine moon sky tides radar maps location language units clock "
-            "week icons calendar culture link doctor completion'",
+            "week icons calendar culture hours link doctor completion'",
             script,
         )
         self.assertIn(
@@ -154,6 +155,29 @@ class CompletionScriptTests(unittest.TestCase):
         for sub in CALENDAR_SUBCOMMANDS:
             self.assertIn(f'export extern "linecast calendar {sub}"', nu)
             self.assertIn(f'export extern "calendar {sub}"', nu)
+
+    def test_hours_subcommands_track_its_parser(self):
+        """`linecast hours` takes the names sunshine's --hours takes,
+        plus show and auto; every shell offers them all."""
+        from linecast._completion import HOURS_SUBCOMMANDS
+        choices = None
+        for action in _runtime.sunshine_parser()._actions:
+            if "--hours" in action.option_strings:
+                choices = set(action.choices)
+        self.assertIsNotNone(choices, "sunshine has no --hours")
+        self.assertEqual(set(HOURS_SUBCOMMANDS), choices | {"show", "auto"})
+        bash = render_completion("bash")
+        zsh = render_completion("zsh")
+        fish = render_completion("fish")
+        nu = render_completion("nu")
+        joined = " ".join(HOURS_SUBCOMMANDS)
+        self.assertIn(f'COMPREPLY+=( $(compgen -W "{joined}" -- "$cur") )', bash)
+        self.assertIn(f"compadd -- {joined}", zsh)
+        self.assertIn(f"complete -c linecast -f -n '__fish_seen_subcommand_from hours' "
+                      f"-a '{joined}'", fish)
+        for sub in HOURS_SUBCOMMANDS:
+            self.assertIn(f'export extern "linecast hours {sub}"', nu)
+            self.assertIn(f'export extern "hours {sub}"', nu)
 
     def test_language_subcommands_list_every_language(self):
         """`linecast language` takes every code linecast has strings for,

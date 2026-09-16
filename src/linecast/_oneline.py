@@ -59,10 +59,14 @@ def weather_oneline(data, location_name, runtime):
 # Sunshine oneline
 # ---------------------------------------------------------------------------
 
-def sunshine_oneline(lat, lng, doy, now_hour, runtime, tz_offset_h=None):
+def sunshine_oneline(lat, lng, doy, now_hour, runtime, tz_offset_h=None,
+                     hours=None, now=None):
     """Return a compact solar summary line.
 
     Example: ``sunrise 5:42a sunset 7:38p 12h34m +2m waning_crescent_icon``
+
+    With *hours*, the day read in a tradition's hours, the reading of
+    *now* follows: ``4:20 1h=57m`` for the halachic hours.
     """
     from linecast.sunshine import solar_times, moon_phase
     from datetime import datetime
@@ -103,6 +107,11 @@ def sunshine_oneline(lat, lng, doy, now_hour, runtime, tz_offset_h=None):
         f"{dim}{delta_str} "
         f"{text}{moon_icon}"
     )
+    if hours is not None and now is not None:
+        from linecast._sunshine_hours import corner_reading
+        tail = corner_reading(hours, now, runtime).replace(" \u00b7 ", " ").replace(" = ", "=")
+        if tail:
+            line += f" {text}{tail}"
     return line + RESET
 
 

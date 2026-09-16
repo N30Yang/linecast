@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from linecast._paths import config_root
-from linecast._runtime import WEEK_STARTS, log_failure
+from linecast._runtime import HOURS_CHOICES, WEEK_STARTS, log_failure
 
 
 def config_file() -> Path:
@@ -102,6 +102,18 @@ def saved_calendar() -> str | None:
     cal = read_config().get("calendar")
     if isinstance(cal, str) and cal.strip().lower() in CALENDAR_CHOICES:
         return cal.strip().lower()
+    return None
+
+
+def saved_hours() -> str | None:
+    """Return the system of hours saved via `linecast hours`, or None.
+
+    A name from HOURS_CHOICES pins that system in every language;
+    'none' keeps the hours off.
+    """
+    hours = read_config().get("hours")
+    if isinstance(hours, str) and hours.strip().lower() in HOURS_CHOICES:
+        return hours.strip().lower()
     return None
 
 

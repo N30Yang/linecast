@@ -118,6 +118,8 @@ The dashboard speaks twenty languages, and its units follow the place or your ow
 
 ![the year view for Reykjavík, in Icelandic, with the pointer on the December solstice](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-year.png)
 
+The day can also be read in a tradition's hours beside the civil clock: the halachic sha'ot zmaniyot, a twelfth of the day from sunrise to sunset, with the day's zmanim from alot hashachar to tzeit listed under the chart and the next one counted down. `sunshine --hours halachic` reads it so for one run and `linecast hours halachic` saves it. [HOURS.md](HOURS.md) describes each system and how it is checked.
+
 Near the poles the same chart turns into polar night and midnight sun. These are Longyearbyen and Vostok Station, at 78° north and 78° south.
 
 <p align="center">
@@ -292,6 +294,19 @@ linecast sky --culture hawaiian     # just this once
 ```
 
 Use `t` in `sky` to choose one from a list. The names are in [CULTURES.md](CULTURES.md), with the credits for each.
+
+### Hours
+
+`sunshine` can read the day in a tradition's hours beside the civil clock. To choose one, for every run or for one:
+
+```sh
+linecast hours halachic             # the zmanim by the Gr"a, every time
+linecast hours halachic-mga         # by the Magen Avraham
+linecast hours none                 # the civil clock alone
+linecast sunshine --hours halachic  # just this once
+```
+
+No language brings a system of hours with it, so there is nothing to follow with `auto`; it clears the setting. There's more about each in [HOURS.md](HOURS.md).
 
 ### Color and icons
 
