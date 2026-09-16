@@ -262,24 +262,59 @@ def _interpolate_columns(values, graph_w):
     return interpolate(values, graph_w)
 
 
+def _present(values):
+    """The numbers in a series, with the nulls left out."""
+    return [v for v in (values or ()) if v is not None]
+
+
+def _filled(values, fill=None):
+    """A series with each null replaced: by the nearest earlier value, or
+    the nearest later one at the start, or `fill` when there is nothing
+    else.  Open-Meteo writes null for an hour it has no value for, and a
+    curve wants a number in every hour; carrying the neighbour across
+    the gap keeps the line unbroken and the columns aligned with the
+    clock.  `fill` is for the series where a missing hour honestly means
+    nothing -- no rain, no cloud, no UV -- rather than "about the same".
+    """
+    if not values:
+        return []
+    if fill is not None:
+        return [fill if v is None else v for v in values]
+    out = list(values)
+    last = next((v for v in out if v is not None), None)
+    if last is None:
+        return []
+    for i, v in enumerate(out):
+        if v is None:
+            out[i] = last
+        else:
+            last = v
+    return out
+
+
 def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     """Slice hourly arrays to the visible window.
 
     offset_minutes shifts the window start forward (positive) or backward
     (negative) from the current hour, enabling keyboard/mouse scrolling.
+
+    The nulls in the series are dealt with here, once, so that nothing
+    downstream -- the curve, the bars, the labels, the hover chip -- meets
+    one (see _filled).  A temperature series with no numbers at all is no
+    graph, and returns None like an empty one.
     """
     times = hourly.get("time", [])
-    temps = hourly.get("temperature_2m", [])
-    precip_prob = hourly.get("precipitation_probability", [])
-    precip_amount = hourly.get("precipitation", [])
-    weather_codes = hourly.get("weather_code", [])
-    wind_speeds = hourly.get("wind_speed_10m", [])
-    wind_directions = hourly.get("wind_direction_10m", [])
-    apparent_temps = hourly.get("apparent_temperature", [])
-    humidity = hourly.get("relative_humidity_2m", [])
-    dew_points = hourly.get("dew_point_2m", [])
-    uv_indices = hourly.get("uv_index", [])
-    cloud_cover = hourly.get("cloud_cover", [])
+    temps = _filled(hourly.get("temperature_2m", []))
+    precip_prob = _filled(hourly.get("precipitation_probability", []), fill=0)
+    precip_amount = _filled(hourly.get("precipitation", []), fill=0)
+    weather_codes = _filled(hourly.get("weather_code", []), fill=0)
+    wind_speeds = _filled(hourly.get("wind_speed_10m", []), fill=0)
+    wind_directions = _filled(hourly.get("wind_direction_10m", []))
+    apparent_temps = _filled(hourly.get("apparent_temperature", []))
+    humidity = _filled(hourly.get("relative_humidity_2m", []))
+    dew_points = _filled(hourly.get("dew_point_2m", []))
+    uv_indices = _filled(hourly.get("uv_index", []), fill=0)
+    cloud_cover = _filled(hourly.get("cloud_cover", []), fill=0)
     if not times or not temps:
         return None
 
@@ -431,11 +466,10 @@ def _compute_daylight_columns(window_dts, sun_events, graph_w):
             lo_i = int(t_frac)
             hi_i = min(lo_i + 1, len(window_dts) - 1)
             frac = t_frac - lo_i
-            secs = (window_dts[lo_i] + (window_dts[hi_i] - window_dts[lo_i]) * frac).timestamp()
-            if window_dts[0].tzinfo:
-                col_dt = datetime.fromtimestamp(secs, tz=window_dts[0].tzinfo)
-            else:
-                col_dt = datetime.fromtimestamp(secs)
+            # Interpolated in place: a round trip through a timestamp
+            # would read these naive local times in the machine's zone,
+            # and on its own DST night shift an hour of columns.
+            col_dt = window_dts[lo_i] + (window_dts[hi_i] - window_dts[lo_i]) * frac
             col_daylight.append(_daylight_factor(col_dt, sun_events))
         return col_daylight
     return [1.0] * graph_w

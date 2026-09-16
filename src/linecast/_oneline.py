@@ -24,10 +24,12 @@ def weather_oneline(data, location_name, runtime):
     if not data:
         return "No weather data"
 
-    current = data.get("current", {})
-    temp = current.get("temperature_2m", 0)
-    wmo = current.get("weather_code", 0)
-    wind = current.get("wind_speed_10m", 0)
+    # A key present and null is a reading the model has no value for;
+    # the line leaves it out rather than print it as 0
+    current = data.get("current") or {}
+    temp = current.get("temperature_2m")
+    wmo = current.get("weather_code") or 0
+    wind = current.get("wind_speed_10m") or 0
     humidity = current.get("relative_humidity_2m")
 
     icons = _wmo_icons(runtime)
@@ -42,7 +44,8 @@ def weather_oneline(data, location_name, runtime):
         short_name = location_name.split(",")[0].strip()
         parts.append(f"{TEXT}{short_name}")
 
-    parts.append(f"{_colored_temp(temp, runtime, deg)}")
+    if temp is not None:
+        parts.append(f"{_colored_temp(temp, runtime, deg)}")
     parts.append(f"{TEXT}{icon} {desc}")
 
     if wind > 0:

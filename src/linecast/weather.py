@@ -37,7 +37,7 @@ from linecast._weather_i18n import (
     _wmo_icons,
     has_string,
 )
-from linecast._weather_hourly import _precip_bar_full
+from linecast._weather_hourly import _precip_bar_full, _present
 from linecast._weather_render import (
     ALERT_AMBER,
     CLOUD_RGB,
@@ -434,15 +434,15 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
 
     hourly = data.get("hourly", {})
 
-    # Check full dataset for optional rows so layout stays stable while scrolling
+    # Check full dataset for optional rows so layout stays stable while
+    # scrolling.  The series can hold nulls, so the stats are over the
+    # hours that have a value.
     wind_threshold = 25 if runtime.metric else 15
-    all_winds = hourly.get("wind_speed_10m", [])
-    has_wind_row = bool(all_winds) and max(all_winds) > wind_threshold
-    all_uv = hourly.get("uv_index", [])
-    has_uv_row = bool(all_uv) and max(all_uv) >= 6
-    has_precip_graph = (bool(hourly.get("precipitation"))
-                        and max(hourly.get("precipitation", [0])) > 0)
-    has_cloud_data = bool(hourly.get("cloud_cover"))
+    has_wind_row = max(_present(hourly.get("wind_speed_10m")), default=0) > wind_threshold
+    has_uv_row = max(_present(hourly.get("uv_index")), default=0) >= 6
+    precip_peak = max(_present(hourly.get("precipitation")), default=0)
+    has_precip_graph = precip_peak > 0
+    has_cloud_data = bool(_present(hourly.get("cloud_cover")))
 
     # Count non-hourly lines precisely
     non_hourly = 1  # header
@@ -511,7 +511,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         # hour comes nowhere near it would leave most of a tall bar empty.
         # The bar takes only the rows its peak can reach, one per third of
         # the scale, and the temperature curve has the rest.
-        peak = max(hourly["precipitation"]) / _precip_bar_full(data, runtime)
+        peak = precip_peak / _precip_bar_full(data, runtime)
         reach = max(1, math.ceil(peak * MAX_PRECIP_ROWS))
         n_precip_braille = min(MAX_PRECIP_ROWS, max(1, graph_budget // 6), reach)
         remaining_for_temp = graph_budget - n_precip_braille
@@ -767,6 +767,57 @@ class WeatherApp(_live.LiveApp):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+def gather(lat, lng, country_code, runtime, geo_label=""):
+    """Everything the dashboard is built from, fetched side by side.
+
+    Returns a dict with name, country_code, data, alerts, aqi and
+    historical.  Each is taken from its own fetch on its own: a
+    provider that raises -- an alert feed with a null where a string
+    was expected, say -- costs only its own entry, logged under --debug,
+    and never the air quality or the climate scale fetched beside it."""
+    from concurrent.futures import ThreadPoolExecutor
+    from datetime import date
+
+    def _settle(future, what, fallback):
+        # With the traceback: a worker that failed is the one thing a
+        # --debug transcript exists to explain.
+        try:
+            return future.result()
+        except Exception as exc:
+            log_failure("worker", what, exc, fallback="omitted", trace=True)
+            return fallback
+
+    result = {}
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        fut_geocode = pool.submit(_reverse_geocode, lat, lng)
+        fut_forecast = pool.submit(fetch_forecast, lat, lng, runtime)
+        fut_aqi = pool.submit(fetch_aqi, lat, lng)
+        fut_hist = pool.submit(fetch_historical, lat, lng, date.today(),
+                               celsius=runtime.celsius, metric=runtime.metric)
+
+        # Alerts depend on geocode for country_code
+        name, cc, addr = _settle(fut_geocode, "reverse geocode", ("", "", {}))
+        fut_alerts = pool.submit(
+            fetch_alerts, lat, lng, cc or country_code,
+            lang=runtime.lang, address=addr,
+        )
+
+        result["name"] = name
+        result["country_code"] = cc or country_code
+        result["data"] = _settle(fut_forecast, "forecast", None)
+        result["aqi"] = _settle(fut_aqi, "air quality", None)
+        result["historical"] = _settle(fut_hist, "historical averages", None)
+        result["alerts"] = _settle(fut_alerts, "alerts", [])
+
+    # A place the reverse geocoder cannot name keeps the name the
+    # user typed; failing that, the coordinates, as radar and maps
+    # show them — never the timezone city, which can be a continent
+    # away (issue #50).
+    if not result["name"]:
+        result["name"] = geo_label or f"{lat:.2f}, {lng:.2f}"
+    return result
+
+
 def main():
     args = weather_parser().parse_args()
     runtime = WeatherRuntime.from_sources(args)
@@ -793,53 +844,12 @@ def main():
         set_current(runtime)
 
     # Fetch data in parallel for faster startup
-    from concurrent.futures import ThreadPoolExecutor
-    import threading
-
     done = threading.Event()
     result = {}
 
     def _fetch():
         try:
-            with ThreadPoolExecutor(max_workers=4) as pool:
-                fut_geocode = pool.submit(_reverse_geocode, lat, lng)
-                fut_forecast = pool.submit(fetch_forecast, lat, lng, runtime)
-                fut_aqi = pool.submit(fetch_aqi, lat, lng)
-
-                def _hist():
-                    try:
-                        from datetime import date
-                        return fetch_historical(
-                            lat, lng, date.today(),
-                            celsius=runtime.celsius, metric=runtime.metric,
-                        )
-                    except Exception as exc:
-                        log_failure("weather/climate", "historical averages", exc,
-                                    url="archive-api.open-meteo.com",
-                                    fallback="no comparison")
-                        return None
-                fut_hist = pool.submit(_hist)
-
-                # Alerts depend on geocode for country_code
-                name, cc, addr = fut_geocode.result()
-                fut_alerts = pool.submit(
-                    fetch_alerts, lat, lng, cc or country_code,
-                    lang=runtime.lang, address=addr,
-                )
-
-                result["name"] = name
-                result["country_code"] = cc or country_code
-                result["data"] = fut_forecast.result()
-                result["alerts"] = fut_alerts.result()
-                result["aqi"] = fut_aqi.result()
-                result["historical"] = fut_hist.result()
-
-            # A place the reverse geocoder cannot name keeps the name the
-            # user typed; failing that, the coordinates, as radar and maps
-            # show them — never the timezone city, which can be a continent
-            # away (issue #50).
-            if not result["name"]:
-                result["name"] = geo_label or f"{lat:.2f}, {lng:.2f}"
+            result.update(gather(lat, lng, country_code, runtime, geo_label))
         except Exception as exc:
             # Whatever landed in `result` is shown; a forecast that did
             # not is the "Could not fetch weather data" exit below.

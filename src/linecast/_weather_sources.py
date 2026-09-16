@@ -448,7 +448,7 @@ def _fetch_alerts_nws(lat, lng):
     features = data.get("features", [])
     alerts = []
     for feature in features:
-        props = feature.get("properties", {})
+        props = feature.get("properties") or {}
         if props.get("status") != "Actual":
             continue
         alerts.append({
@@ -498,11 +498,12 @@ def _fetch_alerts_eccc(lat, lng, lang="en"):
     alerts = []
     seen_events = set()  # deduplicate by event name
     for feature in features:
-        props = feature.get("properties", {})
+        props = feature.get("properties") or {}
+        # a name the feed has no translation for comes back null
         event = (
-            props.get(name_key, "").capitalize()
-            or props.get(short_name_key, "")
-            or props.get(name_fallback, "").capitalize()
+            (props.get(name_key) or "").capitalize()
+            or (props.get(short_name_key) or "")
+            or (props.get(name_fallback) or "").capitalize()
         )
         severity = _eccc_severity(props)
         desc = props.get(text_key) or props.get(text_fallback) or ""
@@ -601,16 +602,16 @@ def _fetch_alerts_metno(lat, lng):
     alerts = []
     seen = set()
     for feature in data.get("features", []):
-        props = feature.get("properties", {})
+        props = feature.get("properties") or {}
         event = (props.get("event") or "").capitalize()
-        severity = props.get("severity", "")
+        severity = props.get("severity") or ""
         if not event:
             continue
         dedup_key = (event, severity)
         if dedup_key in seen:
             continue
         seen.add(dedup_key)
-        when = feature.get("when", {}).get("interval", ["", ""])
+        when = (feature.get("when") or {}).get("interval") or ["", ""]
         effective = when[0] if len(when) > 0 else ""
         expires = when[1] if len(when) > 1 else ""
         web = (props.get("web") or "").strip()
@@ -640,11 +641,12 @@ def _fetch_alerts_meteireann(lat, lng):
     if isinstance(data, list):
         return data
 
-    warnings_data = data.get("warnings", {})
+    warnings_data = data.get("warnings") or {}
     alerts = []
     seen = set()
     for category in ("national", "marine", "environmental"):
-        for w in warnings_data.get(category, []):
+        # a category with nothing in force can be null rather than empty
+        for w in warnings_data.get(category) or []:
             headline = w.get("headline") or ""
             if not headline:
                 continue
@@ -762,9 +764,9 @@ def _fetch_alerts_meteoalarm(lat, lng, slug, lang="en", address=None):
 
     warnings = data.get("warnings", [])
     per_warning_descs = [
-        [area.get("areaDesc", "")
-         for info in w.get("alert", {}).get("info", [])
-         for area in info.get("area", [])]
+        [area.get("areaDesc") or ""
+         for info in (w.get("alert") or {}).get("info") or []
+         for area in info.get("area") or []]
         for w in warnings
     ]
     location_words = _drop_feed_wide_words(
@@ -775,8 +777,8 @@ def _fetch_alerts_meteoalarm(lat, lng, slug, lang="en", address=None):
     national = []
     national_seen = set()
     for w in warnings:
-        alert_obj = w.get("alert", {})
-        infos = alert_obj.get("info", [])
+        alert_obj = w.get("alert") or {}
+        infos = alert_obj.get("info") or []
         # Prefer user's language, fall back to English, then first available
         preferred_info = None
         en_info = None
@@ -784,22 +786,23 @@ def _fetch_alerts_meteoalarm(lat, lng, slug, lang="en", address=None):
         area_descs = []
         areas = []
         for info in infos:
-            info_lang = info.get("language", "")
+            # an info block with no language tag is one in the feed's own
+            info_lang = info.get("language") or ""
             if info_lang.startswith(lang):
                 preferred_info = info
             elif info_lang.startswith("en"):
                 en_info = info
             elif other_info is None:
                 other_info = info
-            for area in info.get("area", []):
-                area_descs.append(area.get("areaDesc", ""))
+            for area in info.get("area") or []:
+                area_descs.append(area.get("areaDesc") or "")
                 areas.append(area)
         info = preferred_info or en_info or other_info
         if not info:
             continue
         codes = _region_keys(areas)
 
-        severity = info.get("severity", "")
+        severity = info.get("severity") or ""
         if severity == "Minor":
             continue
 
@@ -1002,8 +1005,8 @@ def _regions_here(lat, lng, warnings):
     """The region keys covering the point, looked up only if a warning could use them."""
     from linecast._meteoalarm_regions import regions_at
     for w in warnings:
-        for info in w.get("alert", {}).get("info", []):
-            if _region_keys(info.get("area", [])):
+        for info in (w.get("alert") or {}).get("info") or []:
+            if _region_keys(info.get("area") or []):
                 return regions_at(lat, lng)
     return set()
 
@@ -1180,15 +1183,16 @@ def _fetch_alerts_jma(lat, lng, lang="en"):
     if isinstance(data, list):
         return data
 
-    headline = data.get("headlineText", "")
-    report_dt = data.get("reportDatetime", "")
+    # both are null, not absent, when the office has nothing to say
+    headline = data.get("headlineText") or ""
+    report_dt = data.get("reportDatetime") or ""
     use_ja = lang == "ja"
 
     # Collect all active warning codes across all areas
     active_codes = set()
-    for area_type in data.get("areaTypes", []):
-        for area in area_type.get("areas", []):
-            for w in area.get("warnings", []):
+    for area_type in data.get("areaTypes") or []:
+        for area in area_type.get("areas") or []:
+            for w in area.get("warnings") or []:
                 if w.get("status", "") in _JMA_ACTIVE:
                     active_codes.add(w.get("code", ""))
 
@@ -1435,9 +1439,10 @@ def _parse_cma_data(data, provinces, lang="en"):
 
     prefixes = tuple(provinces) if isinstance(provinces, list) else (provinces,)
 
-    page = data.get("data", {}).get("page", {})
-    entries = page.get("list", [])
-    province_alarms = data.get("data", {}).get("provinceAlarms", [])
+    body = data.get("data") or {}
+    page = body.get("page") or {}
+    entries = page.get("list") or []
+    province_alarms = body.get("provinceAlarms") or []
 
     use_zh = lang == "zh"
     alerts = []
@@ -1445,14 +1450,14 @@ def _parse_cma_data(data, provinces, lang="en"):
 
     # Province-level alarms first (most important), then county-level
     for entry in province_alarms + entries:
-        alertid = entry.get("alertid", "")
+        alertid = entry.get("alertid") or ""
         if alertid[:2] not in prefixes:
             continue
 
-        title = entry.get("title", "")
-        pic = entry.get("pic", "")
-        issuetime = entry.get("issuetime", "")
-        detail_url = entry.get("url", "")
+        title = entry.get("title") or ""
+        pic = entry.get("pic") or ""
+        issuetime = entry.get("issuetime") or ""
+        detail_url = entry.get("url") or ""
 
         # Extract warning type and color from title
         tm = re.search(r'\u53d1\u5e03(.+?)(\u7ea2|\u6a59|\u9ec4|\u84dd)\u8272\u9884\u8b66', title)

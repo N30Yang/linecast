@@ -18,12 +18,14 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     """Current conditions header line."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
-    current = data.get("current", {})
-    temp = current.get("temperature_2m", 0)
-    feels = current.get("apparent_temperature", 0)
-    wmo = current.get("weather_code", 0)
-    wind = current.get("wind_speed_10m", 0)
-    gusts = current.get("wind_gusts_10m", 0)
+    # A key can be present and null when the model has no value for
+    # the hour; a null reading is left off the line, not printed as 0.
+    current = data.get("current") or {}
+    temp = current.get("temperature_2m")
+    feels = current.get("apparent_temperature")
+    wmo = current.get("weather_code") or 0
+    wind = current.get("wind_speed_10m") or 0
+    gusts = current.get("wind_gusts_10m") or 0
     humidity = current.get("relative_humidity_2m")
     dew_point = current.get("dew_point_2m")
 
@@ -32,8 +34,12 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     name = WMO_NAMES_I18N.get(runtime.lang, {}).get(wmo) or WMO_NAMES.get(wmo, "")
 
     deg = runtime.temp_unit
-    left_core = f"{TEXT}{icon} {name}  {_colored_temp(temp, runtime, deg)}"
-    left_feels = f"  {MUTED}{_s('feels', runtime)} {_colored_temp(feels, runtime, deg)}"
+    left_core = f"{TEXT}{icon} {name}"
+    if temp is not None:
+        left_core += f"  {_colored_temp(temp, runtime, deg)}"
+    left_feels = ""
+    if feels is not None:
+        left_feels = f"  {MUTED}{_s('feels', runtime)} {_colored_temp(feels, runtime, deg)}"
 
     # Historical comparison — subtle annotation after feels-like
     left_hist = ""
@@ -44,7 +50,8 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
             hi_temps = daily.get("temperature_2m_max", [])
             lo_temps = daily.get("temperature_2m_min", [])
             # Index 1 = today (with past_days=1)
-            if len(hi_temps) > 1 and len(lo_temps) > 1:
+            if (len(hi_temps) > 1 and len(lo_temps) > 1
+                    and hi_temps[1] is not None and lo_temps[1] is not None):
                 hist_text = format_historical_comparison(
                     hi_temps[1], lo_temps[1], historical, runtime,
                 )
@@ -334,13 +341,17 @@ def comparative_sentence(daily, now, runtime=None):
         return ""
 
     if now.hour < _COMPARISON_TURNS_TO_TOMORROW:
-        diff = hi_temps[1] - hi_temps[0]
+        a, b = hi_temps[0], hi_temps[1]
         ref_day = _s("yesterday", runtime)
         subject = _s("today_subj", runtime)
     else:
-        diff = hi_temps[2] - hi_temps[1]
+        a, b = hi_temps[1], hi_temps[2]
         ref_day = _s("today_ref", runtime)
         subject = _s("tomorrow_subj", runtime)
+    # Either day's high can be null; there is then nothing to compare.
+    if a is None or b is None:
+        return ""
+    diff = b - a
 
     abs_diff = abs(diff)
     # Thresholds in degrees (smaller for Celsius since 1°C ≈ 1.8°F)
@@ -419,7 +430,8 @@ def precipitation_sentence(hourly, now, runtime=None):
         return ""
 
     def is_precip(idx):
-        p = precip_prob[idx] if idx < len(precip_prob) else 0
+        # A null probability or code is an hour that says nothing
+        p = (precip_prob[idx] if idx < len(precip_prob) else 0) or 0
         c = codes[idx] if idx < len(codes) else 0
         return c in _PRECIP_CODES and p > 30
 
@@ -504,8 +516,9 @@ def past_precip_sentence(hourly, now, runtime):
             continue
         if dt < past_start or dt > current_hour:
             continue
-        p = precip[i] if i < len(precip) else 0
-        s = snowfall[i] if i < len(snowfall) else 0
+        # A null hour holds no measurable precipitation
+        p = (precip[i] if i < len(precip) else 0) or 0
+        s = (snowfall[i] if i < len(snowfall) else 0) or 0
         c = codes[i] if i < len(codes) else 0
         if p > 0 or s > 0:
             total_precip += p

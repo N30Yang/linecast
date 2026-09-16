@@ -429,8 +429,7 @@ class TestWeatherFetchThread:
         _run_main(stubs, ["weather", "--print", "--debug", "--location", "43.68,-70.37"],
                   monkeypatch)
         err = capsys.readouterr().err
-        line = ("[linecast] worker: weather fetch failed -- RuntimeError: boom; "
-                "the data in hand\n")
+        line = "[linecast] worker: forecast failed -- RuntimeError: boom; omitted\n"
         assert line in err
         after = err.split(line, 1)[1]
         assert after.startswith("Traceback (most recent call last):\n")
