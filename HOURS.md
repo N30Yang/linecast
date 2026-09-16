@@ -4,7 +4,7 @@
 
 ## Choosing one
 
-`linecast sunshine --hours halachic` reads the day in one for a single run, and `linecast hours halachic` saves it for every run. `linecast hours none` turns it off and `linecast hours auto` clears the setting. No language brings a system of hours with it, so `auto` and `none` read the same. The names are `halachic`, `halachic-mga`, `roman`, `japanese`, and `islamic`.
+`linecast sunshine --hours halachic` reads the day in one for a single run, and `linecast hours halachic` saves it for every run. `linecast hours none` turns it off and `linecast hours auto` clears the setting. No language brings a system of hours with it, so `auto` and `none` read the same. The names are `halachic`, `halachic-mga`, `roman`, and `japanese`, with `islamic` to come.
 
 With a system on, the day view's top-left corner reads the shown moment in that system's terms, with the length of the hour in force beside it, and a line under the sunrise and sunset lists the day's marks in order. The marks already past are dim, the next is in the text colour with a countdown, and the rest are muted. The line keeps as many marks as fit the window, the next first; sunrise and sunset go last, since the line above names them. Scrolling the day with the wheel moves both. `--json` carries the same facts in an `hours` block, with each mark's name in the tradition's own script where it has one, and `--oneline` ends with the reading.
 
@@ -22,6 +22,20 @@ The angles are the ones [Hebcal](https://www.hebcal.com/) and the [KosherJava](h
 
 Customs differ in the angles and the minutes, and a community's own luach is the authority. This is the common reckoning, offered as the printed tables offer it.
 
-## Roman, Japanese, and Islamic
+## Roman
 
-These are the next tables over the same engine, and are not in this build yet: the twelve horae and four vigiliae of the Roman day, the six koku of the Edo day and night with their edges at the Sun 7°21′40″ below the horizon, and the prayer times from Fajr to Isha with the fast in Ramadan. Each will have its section here when it lands.
+`roman` reads the day as Rome did: twelve horae from sunrise to sunset, and four vigiliae, the watches, from sunset to sunrise. An hour in Rome runs about forty-five minutes at the December solstice and seventy-five at the June one, and a watch about three hours the year round. The hours count from sunrise, so hora sexta ends at noon and hora nona is mid-afternoon, and the church's terce, sext, and none took their names from the third, sixth, and ninth. The corner reads "hora quarta" by day and "vigilia secunda" by night, with the length of the hour or the watch beside it.
+
+The marks are the ones a Roman named: sunrise, hora tertia, hora sexta, hora nona, sunset, and the second, third, and fourth watches, the third opening at media nox, the middle of the night. Latin is Latin in every language. There is nothing to check this against but the arithmetic; the tests confirm the forty-five and seventy-five minute hours at Rome's latitude.
+
+## Japanese
+
+`japanese` reads the day by 不定時法, the hours Japan kept until 1873 and the wadokei were built to strike: six koku from dawn to dusk and six from dusk to dawn, each named by its bells and the earthly branch of its hour. The count runs 明六つ, 朝五つ, 朝四つ, 昼九つ at noon, 昼八つ, 夕七つ, then 暮六つ at dusk, 夜五つ, 夜四つ, 夜九つ at midnight, 夜八つ, and 暁七つ. Nine was the auspicious number and each bell after it dropped one. The corner reads the koku and its half, 昼四つ半, with the koku's length beside it: over two and a half hours on a June day in Tokyo, under two in December.
+
+The day's edges are not sunrise and sunset but 明六つ and 暮六つ, dawn and dusk. The Jōkyō calendar fixed them at two and a half koku, thirty-six minutes, either side of sunrise and sunset; the Kansei calendar of 1798 replaced that with the Sun's centre 7°21′40″ below the horizon, the depression reached at Kyoto thirty-six minutes before sunrise at the equinoxes, and the Tenpō calendar kept it. The [National Astronomical Observatory](https://eco.mtk.nao.ac.jp/koyomi/wiki/C7F6CCC02FCCEBCCC0A4C8C6FCCAEB.html) still prints 夜明 and 日暮 by that angle, with a note that they answer to the old 明六つ and 暮六つ, and the tests check Tokyo's dawn and dusk on the equinox and both solstices against its calculator, which prints whole minutes; every one is within a minute.
+
+Japanese keeps its own words. The other languages get the count and the time of day, "morning four", with the animal's hour in the full name, and `--json` carries the kanji beside them.
+
+## Islamic
+
+The prayer times, Fajr to Isha, with the fast in Ramadan, are the next table over the same engine and are not in this build yet.

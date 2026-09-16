@@ -41,8 +41,10 @@ class DayHours:
     The edges are aware local datetimes, or None where the Sun never
     gets there: a polar season at the horizon, a Nordic June at 16.1°.
     `divisions` is the number of equal hours between the day's edges,
-    and the night's, or None for a system that keeps marks only.
-    `variant` names the opinion or method the table used.
+    or None for a system that keeps marks only; the night has its own
+    count, `night_divisions`, where it differs (Rome's four vigiliae
+    against twelve horae). `variant` names the opinion or method the
+    table used.
     """
     system: str
     date: date
@@ -53,6 +55,11 @@ class DayHours:
     divisions: int | None
     marks: list = field(default_factory=list)
     variant: str | None = None
+    night_divisions: int | None = None
+
+    def __post_init__(self):
+        if self.night_divisions is None:
+            self.night_divisions = self.divisions
 
 
 @dataclass(frozen=True)
@@ -131,9 +138,10 @@ def reading(hours, now):
     for night, start, end in spans:
         if start is None or end is None or not start <= now < end:
             continue
-        hour = (end - start) / hours.divisions
+        count = hours.night_divisions if night else hours.divisions
+        hour = (end - start) / count
         elapsed = (now - start) / hour
-        index = min(hours.divisions - 1, int(elapsed))
+        index = min(count - 1, int(elapsed))
         return Reading(night, index, elapsed - index, hour.total_seconds(),
                        start, end)
     return None

@@ -118,7 +118,7 @@ The dashboard speaks twenty languages, and its units follow the place or your ow
 
 ![the year view for Reykjavík, in Icelandic, with the pointer on the December solstice](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-year.png)
 
-The day can also be read in a tradition's hours beside the civil clock: the halachic sha'ot zmaniyot, a twelfth of the day from sunrise to sunset, with the day's zmanim from alot hashachar to tzeit listed under the chart and the next one counted down. `sunshine --hours halachic` reads it so for one run and `linecast hours halachic` saves it. [HOURS.md](HOURS.md) describes each system and how it is checked.
+The day can also be read in a tradition's hours beside the civil clock: the halachic sha'ot zmaniyot, a twelfth of the day from sunrise to sunset, with the day's zmanim from alot hashachar to tzeit listed under the chart and the next one counted down; the twelve horae and four vigiliae of Rome; or the six koku of the Edo day and night, 明六つ to 暮六つ, as the bells struck them. `sunshine --hours halachic` reads it so for one run and `linecast hours halachic` saves it. [HOURS.md](HOURS.md) describes each system and how it is checked.
 
 Near the poles the same chart turns into polar night and midnight sun. These are Longyearbyen and Vostok Station, at 78° north and 78° south.
 
@@ -302,6 +302,8 @@ Use `t` in `sky` to choose one from a list. The names are in [CULTURES.md](CULTU
 ```sh
 linecast hours halachic             # the zmanim by the Gr"a, every time
 linecast hours halachic-mga         # by the Magen Avraham
+linecast hours roman                # twelve horae and four vigiliae
+linecast hours japanese             # the six koku of the Edo day and night
 linecast hours none                 # the civil clock alone
 linecast sunshine --hours halachic  # just this once
 ```

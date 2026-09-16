@@ -14,7 +14,7 @@ line above names them already.
 
 from linecast._graphics import RESET, fg, fmt_time_dt, visible_len
 from linecast._hours import fmt_duration, last_mark, next_mark, reading
-from linecast._hours.i18n import hs, mark_name, reading_name, variant_name
+from linecast._hours.i18n import hs, mark_name, reading_name, unit_name, variant_name
 
 _SEP = " · "
 
@@ -34,7 +34,8 @@ def corner_reading(hours, now, runtime):
         name = reading_name(hours.system, r, runtime)
         # The hour's length in minutes, 43m in a December night and
         # 74m on a June day, since "1h = 1h 14m" reads as a riddle.
-        return f"{name}{_SEP}1h = {int(round(r.hour_seconds / 60))}m"
+        unit = unit_name(hours.system, runtime, r.night)
+        return f"{name}{_SEP}{unit} = {int(round(r.hour_seconds / 60))}m"
     # A system of marks alone, or a day the Sun never made the edges
     # of: the interval the moment falls in, and how long it has left.
     before, after = last_mark(hours, now), next_mark(hours, now)

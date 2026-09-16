@@ -24,6 +24,8 @@ import pytest
 from linecast._hours import (
     DayHours, Mark, hours_now, last_mark, next_mark, reading, resolve_hours,
 )
+from linecast._hours.roman import roman_hours
+from linecast._hours.wadokei import wadokei
 from linecast._hours.zmanim import zmanim
 from linecast._runtime import RuntimeConfig
 
@@ -619,3 +621,112 @@ class TestPainting:
                          None, marks, "gra")
         now = datetime(2026, 9, 15, 14, 30, tzinfo=self.TZ)
         assert corner_reading(hours, now, _runtime()) == "sunrise · sunset in 4h 15m"
+
+
+class TestRoman:
+    ROME = ZoneInfo("Europe/Rome")
+
+    def test_the_hour_runs_from_forty_five_to_seventy_five_minutes(self):
+        """In Rome an hour was about 45 minutes at the December
+        solstice and 75 at the June one."""
+        june = reading(roman_hours(date(2026, 6, 21), 41.9, 12.5, self.ROME),
+                       datetime(2026, 6, 21, 14, 30, tzinfo=self.ROME))
+        december = reading(roman_hours(date(2026, 12, 21), 41.9, 12.5, self.ROME),
+                           datetime(2026, 12, 21, 14, 30, tzinfo=self.ROME))
+        assert abs(june.hour_seconds / 60 - 75) < 3
+        assert abs(december.hour_seconds / 60 - 45) < 3
+
+    def test_the_night_has_four_watches(self):
+        hours = roman_hours(date(2026, 6, 21), 41.9, 12.5, self.ROME)
+        assert hours.divisions == 12 and hours.night_divisions == 4
+        r = reading(hours, datetime(2026, 6, 21, 23, 30, tzinfo=self.ROME))
+        assert r.night and r.index == 1
+        assert abs(r.hour_seconds - (hours.next_day_start - hours.day_end).total_seconds() / 4) < 1
+
+    def test_names_and_marks(self):
+        from linecast._sunshine_hours import corner_reading, hours_line
+        hours = roman_hours(date(2026, 6, 21), 41.9, 12.5, self.ROME)
+        day = datetime(2026, 6, 21, 14, 30, tzinfo=self.ROME)
+        assert corner_reading(hours, day, _runtime()) == "hora octava · 1h = 76m"
+        night = datetime(2026, 6, 21, 23, 30, tzinfo=self.ROME)
+        assert corner_reading(hours, night, _runtime()) == "vigilia secunda · 1 vigilia = 132m"
+        keys = [m.key for m in hours.marks]
+        assert keys == ["vigilia_tertia", "vigilia_quarta", "sunrise", "hora_tertia",
+                        "hora_sexta", "hora_nona", "sunset", "vigilia_secunda"]
+        line = _plain(hours_line(hours, day, 300, _runtime()))
+        assert "sexta 1:11p" in line and "nona 5:00p (in 2h 30m)" in line
+        assert line.endswith("vigilia II 11:00p")
+
+    def test_hora_sexta_is_the_middle_of_the_day(self):
+        hours = roman_hours(date(2026, 6, 21), 41.9, 12.5, self.ROME)
+        marks = {m.key: m.at for m in hours.marks}
+        middle = hours.day_start + (hours.day_end - hours.day_start) / 2
+        assert abs(marks["hora_sexta"] - middle) < timedelta(seconds=1)
+
+
+class TestWadokei:
+    """The National Astronomical Observatory's calculator gives 夜明 and
+    日暮 for Tokyo by the 7°21′40″ rule, to the minute."""
+    TOKYO = ZoneInfo("Asia/Tokyo")
+    LAT, LNG = 35.6895, 139.6917
+    PUBLISHED = {
+        date(2026, 3, 20): ("05:13", "18:25"),
+        date(2026, 6, 21): ("03:47", "19:38"),
+        date(2026, 12, 22): ("06:11", "17:08"),
+    }
+
+    @pytest.mark.parametrize("day", sorted(PUBLISHED))
+    def test_dawn_and_dusk_match_the_observatory(self, day):
+        """The observatory prints whole minutes, and its Tokyo is not
+        quite this one, so within a minute is the check."""
+        hours = wadokei(day, self.LAT, self.LNG, self.TOKYO)
+        for at, published in zip((hours.day_start, hours.day_end), self.PUBLISHED[day]):
+            h, m = (int(x) for x in published.split(":"))
+            expected = datetime(day.year, day.month, day.day, h, m, tzinfo=self.TOKYO)
+            assert abs(at - expected) < timedelta(seconds=90), (at, published)
+
+    def test_six_koku_each_way_named_by_their_bells(self):
+        hours = wadokei(date(2026, 6, 21), self.LAT, self.LNG, self.TOKYO)
+        assert hours.divisions == 6 and hours.night_divisions == 6
+        keys = [m.key for m in hours.marks]
+        assert keys == ["yoru_yatsu", "akatsuki_nanatsu", "ake_mutsu", "asa_itsutsu",
+                        "asa_yotsu", "hiru_kokonotsu", "hiru_yatsu", "yuu_nanatsu",
+                        "kure_mutsu", "yoru_itsutsu", "yoru_yotsu", "yoru_kokonotsu"]
+        marks = {m.key: m.at for m in hours.marks}
+        assert marks["ake_mutsu"] == hours.day_start
+        assert marks["kure_mutsu"] == hours.day_end
+        noon = hours.day_start + (hours.day_end - hours.day_start) / 2
+        assert abs(marks["hiru_kokonotsu"] - noon) < timedelta(seconds=1)
+
+    def test_the_corner_in_japanese_and_english(self):
+        from linecast._sunshine_hours import corner_reading
+        hours = wadokei(date(2026, 6, 21), self.LAT, self.LNG, self.TOKYO)
+        now = datetime(2026, 6, 21, 10, 40, tzinfo=self.TOKYO)
+        assert corner_reading(hours, now, _runtime(lang="ja")) == "朝四つ半 · 1刻 = 159m"
+        assert corner_reading(hours, now, _runtime()) == "morning four ½ · 1 koku = 159m"
+        early = datetime(2026, 6, 21, 9, 30, tzinfo=self.TOKYO)
+        assert corner_reading(hours, early, _runtime(lang="ja")) == "朝四つ · 1刻 = 159m"
+        night = datetime(2026, 6, 21, 23, 50, tzinfo=self.TOKYO)
+        assert corner_reading(hours, night, _runtime(lang="ja")).startswith("夜九つ")
+
+    def test_the_line_keeps_kanji_in_japanese_and_words_elsewhere(self):
+        from linecast._sunshine_hours import hours_line
+        hours = wadokei(date(2026, 6, 21), self.LAT, self.LNG, self.TOKYO)
+        now = datetime(2026, 6, 21, 10, 40, tzinfo=self.TOKYO)
+        ja = _plain(hours_line(hours, now, 300, _runtime(lang="ja", use_24h=True)))
+        assert ja.startswith("夜八つ 01:04 · 暁七つ 02:25 · 明六つ 03:47")
+        assert "昼九つ 11:43 (1h 03m後)" in ja
+        en = _plain(hours_line(hours, now, 300, _runtime()))
+        assert "noon nine 11:43a (in 1h 03m)" in en
+        assert en.endswith("midnight nine 11:43p")
+
+    def test_json_carries_the_kanji_beside_the_english(self):
+        from linecast._sunshine_json import build_payload
+        hours = wadokei(date(2026, 6, 21), self.LAT, self.LNG, self.TOKYO)
+        now = datetime(2026, 6, 21, 10, 40, tzinfo=self.TOKYO)
+        block = build_payload(self.LAT, self.LNG, now=now, location="Tokyo", hours=hours)["hours"]
+        assert block["divisions"] == 6 and block["night_divisions"] == 6
+        noon = next(m for m in block["marks"] if m["key"] == "hiru_kokonotsu")
+        assert noon == {"key": "hiru_kokonotsu", "name": "noon nine, the hour of the Horse",
+                        "native": "昼九つ", "time": "2026-06-21T11:43"}
+        assert block["now"]["label"] == "morning four ½"

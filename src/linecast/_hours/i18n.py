@@ -31,10 +31,40 @@ _ZMANIM = {
     "chatzot_halayla": ("chatzot halayla", "chatzot halayla", "חצות הלילה"),
 }
 
+# The Roman marks: key → (short, full). Latin in every language.
+_ROMAN = {
+    "hora_tertia": ("tertia", "hora tertia"),
+    "hora_sexta": ("sexta", "hora sexta"),
+    "hora_nona": ("nona", "hora nona"),
+    "vigilia_secunda": ("vigilia II", "vigilia secunda"),
+    "vigilia_tertia": ("vigilia III", "vigilia tertia"),
+    "vigilia_quarta": ("vigilia IV", "vigilia quarta"),
+}
+
+# The Edo koku: key → (Japanese, English short, English full). The
+# Japanese name stands in every language but the ones with their own
+# column; the animal's hour is the branch's, as the wall calendars
+# still print the 子の刻.
+_EDO = {
+    "ake_mutsu": ("明六つ", "dawn six", "dawn six, the hour of the Rabbit"),
+    "asa_itsutsu": ("朝五つ", "morning five", "morning five, the hour of the Dragon"),
+    "asa_yotsu": ("朝四つ", "morning four", "morning four, the hour of the Snake"),
+    "hiru_kokonotsu": ("昼九つ", "noon nine", "noon nine, the hour of the Horse"),
+    "hiru_yatsu": ("昼八つ", "day eight", "day eight, the hour of the Goat"),
+    "yuu_nanatsu": ("夕七つ", "evening seven", "evening seven, the hour of the Monkey"),
+    "kure_mutsu": ("暮六つ", "dusk six", "dusk six, the hour of the Rooster"),
+    "yoru_itsutsu": ("夜五つ", "night five", "night five, the hour of the Dog"),
+    "yoru_yotsu": ("夜四つ", "night four", "night four, the hour of the Pig"),
+    "yoru_kokonotsu": ("夜九つ", "midnight nine", "midnight nine, the hour of the Rat"),
+    "yoru_yatsu": ("夜八つ", "night eight", "night eight, the hour of the Ox"),
+    "akatsuki_nanatsu": ("暁七つ", "daybreak seven", "daybreak seven, the hour of the Tiger"),
+}
+
 # The strings the hours line and the corner need beyond the names:
-# "night" for the night hours, "in {dur}" for the countdown.
+# "night" for the night hours, "in {dur}" for the countdown, and the
+# unit the corner measures, "1h = 62m", where a system has its own.
 _HOURS_STRINGS = {
-    "en": {"night": "night", "in_time": "in {dur}"},
+    "en": {"night": "night", "in_time": "in {dur}", "koku": "1 koku"},
     "fr": {"night": "nuit", "in_time": "dans {dur}"},
     "es": {"night": "noche", "in_time": "en {dur}"},
     "de": {"night": "Nacht", "in_time": "in {dur}"},
@@ -47,7 +77,7 @@ _HOURS_STRINGS = {
     "is": {"night": "nótt", "in_time": "eftir {dur}"},
     "da": {"night": "nat", "in_time": "om {dur}"},
     "fi": {"night": "yö", "in_time": "{dur} kuluttua"},
-    "ja": {"night": "夜", "in_time": "{dur}後"},
+    "ja": {"night": "夜", "in_time": "{dur}後", "koku": "1刻"},
     "ko": {"night": "밤", "in_time": "{dur} 후"},
     "zh": {"night": "夜", "in_time": "{dur}后"},
     "th": {"night": "กลางคืน", "in_time": "อีก {dur}"},
@@ -74,6 +104,14 @@ def mark_name(system, key, runtime, short=False):
     if system == "halachic":
         short_name, full, _hebrew = _ZMANIM[key]
         return short_name if short else full
+    if system == "roman":
+        short_name, full = _ROMAN[key]
+        return short_name if short else full
+    if system == "japanese":
+        japanese, short_name, full = _EDO[key]
+        if lang_of(runtime) == "ja":
+            return japanese
+        return short_name if short else full
     return key
 
 
@@ -82,7 +120,19 @@ def mark_native(system, key):
     of a zman. None where the display name already is it."""
     if system == "halachic":
         return _ZMANIM[key][2]
+    if system == "japanese":
+        return _EDO[key][0]
     return None
+
+
+def unit_name(system, runtime, night=False):
+    """What the corner calls one of the system's hours: '1h', '1刻', or
+    at Rome by night '1 vigilia'."""
+    if system == "japanese":
+        return hs("koku", runtime)
+    if system == "roman" and night:
+        return "1 vigilia"
+    return "1h"
 
 
 def reading_name(system, r, runtime):

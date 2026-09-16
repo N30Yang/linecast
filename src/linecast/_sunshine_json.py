@@ -140,6 +140,7 @@ def _hours_block(hours, now):
         "day_start": local_iso(hours.day_start) if hours.day_start else None,
         "day_end": local_iso(hours.day_end) if hours.day_end else None,
         "divisions": hours.divisions,
+        "night_divisions": hours.night_divisions,
         "now": None if r is None else {
             "label": reading_name(hours.system, r, runtime),
             "night": r.night,
