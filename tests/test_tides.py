@@ -1,6 +1,8 @@
+import re
 import unittest
 from datetime import date, datetime, timedelta
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 from linecast import tides
 from linecast import _tides_chs
@@ -9,6 +11,8 @@ from linecast import _tides_noaa
 from linecast import _tides_openmeteo
 from linecast import _tides_qld
 from linecast import _tides_tidecheck
+from linecast._runtime import TidesRuntime
+from linecast._tides_render import prepare_tide_window
 from linecast._tides_providers import (
     CHS, HKO, NOAA, OPENMETEO, PROVIDERS, QLD, TIDECHECK, provider_for_id,
 )
@@ -55,6 +59,23 @@ class RenderTests(unittest.TestCase):
                                hilo=[], provider=HKO)
         self.assertIn("Hong Kong Observatory", out)
 
+    def test_render_reads_now_in_the_data_zone_when_metadata_has_none(self):
+        # CHS and TideCheck answer aware datetimes whatever the metadata
+        # says, and a cached row keeps its offset; a station whose
+        # metadata did not arrive must still draw rather than fall over
+        # comparing a naive now with them
+        tz = ZoneInfo("America/Halifax")
+        start = datetime.now(tz).replace(minute=0, second=0, microsecond=0)
+        preds = [(start + timedelta(hours=h), float(h % 12))
+                 for h in range(-24, 30)]
+        hilo = [(start + timedelta(hours=3), 11.0, "H"),
+                (start + timedelta(hours=9), 0.0, "L")]
+        self.assertIs(tides._station_now(None, preds).tzinfo, tz)
+        with patch.object(tides, "get_terminal_size", return_value=(80, 24)):
+            out = tides.render("abc", "Halifax", station_meta=None,
+                               predictions=preds, hilo=hilo, provider=HKO)
+        self.assertTrue(isinstance(out, str) and out)
+
     def test_render_fetches_scrubbed_day_when_offset_crosses_midnight(self):
         now_local = datetime(2026, 3, 5, 23, 30, 0)
         scrubbed_date = date(2026, 3, 6)
@@ -77,6 +98,38 @@ class RenderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class InfoLineTests(unittest.TestCase):
+    """The range on the pill is the highest high less the lowest low."""
+
+    def setUp(self):
+        self.runtime = TidesRuntime(live=False, icons="plain", lang="en",
+                                    metric=False, oneline=False)
+        self.now = datetime(2026, 3, 5, 12, 0)
+        self.preds = [(self.now + timedelta(hours=h), 2.0) for h in range(-6, 19)]
+
+    def _pill(self, hilo):
+        window = prepare_tide_window(self.preds, hilo, self.now - timedelta(hours=6))
+        line = tides._info_line(window, 2.0, self.now, 80, 0, True, self.runtime)
+        return re.sub(r"\x1b\[[0-9;]*m", "", line)
+
+    def test_range_spans_high_to_low(self):
+        pill = self._pill([(self.now + timedelta(hours=3), 5.0, "H"),
+                           (self.now + timedelta(hours=9), 1.5, "L")])
+        self.assertIn("Δ3.5", pill)
+
+    def test_no_range_from_a_lone_low(self):
+        # a diurnal station's day can hold one extreme; measured against
+        # zero, a lone low of 1.5 ft read as a range of -1.5
+        pill = self._pill([(self.now + timedelta(hours=9), 1.5, "L")])
+        self.assertIn("1.5", pill)
+        self.assertNotIn("Δ", pill)
+
+    def test_no_range_from_a_lone_high(self):
+        pill = self._pill([(self.now + timedelta(hours=3), 5.0, "H")])
+        self.assertIn("5.0", pill)
+        self.assertNotIn("Δ", pill)
 
 
 class StaticRenderTests(unittest.TestCase):

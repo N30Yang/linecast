@@ -141,6 +141,22 @@ class TestPhotonParse:
         _stub(monkeypatch, {"type": "FeatureCollection", "features": []})
         assert ms.photon_search("qqqqzz", 43.659, -70.257, 12) == []
 
+    def test_a_feature_without_coordinates_is_skipped_not_fatal(
+            self, monkeypatch):
+        # one feature with nowhere to go must not cost the whole answer:
+        # it is left out, as a nameless one is
+        payload = {"type": "FeatureCollection", "features": [
+            {"properties": {"type": "city", "name": "Nowhere"}},
+            {"properties": {"type": "city", "name": "Nowhere Either"},
+             "geometry": {"coordinates": []}},
+            {"properties": {"type": "city", "name": "Portland",
+                            "state": "Maine"},
+             "geometry": {"coordinates": [-70.27, 43.67]}},
+        ]}
+        _stub(monkeypatch, payload)
+        results = ms.photon_search("nowhere", 43.659, -70.257, 12)
+        assert [r.name for r in results] == ["Portland"]
+
 
 class TestPhotonRequest:
     def test_url_carries_the_bias_parameters(self, monkeypatch):

@@ -139,6 +139,11 @@ def _geometry(cmds):
     while i < n:
         cid, count = cmds[i] & 0x7, cmds[i] >> 3
         i += 1
+        # a command's parameters must all be there before any is read:
+        # a stream cut short is the ValueError the module promises,
+        # not an IndexError from the middle of a pair
+        if cid in (1, 2) and i + 2 * count > n:
+            raise ValueError("truncated geometry")
         if cid == 1:  # MoveTo; count > 1 means MultiPoint
             for _ in range(count):
                 x += _unzigzag(cmds[i])
@@ -193,10 +198,15 @@ def decode_tile(data: bytes) -> dict[str, dict[str, Any]]:
 
     Empty input (a 0-byte "empty tile" response) decodes to {}.
     """
-    if data[:2] == b"\x1f\x8b":
-        data = gzip.decompress(data)
-    elif data[:1] == b"\x78":
-        data = zlib.decompress(data)
+    # a wrapper cut short raises its own kinds (EOFError, zlib.error,
+    # gzip's OSError); to the caller it is one more corrupt tile
+    try:
+        if data[:2] == b"\x1f\x8b":
+            data = gzip.decompress(data)
+        elif data[:1] == b"\x78":
+            data = zlib.decompress(data)
+    except (OSError, EOFError, zlib.error) as exc:
+        raise ValueError(f"bad compression: {exc}") from exc
     layers = {}
     for fn, _wt, v in _fields(data):
         if fn != 3:  # Tile.layers

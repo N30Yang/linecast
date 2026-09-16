@@ -232,9 +232,19 @@ def _settled(future, tag, what, fallback_note):
         return None
 
 
-def _station_now(meta):
-    """Current datetime in station local time when possible."""
+def _station_now(meta, series=None):
+    """Current datetime in station local time when possible.
+
+    *series* is the station's data, a list of tuples that start with a
+    datetime.  When the metadata gives no zone but the data is aware
+    (CHS and TideCheck answer in UTC and convert, and a cached row
+    keeps its offset), "now" is taken in the data's zone: a naive now
+    beside aware predictions cannot be compared with them at all, and
+    the view would fall over rather than draw.
+    """
     tz = _station_tzinfo(meta)
+    if tz is None and series:
+        tz = series[0][0].tzinfo
     if tz is not None:
         return datetime.now(tz)
     return datetime.now()
@@ -607,8 +617,6 @@ def _info_line(window, now_height, now_dt, width, offset_minutes, rising, runtim
     if hilo:
         highs = [(dt, v) for dt, v, t in hilo if t == "H"]
         lows = [(dt, v) for dt, v, t in hilo if t == "L"]
-        h_max = max((v for _, v, t in hilo if t == "H"), default=0)
-        h_min = min((v for _, v, t in hilo if t == "L"), default=0)
 
         if highs:
             dt, v = highs[0]
@@ -621,8 +629,15 @@ def _info_line(window, now_height, now_dt, width, offset_minutes, rising, runtim
             t_str = fmt_time_dt(dt, use_24h=runtime.use_24h)
             rest_parts.append(f"{text}{icon_lo}{v_d:.1f}{unit} {dim}{t_str}")
 
-        tide_range = runtime.convert_height(h_max - h_min)
-        rest_parts.append(f"{text}\u0394{tide_range:.1f}{unit}")
+        # The range is the highest high less the lowest low, so it needs
+        # one of each.  A diurnal station's 24 hours can hold a single
+        # extreme, and measuring that against zero would print a range
+        # that is really a height, or a negative one for a lone low.
+        if highs and lows:
+            h_max = max(v for _, v in highs)
+            h_min = min(v for _, v in lows)
+            tide_range = runtime.convert_height(h_max - h_min)
+            rest_parts.append(f"{text}\u0394{tide_range:.1f}{unit}")
 
     # --- "Space to return" hint ---
     if offset_minutes:
@@ -678,7 +693,7 @@ def render(station_id, station_name, station_meta=None, runtime=None,
     if provider is None:
         provider = NOAA
 
-    now_local = _station_now(station_meta)
+    now_local = _station_now(station_meta, predictions)
     station_tz = _station_tzinfo(station_meta)
     cols, rows = get_terminal_size()
     graph_w = max(30, cols)
@@ -893,7 +908,7 @@ class TidesApp(_live.LiveApp):
         a flat sea — the old range stays, and the next try waits out a
         short pause so a dead network is not asked on every repaint.
         """
-        current_now = _station_now(self.station_meta)
+        current_now = _station_now(self.station_meta, self.predictions)
         view_start = _live_window_start(
             current_now,
             offset_minutes=offset_minutes,
@@ -1086,6 +1101,7 @@ def main():
             hilo_data = provider.hilo_range(
                 station_id, today - timedelta(days=1),
                 today + timedelta(days=2), station_tz)
+            now_local = _station_now(station_meta, preds or hilo_data)
             tz_name = (getattr(station_tz, "key", None)
                        or (now_local.tzname() if now_local.tzinfo else None))
             payload = build_payload(
@@ -1100,7 +1116,8 @@ def main():
             hilo_data = provider.hilo_range(
                 station_id, today - timedelta(days=1),
                 today + timedelta(days=1), station_tz)
-            line = tides_oneline(station_name, hilo_data or [], now_local,
+            line = tides_oneline(station_name, hilo_data or [],
+                                 _station_now(station_meta, hilo_data),
                                  runtime)
             spin.stop()
             print(line)

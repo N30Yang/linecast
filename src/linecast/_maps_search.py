@@ -136,7 +136,12 @@ def _photon_result(feature):
         name = f"{house} {street}".strip() if street else ""
     if not name:
         return None
-    lon, lat = (feature.get("geometry") or {})["coordinates"][:2]
+    # a feature with nowhere to go is skipped like a nameless one, rather
+    # than costing the whole answer
+    coords = (feature.get("geometry") or {}).get("coordinates") or []
+    if len(coords) < 2:
+        return None
+    lon, lat = coords[:2]
     locality = (props.get("city") or props.get("locality")
                 or props.get("district") or props.get("county"))
     detail = _detail([locality, props.get("state"), props.get("country")],
