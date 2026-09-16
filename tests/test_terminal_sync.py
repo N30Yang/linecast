@@ -298,7 +298,14 @@ _SIGNAL_CHILD = """
 import json, os, signal, sys, termios
 from linecast import _live
 fd = sys.stdin.fileno()
-before = termios.tcgetattr(fd)
+def settings():
+    # BSD marks a tty put back into canonical mode with PENDIN until the
+    # next read reprocesses its input, and reports the bit through
+    # tcgetattr meanwhile; it says nothing about what was restored.
+    attrs = termios.tcgetattr(fd)
+    attrs[3] &= ~termios.PENDIN
+    return attrs
+before = settings()
 def render(offset_minutes=0, **kw):
     sys.stderr.write("FRAME %d\\n" % offset_minutes)
     sys.stderr.flush()
@@ -310,7 +317,7 @@ except KeyboardInterrupt:
     how = "KeyboardInterrupt"
 except SystemExit as exc:
     how = "SystemExit %s" % exc.code
-after = termios.tcgetattr(fd)
+after = settings()
 print(json.dumps({"how": how, "tty_restored": after == before,
                   "winch_restored": signal.getsignal(signal.SIGWINCH) == signal.SIG_DFL}),
       file=sys.stderr)
