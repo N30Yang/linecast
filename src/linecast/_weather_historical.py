@@ -91,11 +91,14 @@ def fetch_historical(lat: float, lng: float, target_date: date,
 
 def _compute_averages(data, month: int, day: int) -> Optional[HistoricalAverages]:
     """Extract matching month-day rows from archive response and average them."""
-    daily = data.get("daily", {})
-    times = daily.get("time", [])
-    highs = daily.get("temperature_2m_max", [])
-    lows = daily.get("temperature_2m_min", [])
-    precips = daily.get("precipitation_sum", [])
+    # The archive writes null for a day it has no value for and for a
+    # whole block it could not produce; a partial answer still yields
+    # the years it has, as the forecast's nulls do (issue #112).
+    daily = data.get("daily") or {}
+    times = daily.get("time") or []
+    highs = daily.get("temperature_2m_max") or []
+    lows = daily.get("temperature_2m_min") or []
+    precips = daily.get("precipitation_sum") or []
 
     if not times:
         return None
@@ -110,11 +113,12 @@ def _compute_averages(data, month: int, day: int) -> Optional[HistoricalAverages
     year_highs = {}  # year -> its hottest high so far
     year_lows = {}
     for i, t in enumerate(times):
-        # times are "YYYY-MM-DD" strings
+        # times are "YYYY-MM-DD" strings, or null for a day the archive
+        # could not date
         try:
             parts = t.split("-")
             y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
-        except (IndexError, ValueError) as exc:
+        except (AttributeError, IndexError, ValueError) as exc:
             dropped += 1
             bad = exc
             continue

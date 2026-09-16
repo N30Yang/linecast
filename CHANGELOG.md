@@ -25,6 +25,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Piping `--print` output into a reader that closes early, such as `head`, ends quietly instead of with a broken-pipe traceback.
 - Weather: An hour or a day the forecast has no value for no longer ends the view in a traceback. Open-Meteo leaves a null where a station has no reading; the curve, the bars, the daily rows, the prose, `--json` and `--oneline` now skip it. A null current temperature is left off the header rather than shown as 0°.
 - Weather: A warning feed that answers in a shape the parser does not expect costs only the alerts. It used to take the air quality and the climate scale down with it.
+- Weather: A day the climate archive could not date no longer costs the "warmer than usual" line and the climate scale of the hourly chart. The years around it are still averaged.
 - Weather: The day and night tint of the hourly chart no longer shifts by an hour on the night the machine's clocks change.
 - Radar: With the network down, or a source with nothing for the view, the live radar waits half a minute before asking again. It used to start a new round of requests the moment the last one failed, hundreds of times a second.
 - Radar: A location above 80° north or south opens on a view the tile sources can draw, with the marker at the true place, instead of failing on every frame.
