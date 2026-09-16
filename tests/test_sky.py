@@ -778,11 +778,25 @@ class TestCultures:
         zh = {f["name"] for f in sky.figures_for("chinese", "zh")}
         en = {f["name"] for f in sky.figures_for("chinese", "en")}
         assert "毕宿" in zh and "Net" in en and "Net" not in zh
-        # The star names are English-only in the data, so they stay out
-        # of the Chinese view rather than mix scripts.
-        assert sky.names_for("chinese", "zh") == {}
+        # The three asterisms the index leaves without a native name
+        # take theirs from the culture's translation.
+        assert {"星宿", "龟", "平"} <= zh
+        assert len(sky.figures_for("chinese", "zh")) == len(sky.figures_for("chinese", "en"))
+        # Stellarium's index names the stars in English only; the bake
+        # derives the Chinese name from the asterism and the ordinal.
+        chinese = sky.names_for("chinese", "zh")
         english = {n for n, _d in sky.names_for("chinese", "en").values()}
         assert len(english) > 2000 and "Northern Pole II" in english
+        # Every named star, in Chinese; an asterism both enclosures
+        # keep, 三公, names its stars alike in each, as the sky does.
+        assert len(chinese) == len(sky.names_for("chinese", "en"))
+        chinese = {n for n, _d in chinese.values()}
+        assert {"北极二", "庶子增二", "太子"} <= chinese
+        assert not any(name.isascii() for name in chinese)
+        modern = {n for n, _d in sky.names_for("chinese-modern", "zh").values()}
+        assert "北极二" in modern
+        assert "Northern Pole II" in {
+            n for n, _d in sky.names_for("chinese-modern", "en").values()}
 
     def test_a_culture_keeping_the_iau_figures_keeps_their_names(self):
         rey = sky.figures_for("rey", "fr")

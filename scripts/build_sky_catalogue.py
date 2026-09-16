@@ -118,8 +118,11 @@ def fetch(name, src):
            "hip_main.dat": HIPPARCOS_URL}.get(name, CELESTIAL + name)
     if name.startswith("sc/"):
         culture, _, filename = name[3:].partition(".")
-        url = (f"{SKYCULTURES}{culture}/"
-               f"{'index.json' if filename == 'json' else 'description.md'}")
+        if filename.endswith(".po"):
+            url = f"{SKYCULTURES}{culture}/po/{filename}"
+        else:
+            url = (f"{SKYCULTURES}{culture}/"
+                   f"{'index.json' if filename == 'json' else 'description.md'}")
     print(f"fetching {url}")
     return urllib.request.urlopen(url).read()
 
@@ -785,6 +788,64 @@ def section(markdown, heading):
     return " ".join(text.replace("_", "").split())
 
 
+# The Chinese star names in Stellarium's index are English only:
+# "Northern Pole II", "Curved Array Added IV". The Chinese name behind
+# each is systematic, the asterism's name and an ordinal, 北极二, with 增
+# for an added star, 勾陈增四, so the bake derives it from the asterism's
+# native name. The asterisms with no native name in the index, and the
+# stars named for themselves alone ("Crown Prince", 太子), come from the
+# culture's own zh_CN translation. The contemporary culture has the same
+# star names and is given the same language, so a Chinese reader sees
+# them in Chinese there too.
+CHINESE_CULTURES = ("chinese", "chinese_contemporary")
+_CHINESE_DIGITS = "零一二三四五六七八九"
+
+
+def chinese_numeral(n):
+    """1..99 as the numeral a star name carries: 一, 十, 十一, 二十三."""
+    if n < 10:
+        return _CHINESE_DIGITS[n]
+    tens, ones = divmod(n, 10)
+    return ((_CHINESE_DIGITS[tens] if tens > 1 else "") + "十"
+            + (_CHINESE_DIGITS[ones] if ones else ""))
+
+
+def roman_numeral(text):
+    value = {"I": 1, "V": 5, "X": 10, "L": 50}
+    total = 0
+    for i, ch in enumerate(text):
+        if i + 1 < len(text) and value[text[i + 1]] > value[ch]:
+            total -= value[ch]
+        else:
+            total += value[ch]
+    return total
+
+
+def po_translations(name, src):
+    """{msgid: msgstr} from a culture's translation file."""
+    po = fetch(name, src).decode("utf-8")
+    pairs = re.findall(r'msgid "((?:[^"\\]|\\.)*)"\nmsgstr "((?:[^"\\]|\\.)*)"', po)
+    return {a: b for a, b in pairs if a and b}
+
+
+_STAR_NAME = re.compile(r"^(.*?)( Added)? ([IVXL]+)$")
+
+
+def chinese_native(english, asterisms, translated):
+    """The Chinese name behind an English star name, or ''."""
+    m = _STAR_NAME.match(english)
+    if m:
+        asterism = asterisms.get(m.group(1)) or translated.get(m.group(1))
+        if asterism:
+            # An asterism two enclosures keep carries the enclosure in
+            # its name, 三公 (紫微垣); its stars are 三公二 in each, as the
+            # charts have them, and the chip's designation tells which.
+            asterism = re.sub(r"\s*\([^)]*\)", "", asterism)
+            return asterism + ("增" if m.group(2) else "") + chinese_numeral(
+                roman_numeral(m.group(3)))
+    return translated.get(english, "")
+
+
 def bake_cultures(stars, src):
     hip = hipparcos(src)
     by_hd = {s["hd"]: i for i, s in enumerate(stars) if s["hd"] is not None}
@@ -821,6 +882,14 @@ def bake_cultures(stars, src):
             if record.get("iau"):
                 entry["iau"] = record["iau"]
             constellations.append(entry)
+        native_lang = (index.get("native_lang") or "").split("_")[0]
+        translated = {}
+        if name in CHINESE_CULTURES:
+            native_lang = "zh"
+            translated = po_translations(f"sc/{name}.zh_CN.po", src)
+            for entry in constellations:
+                entry["native"] = entry["native"] or translated.get(entry["english"], "")
+        asterisms = {e["english"]: e["native"] for e in constellations if e["native"]}
         star_names = {}
         for key, entries in index.get("common_names", {}).items():
             try:
@@ -831,11 +900,14 @@ def bake_cultures(stars, src):
             if hd is None or hd not in by_hd or not entries:
                 continue
             first = entries[0]
-            star_names[str(by_hd[hd])] = [first.get("english", ""), first.get("native", "")]
+            english, native = first.get("english", ""), first.get("native", "")
+            if name in CHINESE_CULTURES and not native:
+                native = chinese_native(english, asterisms, translated)
+            star_names[str(by_hd[hd])] = [english, native]
         cultures.append({
             "id": name, "title": md.split("\n", 1)[0].strip("# ").strip(),
             "region": index.get("region", ""),
-            "native_lang": (index.get("native_lang") or "").split("_")[0],
+            "native_lang": native_lang,
             "fallback": bool(index.get("fallback_to_international_names")),
             "authors": section(md, "Author"), "license": section(md, "License"),
             "constellations": constellations, "star_names": star_names,

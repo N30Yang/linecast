@@ -28,6 +28,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Tides: A Canadian or TideCheck station whose details could not be fetched no longer ends the view in a traceback; the chart takes its clock from the predictions.
 - Tides: A NOAA station list that comes back empty is not kept for a month.
 - Maps: A corrupt street tile is skipped rather than failing the whole view, and a search result without coordinates is left out rather than making the whole search unavailable.
+- Sky: In Chinese, the Chinese sky names its stars in Chinese, 北极二 rather than nothing. The star names came from Stellarium in English only, so a Chinese reader saw the asterisms named and the stars bare; the names are now derived from the asterism and the star's ordinal, with the rest from the culture's own translation. Three asterisms, 星宿, 龟 and 平, are named in Chinese too.
 
 ## 2.6.1 — 2026-09-16
 

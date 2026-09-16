@@ -232,10 +232,11 @@ def _pick(english, native, native_lang, lang):
     """Which of a culture's two names to show: the native one where the
     display language is the culture's own, or where there is no English;
     the English one otherwise, and where the culture has no language of
-    its own and no native form."""
+    its own and no native form. A name the culture never gave a native
+    form falls back to the English one either way."""
     if native_lang:
         if lang == native_lang:
-            return native
+            return native or english
         return english or native
     return native or english
 
