@@ -171,6 +171,41 @@ class TestEsperantoWeather:
         assert DAY_NAMES["eo"] == ["lun", "mar", "mer", "ĵaŭ", "ven", "sab", "dim"]
 
 
+class TestTurkishWeather:
+    def test_comparative_sentences_carry_the_suffix_in_the_template(self):
+        """The reference day takes a case suffix, "bugünden", "dünle"."""
+        runtime = SimpleNamespace(lang="tr", celsius=True)
+        now = datetime(2026, 8, 24, 15)
+        warmer = comparative_sentence({"temperature_2m_max": [20, 21, 24]}, now, runtime)
+        same = comparative_sentence({"temperature_2m_max": [20, 21, 22]}, now, runtime)
+        earlier = comparative_sentence({"temperature_2m_max": [20, 24, 22]},
+                                       datetime(2026, 8, 24, 9), runtime)
+        assert warmer == "Yarın bugünden biraz daha sıcak olacak"
+        assert same == "Yarın bugünle yaklaşık aynı sıcaklıkta olacak"
+        assert earlier == "Bugün dünden daha sıcak olacak"
+
+    def test_precipitation_phrases_read_as_clock_times(self):
+        runtime = SimpleNamespace(lang="tr", use_24h=True)
+        now = datetime(2026, 8, 24, 12, 10)
+        hourly = {
+            "time": [f"2026-08-24T{h:02d}:00" for h in range(12, 18)],
+            "precipitation_probability": [0, 0, 0, 0, 0, 80],
+            "weather_code": [0, 0, 0, 0, 0, 95],
+        }
+        line = _precipitation_line(hourly, now, runtime)
+        assert "Gök gürültülü fırtına muhtemelen 17:00 civarında başlayacak" in line
+
+    def test_past_precipitation_puts_the_span_first(self):
+        runtime = SimpleNamespace(lang="tr", metric=True, precip_unit="mm")
+        now = datetime(2026, 8, 24, 12)
+        hourly = {"time": ["2026-08-24T11:00"], "precipitation": [4.0],
+                  "snowfall": [0], "weather_code": [63]}
+        assert "Son 24 saatte 4.0 mm yağmur" in _past_precip_line(hourly, now, runtime)
+
+    def test_weekdays_use_standard_abbreviations(self):
+        assert DAY_NAMES["tr"] == ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+
+
 class TestWeatherLocaleImprovements:
     def test_same_temperature_sentences_are_idiomatic(self):
         expected = {

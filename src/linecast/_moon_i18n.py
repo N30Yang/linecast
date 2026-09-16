@@ -398,6 +398,24 @@ _MOON_STRINGS = {
         "autumn_equinox": "Aŭtuna ekvinokso",
         "winter_solstice": "Vintra solstico",
     },
+    "tr": {
+        "illuminated": "%{pct} aydınlık",
+        "age": "gün {age} / {total}",
+        "lunar_age": "Ay yaşı {age} g",
+        "up_now": "Şu an gökte",
+        "above_horizon": "ufkun {alt}° üzerinde",
+        "below_horizon": "Ufkun altında",
+        "moonrise": "Ay doğuşu",
+        "moonset": "Ay batışı",
+        "in_days": "{days} g sonra",
+        "begins_at_sunset": "gün batımında başlar",
+        "in_time": "{dur} sonra",
+        "year_day": "{n}. gün / {total}",
+        "spring_equinox": "İlkbahar ekinoksu",
+        "summer_solstice": "Yaz gündönümü",
+        "autumn_equinox": "Sonbahar ekinoksu",
+        "winter_solstice": "Kış gündönümü",
+    },
 }
 
 
@@ -438,6 +456,8 @@ MONTHS_I18N = {
     "vi": [f"thg {m}" for m in range(1, 13)],
     "eo": ["jan", "feb", "mar", "apr", "maj", "jun",
            "jul", "aŭg", "sep", "okt", "nov", "dec"],
+    "tr": ["Oca", "Şub", "Mar", "Nis", "May", "Haz",
+           "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"],
 }
 
 # Date order/format per language: {month} = abbreviated name from

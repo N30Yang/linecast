@@ -416,6 +416,23 @@ _SUNSHINE_STRINGS = {
         "sunrise": "sunleviĝo",
         "sunset": "sunsubiro",
     },
+    "tr": {
+        "today": "bugün",
+        "in_day": "{n} gün sonra",
+        "in_days": "{n} gün sonra",
+        "day_ago": "{n} gün önce",
+        "days_ago": "{n} gün önce",
+        "sky_night": "gece",
+        "sky_astronomical": "astronomik alacakaranlık",
+        "sky_nautical": "denizcilik alacakaranlığı",
+        "sky_civil": "sivil alacakaranlık",
+        "sky_day": "gündüz",
+        "midnight_sun": "gece yarısı güneşi",
+        "polar_night": "kutup gecesi",
+        "solar_noon": "güneş öğlesi",
+        "sunrise": "gün doğumu",
+        "sunset": "gün batımı",
+    },
 }
 
 # Month-axis labels where the first three letters of the MONTHS_I18N name

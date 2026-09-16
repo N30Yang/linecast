@@ -98,7 +98,7 @@ The frames below show each app once or twice. [GALLERY.md](GALLERY.md) shows the
 
 ![weather dashboard](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather.png)
 
-The dashboard speaks twenty-one languages, and its units follow the place or your own setting. Reykjavík in Icelandic and Kyoto in Japanese, both metric:
+The dashboard speaks twenty-two languages, and its units follow the place or your own setting. Reykjavík in Icelandic and Kyoto in Japanese, both metric:
 
 <p>
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather-reykjavik.png" width="49%" alt="the weather in Reykjavík, in Icelandic">
@@ -257,7 +257,7 @@ The moon's calendar opens the week on Monday, or on Sunday in the United States,
 
 ### Language
 
-linecast speaks your terminal's language if it is one of the twenty-one it knows, and English otherwise. To choose one yourself, for every run or for one:
+linecast speaks your terminal's language if it is one of the twenty-two it knows, and English otherwise. To choose one yourself, for every run or for one:
 
 ```sh
 linecast language es        # use Spanish every time
@@ -265,7 +265,7 @@ linecast language auto      # follow the terminal again
 linecast radar --lang zh    # just this once
 ```
 
-The languages are English (`en`), French (`fr`), Spanish (`es`), German (`de`), Italian (`it`), Portuguese (`pt`), Dutch (`nl`), Polish (`pl`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Danish (`da`), Finnish (`fi`), Japanese (`ja`), Korean (`ko`), Chinese (`zh`), Thai (`th`), Indonesian (`id`), Ukrainian (`uk`), Vietnamese (`vi`), and Esperanto (`eo`).
+The languages are English (`en`), French (`fr`), Spanish (`es`), German (`de`), Italian (`it`), Portuguese (`pt`), Dutch (`nl`), Polish (`pl`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Danish (`da`), Finnish (`fi`), Japanese (`ja`), Korean (`ko`), Chinese (`zh`), Thai (`th`), Indonesian (`id`), Ukrainian (`uk`), Vietnamese (`vi`), Esperanto (`eo`), and Turkish (`tr`).
 
 In India, many alerts are published in the state language. Add `--lang hi`, `--lang te`, `--lang mr`, or another Indian language code to `weather` to read them in that language where it exists; the rest of the app stays in English.
 

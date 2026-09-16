@@ -108,6 +108,11 @@ _TIDES_STRINGS = {
         "waves": "Ondoj",
         "swell": "Hulo",
     },
+    "tr": {
+        "space_to_now": "şimdiye dönmek için boşluk",
+        "waves": "Dalgalar",
+        "swell": "Soluğan",
+    },
 }
 
 
@@ -154,6 +159,8 @@ MOON_NAMES_I18N = {
            "Trăng tròn", "Trăng khuyết cuối tháng", "Trăng hạ huyền", "Trăng lưỡi liềm cuối tháng"],
     "eo": ["Novluno", "Kreskanta lunarko", "Unua kvarono", "Kreskanta ĝiba luno",
            "Plenluno", "Malkreskanta ĝiba luno", "Lasta kvarono", "Malkreskanta lunarko"],
+    "tr": ["Yeni Ay", "Büyüyen hilal", "İlk dördün", "Büyüyen şişkin Ay",
+           "Dolunay", "Küçülen şişkin Ay", "Son dördün", "Küçülen hilal"],
 }
 
 

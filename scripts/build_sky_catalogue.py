@@ -96,7 +96,7 @@ WIKIDATA_LANG = {
     "fr": "fr", "es": "es", "de": "de", "it": "it", "pt": "pt", "nl": "nl",
     "pl": "pl", "no": "nb", "sv": "sv", "is": "is", "da": "da", "fi": "fi",
     "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id", "uk": "uk",
-    "vi": "vi", "eo": "eo",
+    "vi": "vi", "eo": "eo", "tr": "tr",
 }
 
 GREEK = {
@@ -218,6 +218,9 @@ GREEK_WORDS = (
     "alfo", "beto", "gamo", "gama", "delto", "epsilono", "zeto", "eto", "teto", "teta",
     "joto", "kapo", "kapa", "lambdo", "muo", "nuo", "ksio", "omikrono", "omikron", "pio",
     "roo", "sigmo", "taŭo", "taŭ", "upsilono", "fio", "ĥio", "psio", "omego",
+    # The Turkish spellings ("Alfa Centauri", "Gama Crucis").
+    "gama", "epsilon", "teta", "kapa", "mü", "nü", "ksi", "omikron", "ro", "ipsilon",
+    "fi", "ki", "omega",
 )
 GREEK_LETTERS = "αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
 # A variable star's designation: one or two capitals before the genitive.
@@ -239,6 +242,10 @@ def chart_name(label, iau, genitives, component):
     if not text or text == iau or any(ch.isdigit() for ch in text):
         return None
     if any(genitive.lower() in low for genitive in genitives):
+        return None
+    # Turkish Wikidata describes some stars in place of naming them
+    # ("Kuğu takımyıldızında yıldız", a star in Cygnus).
+    if "takımyıldız" in low:
         return None
     if any(low == word or low.startswith(word + " ") for word in GREEK_WORDS):
         return None
@@ -484,6 +491,13 @@ OVERRIDES = {
         "eo": {
             "Mizar": "Mizaro", "Sirius": "Siriuso",
         },
+        # Turkish Wikipedia titles its star articles by the IAU name or
+        # the Bayer letter, and gives a Turkish name to a handful (Ağız,
+        # Elektra, Kutup Yıldızı, Miraç), which come through Wikidata's
+        # labels. These three labels are not how it titles the star.
+        "tr": {
+            "Aldulfin": "", "Capella": "", "Mintaka": "",
+        },
         "zh": {
             "Abt's Star": "阿布特星", "Aldhibah": "紫微左垣四", "Alhiba": "天潢五",
             "Almizan": "右旗三", "Alya": "天市左垣七", "Andrews' star": "",
@@ -606,6 +620,34 @@ OVERRIDES = {
             "Sgr": "人马座", "Tau": "金牛座", "Tel": "望远镜座", "TrA": "南三角座",
             "Tri": "三角座", "Tuc": "杜鹃座", "UMa": "大熊座", "UMi": "小熊座",
             "Vel": "船帆座", "Vir": "室女座", "Vol": "飞鱼座", "Vul": "狐狸座",
+        },
+        # Turkish Wikipedia titles the articles by the Latin name, "Ursa
+        # Major (takımyıldız)", and opens each with the Turkish name,
+        # "Büyükayı"; Wikidata carries only two of those as labels. The
+        # Turkish names are these, as the articles give them; Andromeda,
+        # Perseus, and the rest keep the Latin, as Turkish charts print it.
+        "tr": {
+            "Ant": "Pompa", "Aps": "Cennetkuşu", "Aql": "Kartal", "Aqr": "Kova",
+            "Ara": "Sunak", "Ari": "Koç", "Aur": "Arabacı", "Boo": "Çoban",
+            "CMa": "Büyük Köpek", "CMi": "Küçük Köpek", "CVn": "Av Köpekleri",
+            "Cae": "Çelikkalem", "Cam": "Zürafa", "Cap": "Oğlak", "Car": "Karina",
+            "Cas": "Kraliçe", "Cen": "Erboğa", "Cep": "Kral", "Cet": "Balina",
+            "Cha": "Bukalemun", "Cir": "Pergel", "Cnc": "Yengeç", "Col": "Güvercin",
+            "Com": "Berenis'in Saçı", "CrA": "Güneytacı", "CrB": "Kuzeytacı", "Crt": "Kupa",
+            "Cru": "Güneyhaçı", "Crv": "Karga", "Cyg": "Kuğu", "Del": "Yunus",
+            "Dor": "Kılıçbalığı", "Dra": "Ejderha", "Equ": "Tay", "Eri": "Irmak",
+            "For": "Ocak", "Gem": "İkizler", "Gru": "Turna", "Her": "Herkül", "Hor": "Saat",
+            "Hya": "Suyılanı", "Hyi": "Küçüksuyılanı", "Ind": "Hint", "Lac": "Kertenkele",
+            "Leo": "Aslan", "Lep": "Tavşan", "Lib": "Terazi", "Lup": "Kurt", "Lyn": "Vaşak",
+            "Lyr": "Çalgı", "Men": "Masa", "Mic": "Mikroskop", "Mon": "Tekboynuz",
+            "Mus": "Sinek", "Nor": "Cetvel", "Oct": "Sekizlik", "Oph": "Yılancı",
+            "Ori": "Avcı", "Pav": "Tavus", "Phe": "Anka", "Pic": "Ressam",
+            "PsA": "Güneybalığı", "Psc": "Balıklar", "Pup": "Pupa", "Pyx": "Kumpas",
+            "Ret": "Ağcık", "Scl": "Yontar", "Sco": "Akrep", "Sct": "Kalkan", "Ser": "Yılan",
+            "Sex": "Altılık", "Sge": "Okçuk", "Sgr": "Yay", "Tau": "Boğa", "Tel": "Dürbün",
+            "TrA": "Güney Üçgeni", "Tri": "Üçgen", "Tuc": "Tukan", "UMa": "Büyükayı",
+            "UMi": "Küçükayı", "Vel": "Yelken", "Vir": "Başak", "Vol": "Uçanbalık",
+            "Vul": "Tilkicik",
         },
     },
 }

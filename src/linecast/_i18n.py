@@ -13,7 +13,7 @@ LANGUAGES = (
     ("no", "Norwegian"), ("sv", "Swedish"), ("is", "Icelandic"), ("da", "Danish"),
     ("fi", "Finnish"), ("ja", "Japanese"), ("ko", "Korean"), ("zh", "Chinese"),
     ("th", "Thai"), ("id", "Indonesian"), ("uk", "Ukrainian"),
-    ("vi", "Vietnamese"), ("eo", "Esperanto"),
+    ("vi", "Vietnamese"), ("eo", "Esperanto"), ("tr", "Turkish"),
 )
 LANGUAGE_CODES = tuple(code for code, _name in LANGUAGES)
 LANGUAGE_NAMES = dict(LANGUAGES)

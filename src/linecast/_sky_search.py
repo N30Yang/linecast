@@ -212,8 +212,8 @@ def genitive_names(desig, genitives):
 
 
 # Letters no decomposition reduces: the Vietnamese đ, the Polish ł, the
-# Norwegian and Danish ø.
-_BARRED = str.maketrans("đĐłŁøØ", "dDlLoO")
+# Norwegian and Danish ø, the Turkish dotless ı (its capital is a plain I).
+_BARRED = str.maketrans("đĐłŁøØı", "dDlLoOi")
 
 
 def _fold(text):

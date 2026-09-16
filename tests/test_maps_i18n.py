@@ -28,7 +28,7 @@ KEYS = set(TABLE["en"])
 
 def test_every_language_the_cli_offers_has_a_table():
     assert set(LANG_CODES) <= set(TABLE)
-    assert len(TABLE) == 21
+    assert len(TABLE) == 22
 
 
 @pytest.mark.parametrize("lang", sorted(TABLE))

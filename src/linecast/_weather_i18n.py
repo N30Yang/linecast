@@ -88,6 +88,7 @@ DAY_NAMES = {
     "uk": ["пн", "вт", "ср", "чт", "пт", "сб", "нд"],
     "vi": ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
     "eo": ["lun", "mar", "mer", "ĵaŭ", "ven", "sab", "dim"],
+    "tr": ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"],
 }
 
 FULL_DAY_NAMES = {
@@ -112,6 +113,7 @@ FULL_DAY_NAMES = {
     "uk": ["понеділок", "вівторок", "середа", "четвер", "п’ятниця", "субота", "неділя"],
     "vi": ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"],
     "eo": ["lundo", "mardo", "merkredo", "ĵaŭdo", "vendredo", "sabato", "dimanĉo"],
+    "tr": ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"],
 }
 
 WMO_NAMES_I18N = {
@@ -355,6 +357,18 @@ WMO_NAMES_I18N = {
         85: "Malforta neĝado", 86: "Forta neĝado",
         95: "Fulmotondro", 96: "Fulmotondro", 99: "Fulmotondro",
     },
+    "tr": {
+        0: "Açık", 1: "Az bulutlu", 2: "Parçalı bulutlu", 3: "Kapalı",
+        45: "Sis", 48: "Kırçlı sis",
+        51: "Hafif çisenti", 53: "Çisenti", 55: "Yoğun çisenti",
+        56: "Dondurucu çisenti", 57: "Dondurucu çisenti",
+        61: "Hafif yağmur", 63: "Yağmur", 65: "Kuvvetli yağmur",
+        66: "Dondurucu yağmur", 67: "Dondurucu yağmur",
+        71: "Hafif kar", 73: "Kar", 75: "Yoğun kar", 77: "Kar taneleri",
+        80: "Hafif sağanak", 81: "Sağanak", 82: "Kuvvetli sağanak",
+        85: "Kar sağanağı", 86: "Kuvvetli kar sağanağı",
+        95: "Gök gürültülü fırtına", 96: "Gök gürültülü fırtına", 99: "Gök gürültülü fırtına",
+    },
 }
 
 _PRECIP_DESCS_I18N = {
@@ -557,6 +571,16 @@ _PRECIP_DESCS_I18N = {
         80: "malfortaj pluvoj", 81: "pluvoj", 82: "pluvego",
         85: "malforta neĝado", 86: "forta neĝado",
         95: "fulmotondro", 96: "fulmotondro", 99: "fulmotondro",
+    },
+    "tr": {
+        51: "hafif çisenti", 53: "çisenti", 55: "yoğun çisenti",
+        56: "dondurucu çisenti", 57: "dondurucu çisenti",
+        61: "hafif yağmur", 63: "yağmur", 65: "kuvvetli yağmur",
+        66: "dondurucu yağmur", 67: "dondurucu yağmur",
+        71: "hafif kar", 73: "kar", 75: "yoğun kar", 77: "kar taneleri",
+        80: "hafif sağanak", 81: "sağanak", 82: "kuvvetli sağanak",
+        85: "kar sağanağı", 86: "kuvvetli kar sağanağı",
+        95: "gök gürültülü fırtına", 96: "gök gürültülü fırtına", 99: "gök gürültülü fırtına",
     },
 }
 
@@ -2190,6 +2214,85 @@ _STRINGS = {
         "hist_near_avg": "ĉirkaŭ la mezumo",
         "hist_above_avg": "{diff} super la mezumo",
         "hist_below_avg": "{diff} sub la mezumo",
+    },
+    "tr": {
+        "today": "Bugün",
+        "today_short": "Bugün",
+        # "{day} gününe ait" takes a weekday or an ISO date alike; a bare
+        # "{day}'den" would need the suffix to agree with the day's vowels.
+        "forecast_stale": "Bu tahmin {day} gününe ait; daha yenisi alınamadı.",
+        "forecast_stale_at": "Bu tahmin {day} gününe ait; {time} itibarıyla daha yenisi alınamadı.",
+        "forecast_fetching": "Daha yeni tahmin alınıyor…",
+        "retry_run": "Yeniden denemek için tekrar çalıştırın.",
+        "retry_key": "Yeniden denemek için r tuşuna basın.",
+        "credit_forecast": "Hava verileri: {source}",
+        "credit_alerts": "Uyarılar: {source}",
+        # Turkish sets units off with a space: 3 mm, 12 km/h.
+        "metric_unit_sep": " ",
+        "feels": "hissedilen",
+        "wind": "Rüzgar",
+        "gusts": "hamle",
+        "humidity": "Nem",
+        "chance": "olasılık {p}",
+        "chance_of": "{what} olasılığı {p}",
+        "amount_between": "{a} ile {b} arasında {amount}",
+        "amount_all_day": "gün boyunca {amount}",
+        "cloud": "Bulut {p}",
+        "heaviest_around": "en yoğun {time} civarında",
+        "dew_pt": "Çiy n.",
+        "uv": "UV",
+        "aqi": "HKİ",
+        # "until {time}" would put a suffix on the clock time ("15:00'e
+        # kadar"), and which suffix depends on how the hour is read aloud;
+        # the alert's end reads as a label instead.
+        "until": "bitiş",
+        "sentence_end": ".",
+        "sentence_join": ". ",
+        "feels_humid": "Yüksek nem havayı daha sıcak hissettiriyor",
+        "feels_sun": "Güneş havayı daha sıcak hissettiriyor",
+        "feels_wind": "Rüzgar havayı daha serin hissettiriyor",
+        "feels_dry": "Kuru hava daha serin hissettiriyor",
+        # The reference day takes a case suffix, "bugünden", "dünle"; both
+        # words end in ü, so one spelling of each suffix serves.
+        "same_temp": "{ref_day}le yaklaşık aynı sıcaklıkta",
+        "bit_warmer": "{ref_day}den biraz daha sıcak",
+        "bit_cooler": "{ref_day}den biraz daha serin",
+        "warmer": "{ref_day}den daha sıcak",
+        "cooler": "{ref_day}den daha serin",
+        "much_warmer": "{ref_day}den çok daha sıcak",
+        "much_cooler": "{ref_day}den çok daha serin",
+        "today_subj": "Bugün",
+        "tomorrow_subj": "Yarın",
+        "yesterday": "dün",
+        "today_ref": "bugün",
+        "will_be": "{subject} {comparison} olacak",
+        "ending": "{desc} {time} sona erecek",
+        "continuing": "{desc} gün boyunca sürecek",
+        "starting": "{desc} muhtemelen {time} başlayacak",
+        "shortly": "kısa süre içinde",
+        "in_about_an_hour": "yaklaşık bir saat içinde",
+        "in_a_couple_hours": "birkaç saat içinde",
+        "around": "{time} civarında",
+        "overnight": "gece boyunca",
+        "early_tomorrow_morning": "yarın sabah erken saatlerde",
+        "tomorrow_morning": "yarın sabah",
+        "tomorrow_afternoon": "yarın öğleden sonra",
+        "tomorrow_evening": "yarın akşam",
+        "on_day": "{day} günü",
+        "past_precip": "Son 24 saatte {amt} {ptype}",
+        "snow": "kar",
+        "rain": "yağmur",
+        "mixed_precip": "karla karışık yağmur",
+        "Snow": "Kar",
+        "Rain": "Yağmur",
+        "Mix": "Karışık",
+        "q_to_close": "kapatmak için q",
+        "o_to_open": "tarayıcıda açmak için o",
+        "scroll": "kaydır",
+        "space_to_now": "şimdiye dönmek için boşluk",
+        "hist_near_avg": "ortalamaya yakın",
+        "hist_above_avg": "ortalamanın {diff} üzerinde",
+        "hist_below_avg": "ortalamanın {diff} altında",
     },
 }
 

@@ -979,7 +979,8 @@ def render(now_local, lat, lng, runtime, view, fullscreen=False,
                 continue
             name = record["name"] if view.culture else constellation_name(record, lang)
             if lang not in NO_CAPITALS:
-                name = name.upper()
+                # Turkish capitalises i as İ; str.upper gives the dotless I.
+                name = (name.replace("i", "İ") if lang == "tr" else name).upper()
             col = int(round(px0 - visible_len(name) / 2.0))
             row = int(py0) // 2
             cell = fb.cell_bg(max(0, min(graph_w - 1, col)), max(0, min(graph_h - 1, row)))

@@ -276,6 +276,21 @@ _STRINGS = {
         "radar_unavailable": "radaro ne haveblas ({err})",
         "no_frames": "neniuj radaraj bildoj",
     },
+    "tr": {
+        "loading": "yükleniyor…",
+        "hint": "boşluk oynat/duraklat · kaydırma/←→ adımla · +/- yakınlaştır · sürükle / wasd · c sıcaklık · W rüzgar · t tema · S uydu · q çık",
+        "theme": "tema",
+        "now": "şimdi",
+        # "12 km NE of Paris" would put the genitive on the place name;
+        # the place comes first, and the distance after a comma.
+        "near": "{name}, {dist} {unit} {dir}",
+        "compass": "K KD D GD G GB B KB",
+        "forecast": "tahmin",
+        "echo_pct": "%{pct} yankı",
+        "cloud_pct": "%{pct} bulut",
+        "radar_unavailable": "radar kullanılamıyor ({err})",
+        "no_frames": "radar karesi yok",
+    },
 }
 
 

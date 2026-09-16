@@ -367,6 +367,25 @@ _SKY_STRINGS = {
         "search_jump": 'enter denove por iri al tiu momento',
         "tradition": "tradicio",
     },
+    "tr": {
+        "sun": "Güneş", "moon": "Ay",
+        "mercury": "Merkür", "venus": "Venüs", "mars": "Mars",
+        "jupiter": "Jüpiter", "saturn": "Satürn", "uranus": "Uranüs",
+        "neptune": "Neptün",
+        "facing": "{dir} yönüne bakış",
+        "field_of_view": "{deg}° genişlik",
+        "overhead": "başucunda",
+        "planets_none": "gökte gezegen yok",
+        "star": "yıldız",
+        "search_prompt": 'ad veya katalog numarası',
+        "search_none": 'bu adla bir şey yok',
+        # The clock time comes after the verb so it carries no suffix;
+        # "02:14'te" would spell the suffix by the hour's last syllable.
+        "rises_at": '{name} {dir} yönünden doğar, saat {time}',
+        "never_rises": '{name} buradan hiç doğmaz',
+        "search_jump": 'o ana gitmek için tekrar enter',
+        "tradition": "gelenek",
+    },
 }
 
 # The scripts whose constellation names are not set in capitals on the
@@ -376,7 +395,7 @@ NO_CAPITALS = frozenset({"ja", "ko", "zh", "th"})
 
 # The cultures' titles, for the status line, the culture command, and the
 # search panel. Stellarium's data gives each culture an English title;
-# this table gives the other twenty languages, keyed by the short name
+# this table gives the other twenty-one languages, keyed by the short name
 # `linecast culture` takes. A proper name (Boorong, Tukano) stays as it is
 # in the Latin-script languages and is transliterated in the others; a
 # name that is an adjective (Chinese, Norse) takes the language's own word.
@@ -403,6 +422,7 @@ CULTURE_TITLES = {
         "uk": "Анута",
         "vi": "Anuta",
         "eo": "Anuta",
+        "tr": "Anuta",
     },
     "belarusian": {
         "en": "Belarusian",
@@ -426,6 +446,7 @@ CULTURE_TITLES = {
         "uk": "білоруська",
         "vi": "Belarus",
         "eo": "belorusa",
+        "tr": "Belarus",
     },
     "blackfoot": {
         "en": "Blackfoot",
@@ -449,6 +470,7 @@ CULTURE_TITLES = {
         "uk": "Чорноногі",
         "vi": "Blackfoot",
         "eo": "Blackfoot",
+        "tr": "Blackfoot",
     },
     "boorong": {
         "en": "Boorong",
@@ -472,6 +494,7 @@ CULTURE_TITLES = {
         "uk": "Бурунг",
         "vi": "Boorong",
         "eo": "Boorong",
+        "tr": "Boorong",
     },
     "bugis": {
         "en": "Bugis",
@@ -495,6 +518,7 @@ CULTURE_TITLES = {
         "uk": "Бугіс",
         "vi": "Bugis",
         "eo": "Bugis",
+        "tr": "Bugis",
     },
     "chinese": {
         "en": "Chinese",
@@ -518,6 +542,7 @@ CULTURE_TITLES = {
         "uk": "китайська",
         "vi": "Trung Hoa",
         "eo": "ĉina",
+        "tr": "Çin",
     },
     "chinese-modern": {
         "en": "Chinese Contemporary",
@@ -541,6 +566,7 @@ CULTURE_TITLES = {
         "uk": "китайська сучасна",
         "vi": "Trung Quốc hiện đại",
         "eo": "ĉina nuntempa",
+        "tr": "çağdaş Çin",
     },
     "hawaiian": {
         "en": "Hawaiian",
@@ -564,6 +590,7 @@ CULTURE_TITLES = {
         "uk": "гавайська",
         "vi": "Hawaii",
         "eo": "havaja",
+        "tr": "Hawaii",
     },
     "indian": {
         "en": "Indian Vedic",
@@ -587,6 +614,7 @@ CULTURE_TITLES = {
         "uk": "ведична (Індія)",
         "vi": "Vệ Đà Ấn Độ",
         "eo": "veda",
+        "tr": "Vedik Hint",
     },
     "japanese": {
         "en": "Japanese Lunar Stations",
@@ -610,6 +638,7 @@ CULTURE_TITLES = {
         "uk": "японські місячні стоянки",
         "vi": "Nhị thập bát tú Nhật Bản",
         "eo": "japanaj lunaj domoj",
+        "tr": "Japon ay durakları",
     },
     "mandar": {
         "en": "Mandar",
@@ -633,6 +662,7 @@ CULTURE_TITLES = {
         "uk": "Мандар",
         "vi": "Mandar",
         "eo": "Mandar",
+        "tr": "Mandar",
     },
     "maori": {
         "en": "Maori",
@@ -656,6 +686,7 @@ CULTURE_TITLES = {
         "uk": "маорійська",
         "vi": "Māori",
         "eo": "maoria",
+        "tr": "Maori",
     },
     "mongolian": {
         "en": "Mongolian",
@@ -679,6 +710,7 @@ CULTURE_TITLES = {
         "uk": "монгольська",
         "vi": "Mông Cổ",
         "eo": "mongola",
+        "tr": "Moğol",
     },
     "norse": {
         "en": "Norse",
@@ -702,6 +734,7 @@ CULTURE_TITLES = {
         "uk": "скандинавська",
         "vi": "Bắc Âu",
         "eo": "norena",
+        "tr": "İskandinav",
     },
     "romanian": {
         "en": "Romanian",
@@ -725,6 +758,7 @@ CULTURE_TITLES = {
         "uk": "румунська",
         "vi": "Romania",
         "eo": "rumana",
+        "tr": "Rumen",
     },
     "ruelle": {
         "en": "Ruelle",
@@ -748,6 +782,7 @@ CULTURE_TITLES = {
         "uk": "Рюель",
         "vi": "Ruelle",
         "eo": "Ruelle",
+        "tr": "Ruelle",
     },
     "sami": {
         "en": "Sami",
@@ -771,6 +806,7 @@ CULTURE_TITLES = {
         "uk": "саамська",
         "vi": "Sami",
         "eo": "samea",
+        "tr": "Sami",
     },
     "siberian": {
         "en": "Siberian",
@@ -794,6 +830,7 @@ CULTURE_TITLES = {
         "uk": "сибірська",
         "vi": "Siberia",
         "eo": "siberia",
+        "tr": "Sibirya",
     },
     "tongan": {
         "en": "Tongan",
@@ -817,6 +854,7 @@ CULTURE_TITLES = {
         "uk": "тонганська",
         "vi": "Tonga",
         "eo": "tonga",
+        "tr": "Tonga",
     },
     "tukano": {
         "en": "Tukano",
@@ -840,6 +878,7 @@ CULTURE_TITLES = {
         "uk": "Тукано",
         "vi": "Tukano",
         "eo": "Tukano",
+        "tr": "Tukano",
     },
     "snt": {
         "en": "Western (Sky & Telescope)",
@@ -863,6 +902,7 @@ CULTURE_TITLES = {
         "uk": "західна (Sky & Telescope)",
         "vi": "Phương Tây (Sky & Telescope)",
         "eo": "okcidenta (Sky & Telescope)",
+        "tr": "Batı (Sky & Telescope)",
     },
     "rey": {
         "en": "Western (H.A.Rey)",
@@ -886,6 +926,7 @@ CULTURE_TITLES = {
         "uk": "західна (H.A.Rey)",
         "vi": "Phương Tây (H.A.Rey)",
         "eo": "okcidenta (H.A.Rey)",
+        "tr": "Batı (H.A.Rey)",
     },
 }
 
