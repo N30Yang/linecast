@@ -4,6 +4,7 @@ import math
 from datetime import datetime, timedelta
 
 from linecast import _theme
+from linecast._i18n import fmt_percent
 from linecast._graphics import RESET, visible_len
 from linecast._runtime import WeatherRuntime, current_runtime, log_failure, log_skipped
 from linecast._textwidth import wrap_display_width
@@ -70,7 +71,7 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
             left_humidity = (f"  {MUTED}{_s('dew_pt', runtime)} "
                              f"{_colored_temp(dew_point, runtime, deg)}")
         elif humidity >= 70 or humidity <= 25:
-            left_humidity = f"  {MUTED}{_s('humidity', runtime)} {humidity:.0f}%"
+            left_humidity = f"  {MUTED}{_s('humidity', runtime)} {fmt_percent(humidity, runtime)}"
 
     # AQI — show when data available. India reads its own CPCB scale,
     # attached upstream (apply_india_aqi); the number, its colors, and
@@ -103,9 +104,9 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     # Right side: wind info + location (progressively droppable)
     wind_part = ""
     if wind > (15 if runtime.metric else 10) or gusts > (30 if runtime.metric else 20):
-        parts = [f"{_s('wind', runtime)} {wind:.0f}{runtime.wind_unit}"]
+        parts = [f"{_s('wind', runtime)} {wind:.0f}{runtime.wind_unit_label}"]
         if gusts > (30 if runtime.metric else 20):
-            parts.append(f"{_s('gusts', runtime)} {gusts:.0f}{runtime.wind_unit}")
+            parts.append(f"{_s('gusts', runtime)} {gusts:.0f}{runtime.wind_unit_label}")
         wind_part = f"{WIND_COLOR}{'  '.join(parts)}"
     loc_part = f"{MUTED}{location_name}" if location_name else ""
 

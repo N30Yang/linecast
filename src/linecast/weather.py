@@ -24,6 +24,7 @@ import time as _t
 from datetime import datetime
 
 from linecast import _live, _theme
+from linecast._i18n import fmt_percent
 from linecast._graphics import bg, fg, get_terminal_size
 from linecast._location import country_for_defaults, resolve_location
 from linecast._runtime import (
@@ -181,7 +182,7 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
         if dew_f >= 60:
             lines.append(f"{TBG}{TFG} {_s('dew_pt', runtime)} {_colored_temp(dew, runtime, deg)} ")
         elif humidity >= 70 or humidity <= 25:
-            lines.append(f"{TBG}{TFG} {_s('humidity', runtime)} {humidity:.0f}% ")
+            lines.append(f"{TBG}{TFG} {_s('humidity', runtime)} {fmt_percent(humidity, runtime)} ")
 
     # Precipitation: the hour's amount, and its chance in the very shade
     # the bar below is drawn in, so the chip teaches what the fade means.
@@ -191,13 +192,14 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     # Under 20% the shaded figure is hard to read and says nothing worth
     # reading; the bar below is a ghost of one anyway.
     if prob and prob >= 20:
-        precip_parts.append(_s("chance", runtime, p=f"{_precip_shade(code, prob)}{prob:.0f}%{TFG}"))
+        shaded = f"{_precip_shade(code, prob)}{fmt_percent(prob, runtime)}{TFG}"
+        precip_parts.append(_s("chance", runtime, p=shaded))
     if precip_parts:
         lines.append(f"{TBG}{TFG} {'  '.join(precip_parts)} ")
 
     # Cloud cover, in the shade of the strip
     if cloud is not None and cloud >= 10:
-        shaded = f"{_cloud_shade(cloud)}{cloud:.0f}%{TFG}"
+        shaded = f"{_cloud_shade(cloud)}{fmt_percent(cloud, runtime)}{TFG}"
         lines.append(f"{TBG}{TFG} {_s('cloud', runtime, p=shaded)} ")
 
     # Wind (if notable)
@@ -205,7 +207,7 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     if wind > wind_threshold:
         sector = int((wind_dir + 22.5) / 45) % 8
         arrow = WIND_ARROWS[sector]
-        lines.append(f"{TBG}{TFG} {arrow} {wind:.0f}{runtime.wind_unit} ")
+        lines.append(f"{TBG}{TFG} {arrow} {wind:.0f}{runtime.wind_unit_label} ")
 
     if not lines:
         return ""
@@ -331,7 +333,7 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
         # bar it sits under, and the daily rows have no such bar.
         amount = f"{ink}{fmt_precip_amount(total, runtime)}{TFG}" if total > 0 else ""
         if prob > 0:
-            odds = _s("chance_of", runtime, p=f"{ink}{prob:.0f}%{TFG}",
+            odds = _s("chance_of", runtime, p=f"{ink}{fmt_percent(prob, runtime)}{TFG}",
                       what=_precip_kind_lower(code, runtime))
             lines.append(f"{TBG}{TFG} {odds} ")
         elif amount:
@@ -359,9 +361,9 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
         speed = day_value("wind_speed_10m_max")
         gust = day_value("wind_gusts_10m_max")
         if speed is not None:
-            lines.append(f"{TBG}{TFG} {_s('wind', runtime)} {speed:.0f}{runtime.wind_unit} ")
+            lines.append(f"{TBG}{TFG} {_s('wind', runtime)} {speed:.0f}{runtime.wind_unit_label} ")
         if gust is not None and speed is not None and gust > speed:
-            line = f"{TBG}{TFG} {_s('gusts', runtime)} {gust:.0f}{runtime.wind_unit}"
+            line = f"{TBG}{TFG} {_s('gusts', runtime)} {gust:.0f}{runtime.wind_unit_label}"
             gusts = hour_values("wind_gusts_10m")
             if gusts:
                 at = when(max(gusts, key=lambda jv: jv[1])[0])

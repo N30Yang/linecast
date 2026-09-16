@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from linecast import _theme
+from linecast._i18n import fmt_percent
 from linecast._graphics import bg, color_mode, fg, visible_len, RESET, BOLD
 from linecast._runtime import WeatherRuntime, current_runtime
 from linecast._weather_i18n import DAY_NAMES, _s, _wmo_icons
@@ -119,9 +120,9 @@ def render_daily_mapped(data, width, runtime=None, now=None):
                 unit = _s('precip_inch', runtime)
                 precip_amt = (f"{precip_i:.1f}{unit}" if precip_i >= 1
                               else f"{precip_i:.2f}{unit}")
-        prob_s = f"{prob_i:.0f}%" if prob_i > 25 else ""
+        prob_s = fmt_percent(prob_i, runtime) if prob_i > 25 else ""
         wind_amt = (
-            f"{wind_i:.0f}{runtime.wind_unit}"
+            f"{wind_i:.0f}{runtime.wind_unit_label}"
             if wind_i > (25 if runtime.metric else 15)
             else ""
         )

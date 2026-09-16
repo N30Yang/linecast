@@ -42,6 +42,17 @@ def lang_of(runtime):
     return getattr(runtime, "lang", "en") if runtime else "en"
 
 
+# Languages that write the percent sign before the number: %40.
+PERCENT_FIRST = frozenset({"tr"})
+
+
+def fmt_percent(value, runtime):
+    """`value` as a whole-number percentage the display language's way:
+    "40%", or "%40" in Turkish."""
+    text = f"{value:.0f}"
+    return f"%{text}" if lang_of(runtime) in PERCENT_FIRST else f"{text}%"
+
+
 def lookup(table, key, lang, **kwargs):
     """The text for `key` in `lang`, falling back to English and then to
     the key itself.  Formatted with kwargs only when some are given, so a

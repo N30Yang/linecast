@@ -206,6 +206,26 @@ class TestTurkishWeather:
         assert DAY_NAMES["tr"] == ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
 
+class TestTurkishPercentAndUnits:
+    def test_the_percent_sign_leads_in_turkish(self):
+        from linecast._i18n import fmt_percent
+        assert fmt_percent(40, SimpleNamespace(lang="tr")) == "%40"
+        assert fmt_percent(40.4, SimpleNamespace(lang="en")) == "40%"
+        assert fmt_percent(40, None) == "40%"
+
+    def test_the_wind_reads_km_sa_on_screen_and_km_h_in_json(self):
+        from linecast._runtime import WeatherRuntime
+        defaults = dict(live=False, icons="emoji", oneline=False, celsius=True,
+                        metric=True, shading=False)
+        turkish = WeatherRuntime(lang="tr", **defaults)
+        english = WeatherRuntime(lang="en", **defaults)
+        assert turkish.wind_unit_label == "km/sa"
+        assert turkish.wind_unit == "km/h"
+        assert english.wind_unit_label == "km/h"
+        imperial = WeatherRuntime(lang="tr", **{**defaults, "metric": False})
+        assert imperial.wind_unit_label == "mph"
+
+
 class TestWeatherLocaleImprovements:
     def test_same_temperature_sentences_are_idiomatic(self):
         expected = {

@@ -598,6 +598,7 @@ _STRINGS = {
         "credit_forecast": 'Weather data by {source}',
         "credit_alerts": 'Alerts by {source}',
         "metric_unit_sep": "",
+        "unit_kmh": "km/h",
         "feels": "feels",
         "wind": "Wind",
         "gusts": "gusts",
@@ -2227,8 +2228,10 @@ _STRINGS = {
         "retry_key": "Yeniden denemek için r tuşuna basın.",
         "credit_forecast": "Hava verileri: {source}",
         "credit_alerts": "Uyarılar: {source}",
-        # Turkish sets units off with a space: 3 mm, 12 km/h.
+        # Turkish sets units off with a space, and reads the hour as
+        # "saat": 3 mm, 12 km/sa.
         "metric_unit_sep": " ",
+        "unit_kmh": "km/sa",
         "feels": "hissedilen",
         "wind": "Rüzgar",
         "gusts": "hamle",

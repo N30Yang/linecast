@@ -5,6 +5,7 @@ embedding in a status bar.  The ``--oneline`` flag in each subcommand triggers
 these renderers instead of the full terminal UI.
 """
 
+from linecast._i18n import fmt_percent
 from linecast._graphics import fg, RESET
 from linecast._framebuffer import fmt_time, fmt_time_dt
 
@@ -50,10 +51,10 @@ def weather_oneline(data, location_name, runtime):
 
     if wind > 0:
         from linecast._weather_i18n import _s
-        parts.append(f"{WIND_COLOR}{_s('wind', runtime)} {wind:.0f}{runtime.wind_unit}")
+        parts.append(f"{WIND_COLOR}{_s('wind', runtime)} {wind:.0f}{runtime.wind_unit_label}")
 
     if humidity is not None:
-        parts.append(f"{MUTED}\U0001f4a7{humidity:.0f}%")
+        parts.append(f"{MUTED}\U0001f4a7{fmt_percent(humidity, runtime)}")
 
     return " ".join(parts) + RESET
 
@@ -160,7 +161,7 @@ def moon_oneline(now_local, lat, lng, runtime, calendar=None):
     purple = fg(*INFO_PURPLE_RGB)
     text = fg(*INFO_TEXT_RGB)
 
-    parts = [f"{text}{icon} {name} {illum * 100:.0f}%"]
+    parts = [f"{text}{icon} {name} {fmt_percent(illum * 100, runtime)}"]
 
     rise, sset = upcoming_moon_events(now_local, lat, lng)
     events = sorted(
@@ -259,7 +260,7 @@ def sky_oneline(now_local, lat, lng, runtime):
     parts = []
     if scene.moon_alt > 0.0:
         _idx, _name, icon = moon_phase(scene.moment_utc, runtime)
-        parts.append(f"{text}{icon} {scene.moon_illum * 100:.0f}% "
+        parts.append(f"{text}{icon} {fmt_percent(scene.moon_illum * 100, runtime)} "
                      f"{compass_point(scene.moon_az, runtime, culture)} {scene.moon_alt:.0f}°")
     for key, _vec, alt, az, mag in scene.planets:
         if alt > 0.0 and easily_seen(mag, alt, scene):
