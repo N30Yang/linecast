@@ -1,5 +1,6 @@
 """python -m linecast / linecast CLI entry point."""
 
+import errno
 import os
 import sys
 from linecast._completion import available_shells, completion_help, render_completion
@@ -118,12 +119,26 @@ def main():
             _main()
         finally:
             sys.stdout.flush()
-    except BrokenPipeError:
+    except OSError as exc:
+        if not _reader_gone(exc):
+            raise
         try:
             os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
         except OSError:
             pass
         sys.exit(0)
+
+
+def _reader_gone(exc):
+    """Whether an error writing stdout says the reader has closed it.
+
+    POSIX reports it as EPIPE.  Windows has no reader to signal: its C
+    runtime turns the pipe's ERROR_NO_DATA into EINVAL, so on Windows
+    an EINVAL from stdout is taken the same way.
+    """
+    if isinstance(exc, BrokenPipeError):
+        return True
+    return sys.platform == "win32" and exc.errno == errno.EINVAL
 
 
 def _main():
