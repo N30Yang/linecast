@@ -8,7 +8,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from linecast import _live
-from linecast._live import LiveApp, overlay
+from linecast._live import LiveApp, menu_box, overlay
 
 
 class TestOverlay:
@@ -53,6 +53,18 @@ class TestPointerChip:
 
     def test_nothing_from_no_lines(self):
         assert _live.pointer_chip([], 10, 5, 80, 24) == ""
+
+
+class TestMenuBox:
+    def test_fits_a_screen_narrower_than_its_frame(self):
+        """A box has nothing inside on three columns, and does not spin
+        forever trimming an empty row to a negative width."""
+        out = menu_box(["abc"], 3, 10)
+        assert "┌┐" in out and "││" in out and "└┘" in out
+
+    def test_trims_rows_to_the_screen(self):
+        out = menu_box(["abcdef"], 8, 10, title="t")
+        assert "│abcd│" in out
 
 
 class TestHooks:

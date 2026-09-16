@@ -182,7 +182,7 @@ def menu_box(lines, cols, rows, title="", sel=None, border="", fill="",
     """
     from linecast._graphics import RESET, visible_len
     widths = [visible_len(line) for line in lines if line is not None]
-    inner = min(cols - 4, (max(widths) if widths else 0) + 1)
+    inner = max(0, min(cols - 4, (max(widths) if widths else 0) + 1))
     top = max(1, (rows - (len(lines) + 2)) // 2)
     left = max(0, (cols - inner - 2) // 2)
     head = f" {title} ".center(inner, "─") if title else "─" * inner
@@ -197,7 +197,7 @@ def menu_box(lines, cols, rows, title="", sel=None, border="", fill="",
         if line is None:
             out.append(f"├{'─' * inner}┤")
             continue
-        while visible_len(line) > inner:
+        while line and visible_len(line) > inner:
             line = line[:-1]
         body = line + " " * (inner - visible_len(line))
         if i == sel:
@@ -661,12 +661,20 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
     def _ack_wait():
         return _ACK_WAIT_S if _term.answered else _ACK_FIRST_WAIT_S
 
+    def _coalesce_or_repaint():
+        """The verdict for input that changed the frame: paint now, or
+        hold the paint while more input is waiting."""
+        return 'coalesce' if _term.wait_readable(fd, 0) else 'repaint'
+
     def handle_input():
         """Read one key or mouse event and apply it.
 
         'quit' to leave the loop, 'repaint' when the frame should be drawn
-        again, None when nothing on screen changed -- or when more input
-        is already waiting, so a burst of scrolling paints once at its end.
+        again, 'coalesce' when it should but more input is already waiting
+        -- so a burst of scrolling paints once at its end -- and None when
+        nothing on screen changed.  The caller owes a repaint after a
+        'coalesce' whatever the later input says: the bytes waiting may
+        be the terminal's reply to the last frame, which changes nothing.
         """
         nonlocal offset, playing, play_frame, mouse_pos, drag_start, drag_delta
         nonlocal active_alert, modal_scroll, acks_owed
@@ -714,9 +722,7 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                 play_frame += step
             else:
                 offset += step * scroll_step
-            if _term.wait_readable(fd, 0):
-                return None  # coalesce rapid scrolling
-            return 'repaint'
+            return _coalesce_or_repaint()  # rapid scrolling
         elif action == 'reset':
             if auto_play:
                 playing = not playing  # space = play/pause
@@ -728,9 +734,7 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
         elif (on_action is not None and isinstance(action, str)
               and action.startswith('key:')):
             if on_action(action[4:]):
-                if _term.wait_readable(fd, 0):
-                    return None  # coalesce held-down keys (zoom taps)
-                return 'repaint'
+                return _coalesce_or_repaint()  # held-down keys (zoom taps)
         elif mouse and isinstance(action, tuple) and action[0] == 'mouse':
             _, cb, cx, cy, is_rel = action
             wheel_cb = _normalize_wheel_cb(cb)
@@ -739,9 +743,7 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                     # Caller owns the wheel outright (zoom, panel scroll,
                     # …) — no scrub fallback.
                     if on_wheel(1 if wheel_cb == 64 else -1, cx, cy):
-                        if _term.wait_readable(fd, 0):
-                            return None  # coalesce rapid wheel
-                        return 'repaint'
+                        return _coalesce_or_repaint()  # rapid wheel
                     return None
                 if active_alert is not None:
                     # Scroll the modal
@@ -752,9 +754,7 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                     play_frame += 1 if wheel_cb == 64 else -1
                 else:
                     offset += scroll_step if wheel_cb == 64 else -scroll_step
-                if _term.wait_readable(fd, 0):
-                    return None  # coalesce rapid scrolling
-                return 'repaint'
+                return _coalesce_or_repaint()  # rapid scrolling
             if is_rel:
                 # Button release — completes a drag gesture if one
                 # started; otherwise ignore.
@@ -793,15 +793,11 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                     dcol, drow = cx - drag_start[0], cy - drag_start[1]
                     drag_delta = (dcol, drow)
                     if on_drag(dcol, drow, False):
-                        if _term.wait_readable(fd, 0):
-                            return None  # coalesce rapid drag motion
-                        return 'repaint'
+                        return _coalesce_or_repaint()  # rapid drag motion
                     return None
-                # Hover-capable terminals.
+                # Hover-capable terminals: render once at the final position.
                 mouse_pos = (cx, cy)
-                if _term.wait_readable(fd, 0):
-                    return None  # coalesce rapid motion: render once at the final position
-                return 'repaint'
+                return _coalesce_or_repaint()
             # Fallback for terminals without motion reporting:
             # update pointer on press so tooltip can still appear.
             if (cb & 0b11) in (0, 1, 2):
@@ -890,7 +886,14 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
             # Wait for input, resize, or timeout
             wait = play_interval if (auto_play and playing) else interval
             deadline = _time.time() + wait
+            owed = False   # a coalesced input is waiting for its repaint
             while True:
+                # A repaint held back for more input is due once the input
+                # has run out.  It cannot wait for the last of that input
+                # to ask: that is often the terminal's reply to the frame
+                # before, and a reply changes nothing on screen.
+                if owed and not _term.wait_readable(fd, 0):
+                    break
                 remaining = deadline - _time.time()
                 if remaining <= 0:
                     if auto_play and playing and (play_gate is None
@@ -909,6 +912,8 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                         return
                     if verdict == 'repaint':
                         break
+                    if verdict == 'coalesce':
+                        owed = True
     except KeyboardInterrupt:
         pass
     # SystemExit is NOT swallowed: a sys.exit(1) from a render callback (or
@@ -932,13 +937,19 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
         # What the terminal was still sending -- a colour probe's replies,
         # mouse reports from before it read the escape above -- is read
         # and dropped, up to its reply to the query, so none of it reaches
-        # the shell.  Then the terminal settings, the signal handlers and
+        # the shell.  A frame whose reply was still owed when the loop
+        # ended is answered first, so the drain waits for one reply more
+        # than that.  Then the terminal settings, the signal handlers and
         # the wakeup channel go back, in that order (_term.LiveTerminal).
+        # The drain waits on the terminal, and a second ctrl-C or SIGTERM
+        # meanwhile raises through this block: close() runs regardless,
+        # or the shell would inherit the tty in cbreak.
         try:
-            term.settle(_ack_wait() if sync else 0)
+            term.settle(_ack_wait() if sync else 0, replies=acks_owed + 1)
         except Exception:
             pass
-        term.close()
+        finally:
+            term.close()
         watch.uninstall()
         watch.report()
 

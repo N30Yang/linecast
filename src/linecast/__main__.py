@@ -106,6 +106,27 @@ def _run(cmd, args):
 
 
 def main():
+    # A reader that closes early -- `linecast weather --print | head` --
+    # ends a run with EPIPE on stdout.  That is the reader's choice, not
+    # a failure: swallow it, and give the interpreter something other
+    # than the broken pipe to flush at exit, or it reports the same
+    # error once more on the way out.  Output shorter than the buffer
+    # reaches the pipe only at that flush, so flush here, where the
+    # error can still be caught.
+    try:
+        try:
+            _main()
+        finally:
+            sys.stdout.flush()
+    except BrokenPipeError:
+        try:
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        except OSError:
+            pass
+        sys.exit(0)
+
+
+def _main():
     # A binary named for a command is that command: a symlink or copy
     # of the linecast binary called `weather` runs the weather command,
     # arguments untouched.  Distro packages ship the short commands as
