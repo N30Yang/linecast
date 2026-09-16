@@ -121,21 +121,38 @@ class CompletionScriptTests(unittest.TestCase):
                 self.assertNotIn("-start_values", script)
                 self.assertNotIn("-range_values", script)
 
-    def _source_in_shell(self, shell, script, prelude, show):
-        """Source `script` in `shell` and return what `show` prints."""
+    def _run_in_shell(self, shell, script, command):
+        """Write `script` to a file and run `command` in `shell` with no
+        user config, the file's path in $1 (or $argv[1] in fish); return
+        what it prints. nushell reads its path at parse time, so there
+        the path is spliced into the command in single quotes, which
+        nushell reads with no escapes at all.
+
+        A shell that is not installed skips the test, unless the shell
+        is named in LINECAST_REQUIRE_SHELLS: CI sets that where it has
+        installed the shells, so a missing one fails instead of quietly
+        skipping (#108 shipped through a skip)."""
         exe = shutil.which(shell)
         if exe is None:
+            required = os.environ.get("LINECAST_REQUIRE_SHELLS", "").split()
+            if shell in required:
+                self.fail(f"{shell} is required here and is not installed")
             self.skipTest(f"{shell} is not installed")
         with tempfile.NamedTemporaryFile("w", suffix=f".{shell}",
-                                         delete=False) as handle:
+                                         delete=False, encoding="utf-8") as handle:
             handle.write(script)
         try:
-            # The path rides in $1 so a Windows path's backslashes are
-            # not read as escapes.
-            result = subprocess.run(
-                [exe, "-f", "-c", f'{prelude}source "$1" && {show}', exe,
-                 handle.name],
-                capture_output=True, text=True, check=False)
+            # The path rides as an argument so a Windows path's
+            # backslashes are not read as escapes.
+            if shell == "nu":
+                argv = [exe, "-n", "-c", command.replace("$1", f"'{handle.name}'")]
+            elif shell == "fish":
+                argv = [exe, "--no-config", "-c", command.replace("$1", "$argv[1]"),
+                        handle.name]
+            else:
+                argv = [exe, "-f", "-c", command, exe, handle.name]
+            result = subprocess.run(argv, capture_output=True, text=True,
+                                    check=False)
         finally:
             os.unlink(handle.name)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -143,17 +160,63 @@ class CompletionScriptTests(unittest.TestCase):
         return result.stdout.strip()
 
     def test_bash_completion_sources_cleanly(self):
-        out = self._source_in_shell(
-            "bash", render_completion("bash"), "",
-            'echo "$_linecast_week_start_values"')
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && echo "$_linecast_week_start_values"')
         self.assertEqual(out, "monday sunday saturday")
+
+    def test_bash_completes_a_hyphenated_flags_values(self):
+        """Not just that the script loads: bash's own completion entry
+        point, fed the words on the line, offers the flag's values.
+        --week-start is the flag whose hyphen broke the scripts (#108)."""
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(linecast moon --week-start s) '
+            '&& COMP_CWORD=3 && _linecast_complete '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertEqual(out.split(), ["sunday", "saturday"])
+
+    def test_bash_completes_the_short_names(self):
+        out = self._run_in_shell(
+            "bash", render_completion("bash"),
+            'source "$1" && COMP_WORDS=(moon --week-start "") '
+            '&& COMP_CWORD=2 && _linecast_complete_moon '
+            '&& printf "%s\\n" "${COMPREPLY[@]}"')
+        self.assertEqual(out.split(), ["monday", "sunday", "saturday"])
 
     def test_zsh_completion_sources_cleanly(self):
         """The README's `source <(linecast completion zsh)` must not
         fail; `compdef` is stubbed because -f skips compinit."""
-        out = self._source_in_shell(
-            "zsh", render_completion("zsh"), "compdef() { : }; ",
-            'print -r -- "${_linecast_week_start_values[@]}"')
+        out = self._run_in_shell(
+            "zsh", render_completion("zsh"),
+            'compdef() { : }; source "$1" '
+            '&& print -r -- "${_linecast_week_start_values[@]}"')
+        self.assertEqual(out, "monday sunday saturday")
+
+    def test_fish_completes_a_hyphenated_flags_values(self):
+        """The README's `linecast completion fish | source`, then fish's
+        own completer asked what it would offer on the line."""
+        out = self._run_in_shell(
+            "fish", render_completion("fish"),
+            'source $1; and complete -C "linecast moon --week-start s"')
+        self.assertEqual(sorted(out.split()), ["saturday", "sunday"])
+        out = self._run_in_shell(
+            "fish", render_completion("fish"),
+            'source $1; and complete -C "moon --week-start "')
+        self.assertEqual(sorted(out.split()), ["monday", "saturday", "sunday"])
+
+    def test_nu_completion_loads_as_a_module(self):
+        """The README's `use linecast_completions.nu *`: nushell parses
+        the whole file, and the flag's completer is wired to its extern."""
+        out = self._run_in_shell(
+            "nu", render_completion("nu"),
+            "use $1 *; scope commands | where name == 'linecast moon' "
+            "| get 0.signatures.any | where parameter_name == 'week-start' "
+            "| get 0.completion")
+        self.assertEqual(out, "nu-complete linecast-week-start")
+        out = self._run_in_shell(
+            "nu", render_completion("nu"),
+            "source $1; nu-complete linecast-week-start | str join ' '")
         self.assertEqual(out, "monday sunday saturday")
 
     def test_invalid_shell_raises(self):
