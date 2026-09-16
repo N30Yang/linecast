@@ -598,6 +598,11 @@ OVERRIDES = {
         },
     },
     "constellations": {
+        # Noorali T. Jiwaji, "Namna Ya Kuelewa Nyota Za Mbinguni":
+        # https://sites.google.com/site/astronomyintanzania/astronomiakwakiswahili
+        # Only these attested Swahili names are included; the rest keep
+        # their Latin names. This is a display language, not a sky culture.
+        "sw": {"Cru": "Msalaba wa Kusini", "Sco": "Ng'e"},
         # Czech Wikipedia titles the articles "Souhvězdí Velké medvědice",
         # in the genitive, and Wikidata carries the nominative names the
         # charts print; two of its labels are the article's phrase, and
@@ -834,7 +839,7 @@ def bake_constellations(src):
     # The data sets its multi-word names with four-per-em spaces, which
     # no one types into a search; every name goes out with plain ones.
     records = []
-    counts = {lang: 0 for lang in (*WIKIDATA_LANG, "zh-Hant")}
+    counts = {lang: 0 for lang in (*WIKIDATA_LANG, "zh-Hant", "sw")}
     for f in features:
         p = f["properties"]
         # Serpens is one constellation in two parts; the data carries the
@@ -842,7 +847,9 @@ def bake_constellations(src):
         latin = plain(p["la"] or p["name"])
         found = labels.get(latin, {})
         names = {}
-        for lang, wd_lang in WIKIDATA_LANG.items():
+        # Swahili uses only the sourced overrides, not unchecked labels.
+        for lang in (*WIKIDATA_LANG, "sw"):
+            wd_lang = WIKIDATA_LANG.get(lang)
             text = plain(p.get(lang, "")) if lang in OUR_LANGS else ""
             if not text and wd_lang in found:
                 text = constellation_label(found[wd_lang], latin)

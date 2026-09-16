@@ -454,6 +454,28 @@ _SKY_STRINGS = {
         "search_jump": 'enter znovu pro přechod na tento okamžik',
         "tradition": "tradice",
     },
+    "sw": {
+        "sun": "Jua",
+        "moon": "Mwezi",
+        "mercury": "Utaridi",
+        "venus": "Zuhura",
+        "mars": "Mirihi",
+        "jupiter": "Mshtarii",
+        "saturn": "Zohali",
+        "uranus": "Uranusi",
+        "neptune": "Neptuni",
+        "facing": "kuelekea {dir}",
+        "field_of_view": "upana wa {deg}°",
+        "overhead": "juu ya kichwa",
+        "planets_none": "hakuna sayari juu ya upeo",
+        "star": "nyota",
+        "search_prompt": "jina au namba ya katalogi",
+        "search_none": "hakuna chenye jina hilo",
+        "rises_at": "{name} huchomoza saa {time} upande wa {dir}",
+        "never_rises": "{name} haichomozi hapa",
+        "search_jump": "enter tena kwenda wakati huo",
+        "tradition": "utamaduni",
+    },
 }
 
 # The scripts whose constellation names are not set in capitals on the
@@ -495,6 +517,7 @@ CULTURE_TITLES = {
         "ru": "Анута",
         "ro": "Anuta",
         "cs": "Anuta",
+        "sw": "Anuta",
     },
     "belarusian": {
         "en": "Belarusian",
@@ -523,6 +546,7 @@ CULTURE_TITLES = {
         "ru": "белорусская",
         "ro": "belarusă",
         "cs": "běloruská",
+        "sw": "Kibelarusi",
     },
     "blackfoot": {
         "en": "Blackfoot",
@@ -551,6 +575,7 @@ CULTURE_TITLES = {
         "ru": "Черноногие",
         "ro": "Blackfoot",
         "cs": "Blackfoot",
+        "sw": "Blackfoot",
     },
     "boorong": {
         "en": "Boorong",
@@ -579,6 +604,7 @@ CULTURE_TITLES = {
         "ru": "Бурунг",
         "ro": "Boorong",
         "cs": "Boorong",
+        "sw": "Boorong",
     },
     "bugis": {
         "en": "Bugis",
@@ -607,6 +633,7 @@ CULTURE_TITLES = {
         "ru": "Бугис",
         "ro": "Bugis",
         "cs": "Bugis",
+        "sw": "Bugis",
     },
     "chinese": {
         "en": "Chinese",
@@ -635,6 +662,7 @@ CULTURE_TITLES = {
         "ru": "китайская",
         "ro": "chineză",
         "cs": "čínská",
+        "sw": "Kichina",
     },
     "chinese-modern": {
         "en": "Chinese Contemporary",
@@ -663,6 +691,7 @@ CULTURE_TITLES = {
         "ru": "китайская современная",
         "ro": "chineză contemporană",
         "cs": "čínská současná",
+        "sw": "Kichina cha kisasa",
     },
     "hawaiian": {
         "en": "Hawaiian",
@@ -691,6 +720,7 @@ CULTURE_TITLES = {
         "ru": "гавайская",
         "ro": "hawaiiană",
         "cs": "havajská",
+        "sw": "Kihawaii",
     },
     "indian": {
         "en": "Indian Vedic",
@@ -719,6 +749,7 @@ CULTURE_TITLES = {
         "ru": "ведическая (Индия)",
         "ro": "vedică (India)",
         "cs": "védská (Indie)",
+        "sw": "Kihindi cha Veda",
     },
     "japanese": {
         "en": "Japanese Lunar Stations",
@@ -747,6 +778,7 @@ CULTURE_TITLES = {
         "ru": "японские лунные стоянки",
         "ro": "stațiile lunare japoneze",
         "cs": "japonské lunární domy",
+        "sw": "Vituo vya mwezi vya Kijapani",
     },
     "mandar": {
         "en": "Mandar",
@@ -775,6 +807,7 @@ CULTURE_TITLES = {
         "ru": "Мандар",
         "ro": "Mandar",
         "cs": "Mandar",
+        "sw": "Mandar",
     },
     "maori": {
         "en": "Maori",
@@ -803,6 +836,7 @@ CULTURE_TITLES = {
         "ru": "маори",
         "ro": "maori",
         "cs": "maorská",
+        "sw": "Maori",
     },
     "mongolian": {
         "en": "Mongolian",
@@ -831,6 +865,7 @@ CULTURE_TITLES = {
         "ru": "монгольская",
         "ro": "mongolă",
         "cs": "mongolská",
+        "sw": "Kimongolia",
     },
     "norse": {
         "en": "Norse",
@@ -859,6 +894,7 @@ CULTURE_TITLES = {
         "ru": "скандинавская",
         "ro": "nordică",
         "cs": "severská",
+        "sw": "Kinorse",
     },
     "romanian": {
         "en": "Romanian",
@@ -887,6 +923,7 @@ CULTURE_TITLES = {
         "ru": "румынская",
         "ro": "românească",
         "cs": "rumunská",
+        "sw": "Kiromania",
     },
     "ruelle": {
         "en": "Ruelle",
@@ -915,6 +952,7 @@ CULTURE_TITLES = {
         "ru": "Рюэль",
         "ro": "Ruelle",
         "cs": "Ruelle",
+        "sw": "Ruelle",
     },
     "sami": {
         "en": "Sami",
@@ -943,6 +981,7 @@ CULTURE_TITLES = {
         "ru": "саамская",
         "ro": "sami",
         "cs": "sámská",
+        "sw": "Sami",
     },
     "siberian": {
         "en": "Siberian",
@@ -971,6 +1010,7 @@ CULTURE_TITLES = {
         "ru": "сибирская",
         "ro": "siberiană",
         "cs": "sibiřská",
+        "sw": "Kisiberia",
     },
     "tongan": {
         "en": "Tongan",
@@ -999,6 +1039,7 @@ CULTURE_TITLES = {
         "ru": "тонганская",
         "ro": "tongană",
         "cs": "tonžská",
+        "sw": "Kitonga",
     },
     "tukano": {
         "en": "Tukano",
@@ -1027,6 +1068,7 @@ CULTURE_TITLES = {
         "ru": "Тукано",
         "ro": "Tukano",
         "cs": "Tukano",
+        "sw": "Tukano",
     },
     "snt": {
         "en": "Western (Sky & Telescope)",
@@ -1055,6 +1097,7 @@ CULTURE_TITLES = {
         "ru": "западная (Sky & Telescope)",
         "ro": "occidentală (Sky & Telescope)",
         "cs": "západní (Sky & Telescope)",
+        "sw": "Magharibi (Sky & Telescope)",
     },
     "rey": {
         "en": "Western (H.A.Rey)",
@@ -1083,6 +1126,7 @@ CULTURE_TITLES = {
         "ru": "западная (H.A.Rey)",
         "ro": "occidentală (H.A.Rey)",
         "cs": "západní (H.A.Rey)",
+        "sw": "Magharibi (H.A.Rey)",
     },
 }
 

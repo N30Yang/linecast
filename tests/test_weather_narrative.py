@@ -172,7 +172,40 @@ class TestNarrativePacking:
     def test_nothing_to_say_renders_nothing(self):
         assert narrative_lines({}, NOON, 100, _runtime()) == []
 
-    def test_a_comparison_about_today_opens_the_prose(self):
+    def test_swahili_prose_keeps_noun_agreement_and_punctuation_when_wrapped(self):
+        from linecast._graphics import visible_len
+        data = {
+            "daily": {"temperature_2m_max": [77, 77, 77]},
+            "hourly": {
+                "time": [f"2026-07-15T{h:02d}:00" for h in range(11, 15)],
+                "weather_code": [63, 0, 51, 51],
+                "precipitation_probability": [80, 0, 80, 80],
+                "precipitation": [0.03, 0, 0, 0],
+                "snowfall": [0, 0, 0, 0],
+            },
+        }
+        expected = (
+            "Joto la leo litakuwa karibu sawa na la jana. "
+            "Manyunyu mepesi huenda yakaanza hivi karibuni. "
+            "Kiasi cha mvua katika saa 24 zilizopita: 0.03″."
+        )
+        for width in (40, 80, 160):
+            lines = narrative_lines(data, NOON, width, _runtime(lang="sw"))
+            assert " ".join(self._plain(lines)) == expected
+            assert all(visible_len(line) <= width for line in lines)
+
+    def test_swahili_sentences_keep_the_24_hour_clock_on_a_12_hour_setting(self):
+        # "saa 5pm" would read as eleven in the morning in Swahili time.
+        from linecast._weather_sections import precipitation_sentence
+        hours = range(12, 19)
+        hourly = {
+            "time": [f"2026-07-15T{h:02d}:00" for h in hours],
+            "weather_code": [61 if h < 17 else 0 for h in hours],
+            "precipitation_probability": [80 if h < 17 else 0 for h in hours],
+        }
+        runtime = _runtime(lang="sw", use_24h=False)
+        assert precipitation_sentence(hourly, NOON, runtime) == (
+            "Mvua nyepesi itaisha karibu saa 17:00")
         prose = self._plain(narrative_lines(self.DATA, NOON, 200, _runtime()))[0]
 
         assert prose.startswith("Today will be"), prose

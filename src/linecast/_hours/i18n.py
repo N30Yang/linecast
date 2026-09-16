@@ -111,6 +111,12 @@ _HOURS_STRINGS = {
     "ru": {"night": "ночь", "in_time": "через {dur}", "koku": "1 коку", "fast": "пост"},
     "ro": {"night": "noapte", "in_time": "peste {dur}", "koku": "1 koku", "fast": "post"},
     "cs": {"night": "noc", "in_time": "za {dur}", "koku": "1 koku", "fast": "půst"},
+    "sw": {
+        "night": "usiku",
+        "in_time": "baada ya {dur}",
+        "koku": "koku 1",
+        "fast": "mfungo",
+    },
 }
 
 # The sunrise and sunset marks read in the language's own words, since

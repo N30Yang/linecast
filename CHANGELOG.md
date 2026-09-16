@@ -4,10 +4,11 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, and Chinese in the traditional script, twenty-six languages in all, and sunshine can read the day in the halachic, Roman, Edo, or Islamic hours.
+linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, Swahili, and Chinese in the traditional script, twenty-seven languages in all, and sunshine can read the day in the halachic, Roman, Edo, or Islamic hours.
 
 New this version:
 
+- Language: Added Swahili (`sw`) for the seven views, help panels, and date labels, including Swahili compass abbreviations in sky, moon, and radar. Use `linecast language sw`, `--lang sw`, or a Swahili terminal locale.
 - Language: linecast speaks Turkish, Esperanto, Russian, Romanian, and Czech. `linecast language tr`, `eo`, `ru`, `ro`, or `cs`, or a terminal locale in one of them, puts every view in that language, and the sky names its constellations in each and its brightest stars where the language has its own names. Turkish search takes a dotless ı or a dotted i alike, so `yildiz` finds Yıldız, and Esperanto search takes the x-system, so `gxemeloj` finds Ĝemeloj. (If you have your terminal set to the `eo` locale, please [reach out](https://github.com/ashuttl/linecast/discussions). I want to hear about it.)
 - Language: linecast speaks Chinese in the traditional script. `linecast language zh-Hant`, or a Taiwan, Hong Kong, or Macau terminal locale, puts every view in traditional characters, with the Chinese calendar and the Chinese sky as `zh` has them. `zh` is the simplified script, as before.
 - Language: The Moon's almanac counsel and solunar periods, and the inch mark on rain, read in every language.

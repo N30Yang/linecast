@@ -24,7 +24,7 @@ import time as _t
 from datetime import datetime
 
 from linecast import _live, _theme
-from linecast._i18n import fmt_percent
+from linecast._i18n import fmt_percent, sentence_24h
 from linecast._graphics import bg, fg, get_terminal_size
 from linecast._location import country_for_defaults, resolve_location
 from linecast._runtime import (
@@ -404,7 +404,7 @@ def forecast_notice(data, runtime, live=False, fetching=False, failed_at=None):
         day = made.isoformat()
     if failed_at is not None:
         text = _s("forecast_stale_at", runtime, day=day,
-                  time=_fmt_time(failed_at, runtime.use_24h))
+                  time=_fmt_time(failed_at, sentence_24h(runtime)))
     else:
         text = _s("forecast_stale", runtime, day=day)
     hint = _s("retry_key" if live else "retry_run", runtime)

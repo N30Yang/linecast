@@ -524,6 +524,26 @@ _SUNSHINE_STRINGS = {
         "sunrise": "východ slunce",
         "sunset": "západ slunce",
     },
+    "sw": {
+        "today": "leo",
+        "in_day": "baada ya siku {n}",
+        "in_days": "baada ya siku {n}",
+        "day_ago": "siku {n} iliyopita",
+        "days_ago": "siku {n} zilizopita",
+        "sky_night": "usiku",
+        # TUKI's English-Swahili dictionary gives twilight as
+        # "utusitusi wa asubuhi au jioni", the half-dark, where
+        # mwangaza is brightness; and astronomical as "-a kifalaki".
+        "sky_astronomical": "utusitusi wa kifalaki",
+        "sky_nautical": "utusitusi wa kibaharia",
+        "sky_civil": "utusitusi wa kiraia",
+        "sky_day": "mchana",
+        "midnight_sun": "jua la usiku wa manane",
+        "polar_night": "usiku wa ncha ya dunia",
+        "solar_noon": "adhuhuri ya jua",
+        "sunrise": "jua kuchomoza",
+        "sunset": "jua kutua",
+    },
 }
 
 # Month-axis labels where the first three letters of the MONTHS_I18N name

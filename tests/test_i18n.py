@@ -323,6 +323,67 @@ class TestCzechWeather:
         assert DAY_NAMES["cs"] == ["po", "út", "st", "čt", "pá", "so", "ne"]
 
 
+class TestSwahili:
+    def test_comparative_sentences_and_precipitation(self):
+        runtime = SimpleNamespace(lang="sw", celsius=True, use_24h=True,
+                                  metric=True, precip_unit="mm")
+        now = datetime(2026, 8, 24, 15)
+        assert comparative_sentence({"temperature_2m_max": [20, 21, 24]}, now, runtime) == (
+            "Joto la kesho litakuwa juu kidogo kuliko la leo")
+        assert comparative_sentence({"temperature_2m_max": [20, 21, 22]}, now, runtime) == (
+            "Joto la kesho litakuwa karibu sawa na la leo")
+        assert comparative_sentence({"temperature_2m_max": [20, 21, 22]},
+                                    now.replace(hour=9), runtime) == (
+            "Joto la leo litakuwa karibu sawa na la jana")
+        assert comparative_sentence({"temperature_2m_max": [20, 21, 18]}, now, runtime) == (
+            "Joto la kesho litakuwa chini kidogo kuliko la leo")
+        hourly = {"time": [f"2026-08-24T{h:02d}:00" for h in range(12, 18)],
+                  "precipitation_probability": [0, 0, 0, 0, 0, 80],
+                  "weather_code": [0, 0, 0, 0, 0, 95]}
+        assert "Mvua ya radi huenda ikaanza karibu saa 17:00" in _precipitation_line(
+            hourly, now.replace(hour=12, minute=10), runtime)
+        hourly = {"time": ["2026-08-24T14:00"], "precipitation": [4.0],
+                  "snowfall": [0], "weather_code": [63]}
+        assert "Kiasi cha mvua katika saa 24 zilizopita: 4.0 mm" in _past_precip_line(
+            hourly, now, runtime)
+
+    def test_precipitation_verbs_agree_when_starting_ending_or_continuing(self):
+        from linecast._weather_sections import precipitation_sentence
+        runtime = SimpleNamespace(lang="sw", use_24h=True)
+        now = datetime(2026, 8, 24, 12, 10)
+        times = [f"2026-08-24T{h:02d}:00" for h in range(12, 15)]
+        for code in (51, 53, 55, 56, 57, 61, 73, 95):
+            drizzle = code in (51, 53, 55, 56, 57)
+            desc = WMO_NAMES_I18N["sw"][code]
+            for codes, suffix in (
+                ([0, code, code], "huenda yakaanza" if drizzle else "huenda ikaanza"),
+                ([code, 0, 0], "yataisha" if drizzle else "itaisha"),
+                ([code] * 3, "yataendelea" if drizzle else "itaendelea"),
+            ):
+                hourly = {"time": times, "weather_code": codes,
+                          "precipitation_probability": [80 if c else 0 for c in codes]}
+                when = "siku nzima" if codes == [code] * 3 else "hivi karibuni"
+                assert precipitation_sentence(hourly, now, runtime) == f"{desc} {suffix} {when}"
+
+    def test_calendar_labels_remain_distinct_in_narrow_columns(self):
+        from linecast._moon_i18n import _fmt_month_day
+        from linecast._sunshine_i18n import axis_month_labels, relative_day
+        runtime = SimpleNamespace(lang="sw")
+        assert DAY_NAMES["sw"] == ["J3", "J4", "J5", "Alh", "Ij", "J1", "J2"]
+        assert len({name[:2] for name in DAY_NAMES["sw"]}) == 7
+        assert _fmt_month_day(datetime(2026, 8, 24), runtime) == "24 Ago"
+        assert axis_month_labels(runtime)[2] == "Mac"
+        assert relative_day(-1, runtime) == "siku 1 iliyopita"
+        assert relative_day(-2, runtime) == "siku 2 zilizopita"
+
+    def test_season_events_name_the_month_in_both_hemispheres(self):
+        from linecast._moon_i18n import _season_label
+        runtime = SimpleNamespace(lang="sw")
+        for event, month in enumerate(("Machi", "Juni", "Septemba", "Desemba")):
+            assert _season_label(event, -6.8, runtime).endswith(month)
+            assert _season_label(event, 51.5, runtime).endswith(month)
+
+
 class TestTurkishPercentAndUnits:
     def test_the_percent_sign_leads_in_turkish(self):
         from linecast._i18n import fmt_percent
@@ -356,9 +417,11 @@ class TestTablesComplete:
     }
     # Keys a language needs that English does not: the Slavic few-form,
     # Romanian's one and its "de" form for a count of days, and a dawn
-    # and a dusk word where one twilight word will not do.
+    # and a dusk word where one twilight word will not do, and Swahili
+    # ma-class agreement for drizzle.
     EXTRAS = {"linecast._sunshine_i18n": {"in_days_few", "days_ago_few"},
-              "linecast._moon_i18n": {"in_days_one", "in_days_many"}}
+              "linecast._moon_i18n": {"in_days_one", "in_days_many"},
+              "linecast._weather_i18n": {"starting_ma", "ending_ma", "continuing_ma"}}
     VARIANTS = {"linecast._sunshine_i18n": ("_dawn", "_dusk")}
 
     def _tables(self):

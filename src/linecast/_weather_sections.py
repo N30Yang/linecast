@@ -4,12 +4,12 @@ import math
 from datetime import datetime, timedelta
 
 from linecast import _theme
-from linecast._i18n import fmt_percent
+from linecast._i18n import fmt_percent, sentence_24h
 from linecast._graphics import RESET, visible_len
 from linecast._runtime import WeatherRuntime, current_runtime, log_failure, log_skipped
 from linecast._textwidth import wrap_display_width
 from linecast._weather_i18n import (
-    fmt_wind,
+    fmt_wind, _precip_s,
     DAY_NAMES, ON_DAY_FORMS, WMO_NAMES, WMO_NAMES_I18N, _PRECIP_DESCS_I18N, _s, _wmo_icons,
 )
 from linecast._weather_style import (MUTED, TEXT, WIND_COLOR, _aqi_color,
@@ -453,7 +453,7 @@ def precipitation_sentence(hourly, now, runtime=None):
         if dt.date() == now.date():
             from linecast._framebuffer import fmt_hour_phrase
             return _s("around", runtime,
-                      time=fmt_hour_phrase(dt.hour, runtime.use_24h, lang))
+                      time=fmt_hour_phrase(dt.hour, sentence_24h(runtime), lang))
         if dt.date() == (now + timedelta(days=1)).date():
             if dt.hour < 5:
                 return _s("overnight", runtime)
@@ -476,13 +476,15 @@ def precipitation_sentence(hourly, now, runtime=None):
         current_desc = desc(first_idx)
         for i, dt in window[1:]:
             if not is_precip(i):
-                return _s("ending", runtime, desc=_ucfirst(current_desc),
-                          time=time_phrase(dt))
-        return _s("continuing", runtime, desc=_ucfirst(current_desc))
+                return _precip_s("ending", codes[first_idx], runtime,
+                                 desc=_ucfirst(current_desc), time=time_phrase(dt))
+        return _precip_s("continuing", codes[first_idx], runtime,
+                         desc=_ucfirst(current_desc))
 
     for i, dt in window[1:]:
         if is_precip(i):
-            return _s("starting", runtime, desc=_ucfirst(desc(i)), time=time_phrase(dt))
+            return _precip_s("starting", codes[i], runtime,
+                             desc=_ucfirst(desc(i)), time=time_phrase(dt))
     return ""
 
 

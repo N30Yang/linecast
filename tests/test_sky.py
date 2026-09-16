@@ -351,13 +351,21 @@ class TestCatalogue:
             assert set(names) == set(sky.star_names())
             assert all(proper != desig for proper, desig in names.values() if proper)
 
+    def test_swahili_uses_sourced_constellation_names_and_catalogue_fallbacks(self):
+        records = {r["id"]: r for r in sky.constellations()}
+        assert sky.constellation_name(records["Cru"], "sw") == "Msalaba wa Kusini"
+        assert sky.constellation_name(records["Sco"], "sw") == "Ng'e"
+        assert sky.constellation_name(records["UMa"], "sw") == "Ursa Major"
+        assert sky.star_names("sw")[0] == ("Sirius", "α CMa")
+
     def test_the_constellations_have_their_names_in_every_language(self):
         from linecast._i18n import LANGUAGE_CODES
         ursa = next(r for r in sky.constellations() if r["id"] == "UMa")
         assert ursa["name"] == "Ursa Major"
         for code in LANGUAGE_CODES:
             # Indonesian charts print the Latin names, as the IAU does.
-            if code not in ("en", "id"):
+            # Swahili keeps Latin where a local name has not been verified.
+            if code not in ("en", "id", "sw"):
                 assert sky.constellation_name(ursa, code) != ursa["name"], code
         assert sky.constellation_name(ursa, "pl") == "Wielka Niedźwiedzica"
         assert sky.constellation_name(ursa, "uk") == "Велика Ведмедиця"
@@ -988,6 +996,12 @@ class TestCultures:
         assert search("polarka", pool)[0].label == "Polárka · α UMi"
         assert search("blíženci", pool)[0].label == "Blíženci · Gemini"
         assert search("velky vuz", pool)[0].kind == "asterism"
+        pool = targets(_runtime(lang="sw"))
+        assert search("msalaba wa kusini", pool)[0].label == "Msalaba wa Kusini · Crux"
+        assert search("crux", pool)[0].label == "Msalaba wa Kusini · Crux"
+        assert search("ng'e", pool)[0].label == "Ng'e · Scorpius"
+        assert search("sirius", pool)[0].label == "Sirius · α CMa"
+        assert search("zuhura", pool)[0].kind == "planet"
         pool = targets(_runtime(lang="zh-Hant"))
         assert search("織女一", pool)[0].label == "織女一 · α Lyr"
         assert search("大熊座", pool)[0].label == "大熊座 · Ursa Major"

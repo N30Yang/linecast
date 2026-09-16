@@ -352,6 +352,21 @@ _STRINGS = {
         "radar_unavailable": "radar není k dispozici ({err})",
         "no_frames": "žádné snímky radaru",
     },
+    "sw": {
+        "loading": "inapakia…",
+        "hint": "space cheza/sitisha · ←→ hatua · +/- kuza · buruta / wasd · c joto · W upepo · t mandhari · S setilaiti · q toka",
+        "theme": "mandhari",
+        "now": "sasa",
+        "near": "{dist} {unit} {dir} mwa {name}",
+        # Tanzania Institute of Education, Jiografia na Mazingira, Std 4, p. 26:
+        # https://ol.tie.go.tz/uploaded_files/books/primary/Eng/Std4/Jiogefia_Mazingira/files/basic-html/page33.html
+        "compass": "Kas Kas-Mas Mas Kus-Mas Kus Kus-Magh Magh Kas-Magh",
+        "forecast": "utabiri",
+        "echo_pct": "{pct}% mwangwi",
+        "cloud_pct": "{pct}% mawingu",
+        "radar_unavailable": "rada haipatikani ({err})",
+        "no_frames": "hakuna picha za rada",
+    },
 }
 
 

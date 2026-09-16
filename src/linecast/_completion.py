@@ -42,6 +42,7 @@ LANG_CODES = (
     "ru",
     "ro",
     "cs",
+    "sw",
 )
 
 SHELLS = ("bash", "zsh", "fish", "nu", "nushell")

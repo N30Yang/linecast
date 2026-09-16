@@ -93,6 +93,8 @@ DAY_NAMES = {
     "ru": ["пн", "вт", "ср", "чт", "пт", "сб", "вс"],
     "ro": ["lun", "mar", "mie", "joi", "vin", "sâm", "dum"],
     "cs": ["po", "út", "st", "čt", "pá", "so", "ne"],
+    # glibc sw_TZ (Kamusi): compact labels keep the Juma- days distinct.
+    "sw": ["J3", "J4", "J5", "Alh", "Ij", "J1", "J2"],
 }
 
 FULL_DAY_NAMES = {
@@ -122,6 +124,7 @@ FULL_DAY_NAMES = {
     "ru": ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"],
     "ro": ["luni", "marți", "miercuri", "joi", "vineri", "sâmbătă", "duminică"],
     "cs": ["pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota", "neděle"],
+    "sw": ["Jumatatu", "Jumanne", "Jumatano", "Alhamisi", "Ijumaa", "Jumamosi", "Jumapili"],
 }
 
 WMO_NAMES_I18N = {
@@ -425,6 +428,36 @@ WMO_NAMES_I18N = {
         85: "Sněhové přeháňky", 86: "Silné sněhové přeháňky",
         95: "Bouřka", 96: "Bouřka", 99: "Bouřka",
     },
+    "sw": {
+        0: "Anga safi",
+        1: "Mawingu machache",
+        2: "Mawingu kiasi",
+        3: "Mawingu mengi",
+        45: "Ukungu",
+        48: "Ukungu unaoganda",
+        51: "Manyunyu mepesi",
+        53: "Manyunyu",
+        55: "Manyunyu mazito",
+        56: "Manyunyu yanayoganda",
+        57: "Manyunyu yanayoganda",
+        61: "Mvua nyepesi",
+        63: "Mvua",
+        65: "Mvua kubwa",
+        66: "Mvua inayoganda",
+        67: "Mvua inayoganda",
+        71: "Theluji nyepesi",
+        73: "Theluji",
+        75: "Theluji nzito",
+        77: "Chembe za theluji",
+        80: "Mvua nyepesi za vipindi",
+        81: "Mvua za vipindi",
+        82: "Mvua kubwa za vipindi",
+        85: "Theluji za vipindi",
+        86: "Theluji nzito za vipindi",
+        95: "Mvua ya radi",
+        96: "Mvua ya radi",
+        99: "Mvua ya radi",
+    },
 }
 
 _PRECIP_DESCS_I18N = {
@@ -677,6 +710,30 @@ _PRECIP_DESCS_I18N = {
         80: "slabé přeháňky", 81: "přeháňky", 82: "silné přeháňky",
         85: "sněhové přeháňky", 86: "silné sněhové přeháňky",
         95: "bouřka", 96: "bouřka", 99: "bouřka",
+    },
+    "sw": {
+        51: "manyunyu mepesi",
+        53: "manyunyu",
+        55: "manyunyu mazito",
+        56: "manyunyu yanayoganda",
+        57: "manyunyu yanayoganda",
+        61: "mvua nyepesi",
+        63: "mvua",
+        65: "mvua kubwa",
+        66: "mvua inayoganda",
+        67: "mvua inayoganda",
+        71: "theluji nyepesi",
+        73: "theluji",
+        75: "theluji nzito",
+        77: "theluji ya chembechembe",
+        80: "mvua nyepesi za vipindi",
+        81: "mvua za vipindi",
+        82: "mvua kubwa za vipindi",
+        85: "theluji za vipindi",
+        86: "theluji nzito za vipindi",
+        95: "mvua ya radi",
+        96: "mvua ya radi",
+        99: "mvua ya radi",
     },
 }
 
@@ -2756,6 +2813,81 @@ _STRINGS = {
         "hist_above_avg": "o {diff} nad průměrem",
         "hist_below_avg": "o {diff} pod průměrem",
     },
+    "sw": {
+        "today": "Leo",
+        "today_short": "Leo",
+        "forecast_stale": "Utabiri huu ni wa {day}; mpya haukupatikana.",
+        "forecast_stale_at": "Utabiri huu ni wa {day}; mpya haukupatikana saa {time}.",
+        "forecast_fetching": "Inatafuta utabiri mpya…",
+        "retry_run": "Endesha tena kujaribu upya.",
+        "retry_key": "Bonyeza r kujaribu tena.",
+        "credit_forecast": "Taarifa za hali ya hewa kutoka {source}",
+        "credit_alerts": "Maonyo kutoka {source}",
+        "metric_unit_sep": " ",
+        "feels": "ni kama",
+        "wind": "Upepo",
+        "gusts": "upepo mkali",
+        "humidity": "Unyevunyevu",
+        "chance": "uwezekano wa {p}",
+        "chance_of": "uwezekano wa {p} wa {what}",
+        "amount_between": "{amount} kati ya {a} na {b}",
+        "amount_all_day": "{amount} kwa siku nzima",
+        "cloud": "Mawingu {p}",
+        "heaviest_around": "kali zaidi karibu saa {time}",
+        "dew_pt": "Kiwango cha umande",
+        "uv": "UV",
+        "aqi": "AQI",
+        "precip_inch": "″",
+        "until": "hadi",
+        "sentence_end": ".",
+        "sentence_join": ". ",
+        "feels_humid": "Unyevunyevu mwingi unaongeza hisia ya joto",
+        "feels_sun": "Jua linaongeza hisia ya joto",
+        "feels_wind": "Upepo unaongeza hisia ya baridi",
+        "feels_dry": "Hewa kavu inaongeza hisia ya baridi",
+        "same_temp": "karibu sawa na la {ref_day}",
+        "bit_warmer": "juu kidogo kuliko la {ref_day}",
+        "bit_cooler": "chini kidogo kuliko la {ref_day}",
+        "warmer": "juu kuliko la {ref_day}",
+        "cooler": "chini kuliko la {ref_day}",
+        "much_warmer": "juu sana kuliko la {ref_day}",
+        "much_cooler": "chini sana kuliko la {ref_day}",
+        "today_subj": "Joto la leo",
+        "tomorrow_subj": "Joto la kesho",
+        "yesterday": "jana",
+        "today_ref": "leo",
+        "will_be": "{subject} litakuwa {comparison}",
+        "ending": "{desc} itaisha {time}",
+        "continuing": "{desc} itaendelea siku nzima",
+        "starting": "{desc} huenda ikaanza {time}",
+        "ending_ma": "{desc} yataisha {time}",
+        "continuing_ma": "{desc} yataendelea siku nzima",
+        "starting_ma": "{desc} huenda yakaanza {time}",
+        "shortly": "hivi karibuni",
+        "in_about_an_hour": "baada ya takriban saa moja",
+        "in_a_couple_hours": "baada ya saa mbili hivi",
+        "around": "karibu saa {time}",
+        "overnight": "usiku",
+        "early_tomorrow_morning": "kesho asubuhi na mapema",
+        "tomorrow_morning": "kesho asubuhi",
+        "tomorrow_afternoon": "kesho mchana",
+        "tomorrow_evening": "kesho jioni",
+        "on_day": "{day}",
+        "past_precip": "Kiasi cha {ptype} katika saa 24 zilizopita: {amt}",
+        "snow": "theluji",
+        "rain": "mvua",
+        "mixed_precip": "mvua na theluji",
+        "Snow": "Theluji",
+        "Rain": "Mvua",
+        "Mix": "Mchanganyiko",
+        "q_to_close": "q kufunga",
+        "o_to_open": "o kufungua kwenye kivinjari",
+        "scroll": "sogeza",
+        "space_to_now": "space kurudi sasa",
+        "hist_near_avg": "karibu na wastani",
+        "hist_above_avg": "{diff} juu ya wastani",
+        "hist_below_avg": "{diff} chini ya wastani",
+    },
 }
 
 
@@ -2769,6 +2901,19 @@ def fmt_wind(speed, runtime):
 def _s(key, runtime, **kwargs):
     """Look up a localized string, with optional format substitution."""
     return lookup(_STRINGS, key, lang_of(runtime), **kwargs)
+
+
+def _precip_s(key, code, runtime, **kwargs):
+    """A forecast verb agreeing with the precipitation's noun class.
+
+    Swahili manyunyu (drizzle) takes ma-class agreement; mvua (rain)
+    and theluji (snow) take i- verb agreement. Choose by weather code
+    so editing a description does not change its grammar.
+    """
+    lang = lang_of(runtime)
+    if lang == "sw" and code in (51, 53, 55, 56, 57):
+        key += "_ma"
+    return lookup(_STRINGS, key, lang, **kwargs)
 
 
 def has_string(key):

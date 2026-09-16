@@ -17,7 +17,7 @@ LANGUAGES = (
     ("zh", "Simplified Chinese"), ("zh-Hant", "Traditional Chinese"),
     ("th", "Thai"), ("id", "Indonesian"), ("uk", "Ukrainian"),
     ("vi", "Vietnamese"), ("eo", "Esperanto"), ("tr", "Turkish"),
-    ("ru", "Russian"), ("ro", "Romanian"), ("cs", "Czech"),
+    ("ru", "Russian"), ("ro", "Romanian"), ("cs", "Czech"), ("sw", "Swahili"),
 )
 LANGUAGE_CODES = tuple(code for code, _name in LANGUAGES)
 LANGUAGE_NAMES = dict(LANGUAGES)
@@ -81,6 +81,19 @@ def same_language(lang, other):
 def lang_of(runtime):
     """The runtime's language, or English when there is no runtime."""
     return getattr(runtime, "lang", "en") if runtime else "en"
+
+
+# Languages whose sentences read a 12-hour time as another hour. Swahili
+# counts the hours from dawn, so "saa 1pm" reads as seven in the
+# morning; its screens write 24-hour digits (CLDR's HH:mm, AccuWeather's
+# 07:06), which no reader takes for Swahili time.
+SENTENCE_24H = frozenset({"sw"})
+
+
+def sentence_24h(runtime):
+    """Whether a time inside a sentence takes the 24-hour clock: the
+    user's choice, or always in a language of SENTENCE_24H."""
+    return bool(getattr(runtime, "use_24h", False)) or lang_of(runtime) in SENTENCE_24H
 
 
 # Languages that write the percent sign before the number: %40.

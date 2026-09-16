@@ -742,6 +742,34 @@ _MOON_STRINGS = {
         "autumn_equinox": "Podzimní rovnodennost",
         "winter_solstice": "Zimní slunovrat",
     },
+    "sw": {
+        "illuminated": "{pct}% imeangazwa",
+        "age": "siku ya {age} kati ya {total}",
+        "lunar_age": "umri wa mwezi siku {age}",
+        "up_now": "Uko juu sasa",
+        "above_horizon": "{alt}° juu ya upeo wa macho",
+        "below_horizon": "Chini ya upeo wa macho",
+        "moonrise": "Mwezi kuchomoza",
+        "moonset": "Mwezi kutua",
+        "in_days": "baada ya siku {days}",
+        "begins_at_sunset": "huanza jua linapotua",
+        "in_time": "baada ya {dur}",
+        "year_day": "Siku ya {n} kati ya {total}",
+        "light_of_moon": "mwezi unaoongezeka",
+        "dark_of_moon": "mwezi unaopungua",
+        "good_for": "Wakati mzuri wa {things}",
+        "hold_off": "Subiri kabla ya {things}",
+        "light_good": "kupanda mazao ya juu ya ardhi, kuunganisha miche, kupandikiza",
+        "light_hold": "kupanda mazao ya mizizi",
+        "dark_good": "kupanda mazao ya mizizi, kupogoa, kupalilia",
+        "dark_hold": "kupanda mazao ya juu ya ardhi",
+        "solunar_major": "Kipindi kikuu cha jua na mwezi",
+        "solunar_minor": "kipindi kidogo",
+        "spring_equinox": "Ikwinoksi ya Machi",
+        "summer_solstice": "Solstisi ya Juni",
+        "autumn_equinox": "Ikwinoksi ya Septemba",
+        "winter_solstice": "Solstisi ya Desemba",
+    },
 }
 
 
@@ -790,6 +818,7 @@ MONTHS_I18N = {
            "iul", "aug", "sep", "oct", "noi", "dec"],
     "cs": ["led", "úno", "bře", "dub", "kvě", "čvn",
            "čvc", "srp", "zář", "říj", "lis", "pro"],
+    "sw": ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ago", "Sep", "Okt", "Nov", "Des"],
 }
 
 # Date order/format per language: {month} = abbreviated name from
@@ -824,12 +853,13 @@ def _ms(key, runtime, **kwargs):
 # solar terms (春分, 夏至, …) name the event itself, not the local
 # season — Vietnamese Xuân phân and Hạ chí are the same terms — and
 # Thai's Sanskrit terms (วสันตวิษุวัต, …) likewise, so those languages
-# keep the northern mapping everywhere.
+# keep the northern mapping everywhere. Swahili names the months of
+# the events, so its labels also stay the same in either hemisphere.
 _SEASON_KEYS_NORTH = ("spring_equinox", "summer_solstice",
                       "autumn_equinox", "winter_solstice")
 _SEASON_KEYS_SOUTH = ("autumn_equinox", "winter_solstice",
                       "spring_equinox", "summer_solstice")
-_SEASON_ABSOLUTE_LANGS = frozenset({"ja", "ko", "zh", "zh-Hant", "vi", "th"})
+_SEASON_ABSOLUTE_LANGS = frozenset({"ja", "ko", "zh", "zh-Hant", "vi", "th", "sw"})
 
 
 def _season_label(event, lat, runtime):

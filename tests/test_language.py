@@ -98,6 +98,17 @@ class LanguageCommandTests(ConfigDirMixin):
 
 
 class ResolveLangTests(ConfigDirMixin):
+    def test_swahili_locales_and_saved_language_reach_the_runtime(self):
+        for locale in ("sw_TZ.UTF-8", "sw_KE.UTF-8", "sw_UG.UTF-8"):
+            self.assertEqual(resolve_lang(None, {"LANG": locale}), ("sw", "LANG"))
+        out = io.StringIO()
+        with redirect_stdout(out):
+            language._cmd_set("sw")
+            language._cmd_show()
+        self.assertIn("sw  Swahili  [fixed]", out.getvalue())
+        args = weather_parser().parse_args(["--print"])
+        self.assertEqual(RuntimeConfig.from_sources(args, environ={}).lang, "sw")
+
     def test_default_is_english(self):
         self.assertEqual(resolve_lang(None, {}), ("en", "default"))
 

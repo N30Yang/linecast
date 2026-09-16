@@ -133,6 +133,11 @@ _TIDES_STRINGS = {
         "waves": "Vlny",
         "swell": "Mrtvé vlnění",
     },
+    "sw": {
+        "space_to_now": "space kurudi sasa",
+        "waves": "Mawimbi",
+        "swell": "Mawimbi ya mbali",
+    },
 }
 
 
@@ -189,6 +194,7 @@ MOON_NAMES_I18N = {
            "Lună plină", "Lună gibboasă descrescătoare", "Ultimul pătrar", "Semilună descrescătoare"],
     "cs": ["Nov", "Dorůstající srpek", "První čtvrť", "Dorůstající Měsíc",
            "Úplněk", "Couvající Měsíc", "Poslední čtvrť", "Couvající srpek"],
+    "sw": ["Mwezi mpya", "Hilali inayoongezeka", "Robo ya kwanza", "Mwezi unaoongezeka", "Mwezi mpevu", "Mwezi unaopungua", "Robo ya mwisho", "Hilali inayopungua"],
 }
 
 
