@@ -271,8 +271,10 @@ def render_calendar(now_local, lat, lng, runtime, month_offset=0,
     graph_h = max(9, rows - chrome - (0 if fullscreen else 2))
 
     # Two header rows (title, weekdays); the weeks split what remains,
-    # and the leftover centres the grid vertically.
-    cell_h = max(2, (graph_h - 2) // weeks)
+    # and the leftover centres the grid vertically. A window too short
+    # for two rows a week gets one, a glyph beside the day number,
+    # rather than a last week drawn off the bottom of the frame.
+    cell_h = max(1, (graph_h - 2) // weeks)
     cell_w = max(4, graph_w // 7)
     grid_w = cell_w * 7
     left = (graph_w - grid_w) // 2
@@ -352,10 +354,13 @@ def render_calendar(now_local, lat, lng, runtime, month_offset=0,
                 limb = 360.0 - limb
             _moon._draw_moon_disc(fb, cx, cy, radius, illum, limb, 0.0,
                                   night=_moon.MOON_NIGHT_RGB)
-        else:
+        elif cell_h > 1 or cell_w >= 6:
             # No room to draw: the phase glyph stands in for the disc.
+            # On a one-row cell it sits after the day number, and a
+            # cell too narrow for both keeps the number.
             icon = moon_phase(noon, runtime)[2]
-            _put(overlays, cx, y0 + cell_h // 2, icon, T, max_x=graph_w)
+            gx = cx if cell_h > 1 else x0 + cell_w - 2
+            _put(overlays, gx, y0 + cell_h // 2, icon, T, max_x=graph_w)
 
         # The day number: today bold and bright, a full moon amber, the
         # other principal phases bright, ordinary days dim.
