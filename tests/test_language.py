@@ -120,6 +120,26 @@ class ResolveLangTests(ConfigDirMixin):
         self.assertEqual(resolve_lang(None, {"LINECAST_LANG": "EN_us"}),
                          ("en", "LINECAST_LANG"))
 
+    def test_bokmal_and_nynorsk_locales_are_norwegian(self):
+        # glibc has no no_NO: a Norwegian machine says nb_NO or nn_NO.
+        self.assertEqual(resolve_lang(None, {"LANG": "nb_NO.UTF-8"}), ("no", "LANG"))
+        self.assertEqual(resolve_lang(None, {"LANG": "nn_NO.UTF-8"}), ("no", "LANG"))
+        self.assertEqual(resolve_lang(None, {"LINECAST_LANG": "nb"}),
+                         ("no", "LINECAST_LANG"))
+        _config.write_config({"language": "nb"})
+        self.assertEqual(resolve_lang(None, {}), ("no", "config"))
+
+    def test_a_code_is_two_ascii_letters(self):
+        from linecast._i18n import is_language_code
+        self.assertTrue(is_language_code("eo"))
+        for value in ("\u011d\u011d", "e", "eng", "e1", 7, None):
+            self.assertFalse(is_language_code(value), repr(value))
+
+    def test_setting_an_alias_saves_the_language_it_names(self):
+        with redirect_stdout(io.StringIO()):
+            language._cmd_set("nb")
+        self.assertEqual(_config.read_config()["language"], "no")
+
     def test_junk_env_value_falls_through(self):
         _config.write_config({"language": "fr"})
         self.assertEqual(resolve_lang(None, {"LINECAST_LANG": "7"}), ("fr", "config"))

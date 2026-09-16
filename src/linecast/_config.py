@@ -14,14 +14,27 @@ def config_file() -> Path:
 
 
 def read_config() -> dict[str, Any]:
-    """Return the parsed config dict, or {} if missing or corrupt."""
+    """Return the parsed config dict, or {} if missing or corrupt.
+
+    Corrupt covers a file that is not JSON, not UTF-8, or JSON that is
+    not an object: the file is the user's to edit, and a hand edit
+    that went wrong should cost the settings, not the command.
+    """
     try:
-        return json.loads(config_file().read_bytes())
+        data = json.loads(config_file().read_bytes())
     except FileNotFoundError:
         return {}  # nothing saved yet: the usual case
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
+        # ValueError: JSONDecodeError, and UnicodeDecodeError for bytes
+        # that are not UTF-8, which json.loads raises before parsing.
         log_failure("config", "read of config.json", exc, fallback="defaults used")
         return {}
+    if not isinstance(data, dict):
+        log_failure("config", "read of config.json",
+                    TypeError(f"expected an object, got {type(data).__name__}"),
+                    fallback="defaults used")
+        return {}
+    return data
 
 
 def write_config(data: dict[str, Any]) -> None:
@@ -78,10 +91,10 @@ def saved_icons() -> str | None:
 
 def saved_language() -> str | None:
     """Return the language code saved via `linecast language`, or None."""
-    from linecast._i18n import is_language_code
+    from linecast._i18n import canonical_language, is_language_code
     lang = read_config().get("language")
     if isinstance(lang, str) and is_language_code(lang.strip()):
-        return lang.strip().lower()
+        return canonical_language(lang.strip().lower())
     return None
 
 
@@ -145,6 +158,9 @@ def saved_location() -> dict[str, Any] | None:
     Resolved to coordinates at set time, so reading it never hits the network.
     """
     loc = read_config().get("location")
-    if isinstance(loc, dict) and "lat" in loc and "lng" in loc:
+    if (isinstance(loc, dict)
+            and all(isinstance(loc.get(k), (int, float))
+                    and not isinstance(loc.get(k), bool) for k in ("lat", "lng"))
+            and -90 <= loc["lat"] <= 90 and -180 <= loc["lng"] <= 180):
         return loc
     return None

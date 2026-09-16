@@ -12,7 +12,7 @@ LC_MESSAGES, LANG) > English.
 import argparse
 import os
 
-from linecast._i18n import LANGUAGES, LANGUAGE_NAMES, is_language_code
+from linecast._i18n import LANGUAGES, LANGUAGE_NAMES, canonical_language, is_language_code
 from linecast._runtime import LOCALE_VARS, VersionAction, resolve_lang
 from linecast._config import read_config, save_config, saved_language
 
@@ -47,6 +47,7 @@ def _cmd_show():
 
 
 def _cmd_set(lang):
+    lang = canonical_language(lang)
     config = read_config()
     config["language"] = lang
     save_config(config)

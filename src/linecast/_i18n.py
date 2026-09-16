@@ -18,12 +18,23 @@ LANGUAGES = (
 LANGUAGE_CODES = tuple(code for code, _name in LANGUAGES)
 LANGUAGE_NAMES = dict(LANGUAGES)
 
+# Codes that name a language above by another name.  A Norwegian
+# machine's locale is nb_NO or nn_NO (glibc has no no_NO), and the
+# strings are Bokmål, so both read as "no".
+LANGUAGE_ALIASES = {"nb": "no", "nn": "no"}
+
+
+def canonical_language(code):
+    """`code` as the tables know it: an alias resolved, else unchanged."""
+    return LANGUAGE_ALIASES.get(code, code)
+
 
 def is_language_code(value):
     """A two-letter code, whether or not linecast has strings for it: an
     unlisted one leaves the app in English and still reaches the providers
     that publish in it, as India's alerts do."""
-    return isinstance(value, str) and len(value) == 2 and value.isalpha()
+    return (isinstance(value, str) and len(value) == 2
+            and value.isascii() and value.isalpha())
 
 
 def lang_of(runtime):

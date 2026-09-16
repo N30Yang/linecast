@@ -258,6 +258,8 @@ def resolve_units(namespace=None, environ=None, legacy_env="WEATHER_UNITS",
         if getattr(namespace, "metric", False):
             return "metric", "flag"
     for name in (legacy_env, "LINECAST_UNITS"):
+        if name is None:
+            continue
         value = env.get(name, "").strip().lower()
         if value in ("metric", "imperial"):
             return value, name
@@ -329,11 +331,13 @@ def language_of(value):
     """The two-letter language a locale-style value names, or None.
 
     "fr", "fr-FR", "de_DE.UTF-8", and "EN_us" name their language in the
-    leading letters.  "C", "POSIX", "C.UTF-8", and three-letter codes such
-    as "fil_PH" name none linecast could act on, and neither does junk.
+    leading letters; "nb_NO" and "nn_NO" name Norwegian.  "C", "POSIX",
+    "C.UTF-8", and three-letter codes such as "fil_PH" name none linecast
+    could act on, and neither does junk.
     """
+    from linecast._i18n import canonical_language
     letters = re.match(r"[a-z]*", (value or "").strip().lower()).group()
-    return letters if len(letters) == 2 else None
+    return canonical_language(letters) if len(letters) == 2 else None
 
 
 def resolve_lang(namespace=None, environ=None):
@@ -817,8 +821,9 @@ class RuntimeConfig:
 
     # the parser whose defaults stand in before a main() has run
     _parser = staticmethod(lambda: _base_parser("linecast", ""))
-    # the command's own units env var, before LINECAST_UNITS
-    _legacy_units_env = "WEATHER_UNITS"
+    # the command's own units env var, before LINECAST_UNITS; the
+    # weather and tides runtimes name theirs, the rest have none
+    _legacy_units_env = None
 
     @classmethod
     def from_sources(cls, namespace, environ=None, country=_UNSET):
@@ -856,6 +861,7 @@ class RuntimeConfig:
 
 @dataclass(frozen=True)
 class WeatherRuntime(RuntimeConfig):
+    _legacy_units_env = "WEATHER_UNITS"
     # Defaults required: the base class ends in defaulted fields.
     celsius: bool = True
     temp_range: str = "climate"
@@ -866,7 +872,7 @@ class WeatherRuntime(RuntimeConfig):
     @classmethod
     def from_sources(cls, namespace, environ=None, country=_UNSET):
         env = _environ(environ)
-        base = RuntimeConfig.from_sources(namespace, env, country)
+        base = super().from_sources(namespace, env, country)
         # --celsius / --fahrenheit override temperature independently
         if namespace.fahrenheit:
             celsius = False
