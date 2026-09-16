@@ -226,6 +226,60 @@ class TestTurkishPercentAndUnits:
         assert imperial.wind_unit_label == "mph"
 
 
+class TestTablesComplete:
+    """Every language table carries every English key, so nothing falls
+    back to English unnoticed (issue #111). The exceptions are keys whose
+    English text is the default the other languages share by design."""
+
+    # A unit that reads the same in most languages is written once, in
+    # English, and only the languages that spell it differently carry it.
+    DEFAULTS = {
+        "linecast._weather_i18n": {"unit_kmh", "unit_mm", "unit_cm"},
+        "linecast._radar_i18n": {"unit_km"},
+    }
+    # Keys a language needs that English does not: the Slavic few-form,
+    # and a dawn and a dusk word where one twilight word will not do.
+    EXTRAS = {"linecast._sunshine_i18n": {"in_days_few", "days_ago_few"}}
+    VARIANTS = {"linecast._sunshine_i18n": ("_dawn", "_dusk")}
+
+    def _tables(self):
+        import importlib
+        import pkgutil
+        import linecast
+        for info in pkgutil.walk_packages(linecast.__path__, "linecast."):
+            if "i18n" not in info.name:
+                continue
+            module = importlib.import_module(info.name)
+            for name, obj in vars(module).items():
+                if isinstance(obj, dict) and isinstance(obj.get("en"), dict):
+                    yield info.name, name, obj
+
+    def test_every_language_has_every_english_key(self):
+        from linecast._i18n import LANGUAGE_CODES
+        gaps = []
+        for module, name, table in self._tables():
+            english = set(table["en"]) - self.DEFAULTS.get(module, set())
+            for lang in LANGUAGE_CODES:
+                missing = sorted(english - set(table.get(lang, {})))
+                if missing:
+                    gaps.append(f"{module}.{name} {lang}: {missing}")
+        assert not gaps, "\n".join(gaps)
+
+    def test_no_language_carries_a_key_english_does_not(self):
+        dead = []
+        for module, name, table in self._tables():
+            english = set(table["en"]) | self.EXTRAS.get(module, set())
+            suffixes = self.VARIANTS.get(module, ())
+            for lang, strings in table.items():
+                extra = sorted(
+                    key for key in set(strings) - english
+                    if not any(key.endswith(end) and key[:-len(end)] in table["en"]
+                               for end in suffixes))
+                if extra:
+                    dead.append(f"{module}.{name} {lang}: {extra}")
+        assert not dead, "\n".join(dead)
+
+
 class TestUnitLabels:
     def _runtime(self, lang, metric=True):
         from linecast._runtime import WeatherRuntime
@@ -235,8 +289,10 @@ class TestUnitLabels:
     def test_the_wind_reads_as_the_language_writes_it(self):
         from linecast._weather_i18n import fmt_wind
         assert fmt_wind(12, self._runtime("en")) == "12km/h"
-        assert fmt_wind(12, self._runtime("nl")) == "12km/u"
-        assert fmt_wind(12, self._runtime("da")) == "12km/t"
+        assert fmt_wind(12, self._runtime("nl")) == "12 km/u"
+        assert fmt_wind(12, self._runtime("da")) == "12 km/t"
+        assert fmt_wind(12, self._runtime("de")) == "12 km/h"
+        assert fmt_wind(12, self._runtime("ja")) == "12km/h"
         assert fmt_wind(12, self._runtime("tr")) == "12 km/sa"
         assert fmt_wind(12, self._runtime("eo")) == "12 km/h"
         assert fmt_wind(12, self._runtime("uk")) == "12 км/год"
