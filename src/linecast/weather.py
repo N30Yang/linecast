@@ -25,7 +25,7 @@ import time as _t
 from datetime import datetime
 
 from linecast import _live, _theme
-from linecast._i18n import fmt_percent, sentence_24h
+from linecast._i18n import GEOCODER_UNTRANSLATED, fmt_percent, sentence_24h
 from linecast._graphics import bg, fg, get_terminal_size
 from linecast._location import country_for_defaults, resolve_location
 from linecast._runtime import (
@@ -78,6 +78,7 @@ from linecast._weather_sources import (
     forecast_attribution,
     forecast_date,
     forecast_is_todays,
+    without_country,
 )
 
 # What the dashboard keeps when the window is too short for all of it:
@@ -803,15 +804,20 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
         # Alerts depend on geocode for country_code
         name, cc, addr = _settle(fut_geocode, "reverse geocode", ("", "", {}))
         # That address is in the country's own language, as the alert
-        # feeds' area names are. The name on the header is asked for
-        # again in the user's.
-        fut_name = pool.submit(_reverse_geocode, lat, lng, lang=runtime.lang)
+        # feeds' area names are. A typed place is shown by the forward
+        # geocoder's label, which names what was asked for; with only
+        # coordinates, or a language that label cannot be in, Nominatim
+        # is asked again for the name in the user's.
+        fut_name = None
+        if not geo_label or runtime.lang in GEOCODER_UNTRANSLATED:
+            fut_name = pool.submit(_reverse_geocode, lat, lng, lang=runtime.lang)
         fut_alerts = pool.submit(
             fetch_alerts, lat, lng, cc or country_code,
             lang=runtime.lang, address=addr,
         )
 
-        result["name"] = _settle(fut_name, "place name", ("", "", {}))[0] or name
+        localized = _settle(fut_name, "place name", ("", "", {}))[0] if fut_name else ""
+        result["name"] = localized or without_country(geo_label) or name
         result["country_code"] = cc or country_code
         result["data"] = _settle(fut_forecast, "forecast", None)
         result["aqi"] = _settle(fut_aqi, "air quality", None)
@@ -830,12 +836,11 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
                     "historical averages", None)
         result["alerts"] = _settle(fut_alerts, "alerts", [])
 
-    # A place the reverse geocoder cannot name keeps the name the
-    # user typed; failing that, the coordinates, as radar and maps
-    # show them — never the timezone city, which can be a continent
-    # away (issue #50).
+    # A place no geocoder can name shows its coordinates, as radar and
+    # maps do — never the timezone city, which can be a continent away
+    # (issue #50).
     if not result["name"]:
-        result["name"] = geo_label or f"{lat:.2f}, {lng:.2f}"
+        result["name"] = f"{lat:.2f}, {lng:.2f}"
     return result
 
 

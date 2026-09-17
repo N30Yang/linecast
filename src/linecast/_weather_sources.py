@@ -2065,14 +2065,27 @@ def geocode_first(query: str, lang: str = "en") -> tuple[float, float, str] | No
     if not results:
         return None
     r = results[0]
-    lat = r.get("latitude", 0)
-    lng = r.get("longitude", 0)
-    parts = [r.get("name", "")]
-    if r.get("admin1"):
-        parts.append(r["admin1"])
-    if r.get("country"):
-        parts.append(r["country"])
-    return lat, lng, ", ".join(parts)
+    return r.get("latitude", 0), r.get("longitude", 0), result_label(r)
+
+
+def result_label(result) -> str:
+    """A geocoder result as "name, admin1, country". A region named for
+    its city is left out: "Busan, South Korea", not "Busan, Busan"."""
+    name = result.get("name", "")
+    parts = [name]
+    admin1 = result.get("admin1", "")
+    if admin1 and admin1.casefold() != name.casefold():
+        parts.append(admin1)
+    if result.get("country"):
+        parts.append(result["country"])
+    return ", ".join(parts)
+
+
+def without_country(label: str) -> str:
+    """A result_label without its country, for a header with less room
+    than the tides pill: "Osaka, préfecture d'Osaka"."""
+    parts = label.split(", ")
+    return ", ".join(parts[:2]) if len(parts) == 3 else label
 
 
 def _search_locations(query, lang="en"):
@@ -2083,17 +2096,9 @@ def _search_locations(query, lang="en"):
         return
 
     for result in results:
-        name = result.get("name", "")
-        admin1 = result.get("admin1", "")
-        country = result.get("country", "")
         lat = result.get("latitude", 0)
         lng = result.get("longitude", 0)
-        label = name
-        if admin1:
-            label += f", {admin1}"
-        if country:
-            label += f", {country}"
-        print(f"  {lat:.4f},{lng:.4f}  {label}")
+        print(f"  {lat:.4f},{lng:.4f}  {result_label(result)}")
 
     print("\nUsage: weather --location LAT,LNG")
     print("   or: linecast location set LAT,LNG")

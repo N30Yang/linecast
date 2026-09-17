@@ -61,6 +61,13 @@ def is_language_code(value):
 _GEOCODER_LANG = {"zh-Hant": "zh-TW"}
 _ACCEPT_LANGUAGE = {"zh-Hant": "zh-Hant,zh-TW,zh-HK,zh"}
 
+# Languages Open-Meteo's index has no names in, so a typed place's label
+# comes back in English. A view shows a typed place by that label, since
+# it names what was asked for where reverse geocoding names whichever
+# boundary encloses the point; in these languages Nominatim's name is
+# better when it has one, and the label stays the fallback.
+GEOCODER_UNTRANSLATED = frozenset({"zh-Hant"})
+
 
 def geocoder_language(lang):
     """`lang` as the Open-Meteo geocoder's `language` parameter."""

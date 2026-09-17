@@ -813,6 +813,24 @@ class TestReverseGeocodeName:
                            "country_code": "us"}) == ""
 
 
+class TestResultLabel:
+    """A region named for its city is not repeated."""
+
+    def test_name_admin1_country(self):
+        from linecast._weather_sources import result_label
+        assert result_label({"name": "Osaka", "admin1": "Osaka Prefecture",
+                             "country": "Japan"}) == "Osaka, Osaka Prefecture, Japan"
+
+    def test_a_region_named_for_its_city_is_left_out(self):
+        from linecast._weather_sources import result_label
+        assert result_label({"name": "Busan", "admin1": "Busan",
+                             "country": "South Korea"}) == "Busan, South Korea"
+
+    def test_missing_parts(self):
+        from linecast._weather_sources import result_label
+        assert result_label({"name": "Nuuk", "admin1": "Sermersooq"}) == "Nuuk, Sermersooq"
+
+
 class TestReverseGeocodeLanguage:
     """Asked without a language, Nominatim answers in the country's own,
     which the alert feeds are matched against; asked with one, in the

@@ -270,23 +270,55 @@ class TestGather:
         assert result["alerts"] == []
         assert result["name"] == "Westbrook" and result["country_code"] == "US"
 
-    def test_the_name_is_in_the_users_language_and_the_address_is_not(self):
-        # MeteoAlarm's area names are in the country's language, so the
-        # address they are matched against has to be too.
-        def geocode(lat, lng, lang=None):
-            if lang == "fr":
-                return "Varsovie, Mazovie", "PL", {"city": "Varsovie"}
-            return "Warszawa, województwo mazowieckie", "PL", {"city": "Warszawa"}
-
+    def _gather(self, geocode, lang, geo_label=""):
         with patch.object(weather, "_reverse_geocode", side_effect=geocode), \
              patch.object(weather, "fetch_forecast", return_value={"v": 1}), \
              patch.object(weather, "fetch_aqi", return_value=None), \
              patch.object(weather, "fetch_historical", return_value=None), \
              patch.object(weather, "fetch_alerts", return_value=[]) as alerts:
-            result = weather.gather(52.23, 21.01, "", _runtime("--lang", "fr"))
+            result = weather.gather(52.23, 21.01, "", _runtime("--lang", lang),
+                                    geo_label=geo_label)
+        return result, alerts
+
+    @staticmethod
+    def _warsaw(lat, lng, lang=None):
+        if lang == "fr":
+            return "Varsovie, Mazovie", "PL", {"city": "Varsovie"}
+        if lang == "zh-Hant":
+            return "華沙, 馬佐夫舍省", "PL", {"city": "華沙"}
+        return "Warszawa, województwo mazowieckie", "PL", {"city": "Warszawa"}
+
+    def test_coordinates_are_named_in_the_users_language(self):
+        # MeteoAlarm's area names are in the country's language, so the
+        # address they are matched against has to be too.
+        result, alerts = self._gather(self._warsaw, "fr")
         assert result["name"] == "Varsovie, Mazovie"
         alerts.assert_called_once_with(52.23, 21.01, "PL", lang="fr",
                                        address={"city": "Warszawa"})
+
+    def test_a_typed_place_keeps_the_geocoders_label(self):
+        # Reverse geocoding names whatever boundary encloses the point;
+        # the label names what was asked for, and is not asked again.
+        calls = []
+
+        def geocode(lat, lng, lang=None):
+            calls.append(lang)
+            return self._warsaw(lat, lng, lang)
+
+        result, _alerts = self._gather(geocode, "fr", "Varsovie, Voïvodie de Mazovie, Pologne")
+        assert result["name"] == "Varsovie, Voïvodie de Mazovie"
+        assert calls == [None]
+
+    def test_traditional_chinese_prefers_nominatim_over_the_english_label(self):
+        result, _alerts = self._gather(self._warsaw, "zh-Hant", "Warsaw, Mazovia, Poland")
+        assert result["name"] == "華沙, 馬佐夫舍省"
+
+    def test_traditional_chinese_falls_back_to_the_label(self):
+        def geocode(lat, lng, lang=None):
+            return ("", "PL", {}) if lang else self._warsaw(lat, lng)
+
+        result, _alerts = self._gather(geocode, "zh-Hant", "Warsaw, Mazovia, Poland")
+        assert result["name"] == "Warsaw, Mazovia"
 
     def test_a_geocoder_that_raises_keeps_the_forecast_and_the_typed_name(self):
         with patch.object(weather, "_reverse_geocode", side_effect=OSError("down")), \
