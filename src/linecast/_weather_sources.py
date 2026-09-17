@@ -107,9 +107,12 @@ def _reverse_geocode(lat, lng, lang=None):
     """Reverse geocode coordinates to a display name via Nominatim. Cached.
 
     Returns (display_name, country_code, address) tuple. `lang` localizes
-    the returned names (Nominatim accept-language); cached per language.
+    the returned names (Nominatim accept-language); without one they come
+    in the country's own language, which is what the alert feeds' area
+    names are matched against. Each language keeps its own cache file, so
+    a command that asks both ways finds both the next time.
     """
-    cache_file = cache_dir("weather") / "location.json"
+    cache_file = cache_dir("weather") / (f"location_{lang}.json" if lang else "location.json")
     cached = read_cache(cache_file, 86400)  # 24h cache
     if (cached and cached.get("lat") == round(lat, 4)
             and cached.get("lng") == round(lng, 4)
@@ -123,6 +126,8 @@ def _reverse_geocode(lat, lng, lang=None):
         )
         if lang:
             url += f"&accept-language={accept_language(lang)}"
+        from linecast._maps_search import _throttle
+        _throttle()
         data = fetch_json(url, timeout=10)
         addr = data.get("address", {})
         # Nominatim files small places under keys all the way down to

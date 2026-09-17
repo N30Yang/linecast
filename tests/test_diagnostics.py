@@ -406,7 +406,8 @@ class TestWeatherFetchThread:
     @pytest.fixture
     def stubs(self, monkeypatch):
         weather = _mod("weather")
-        monkeypatch.setattr(weather, "_reverse_geocode", lambda lat, lng: ("Here", "US", {}))
+        monkeypatch.setattr(weather, "_reverse_geocode",
+                            lambda lat, lng, lang=None: ("Here", "US", {}))
         monkeypatch.setattr(weather, "fetch_aqi", lambda lat, lng: None)
         monkeypatch.setattr(weather, "fetch_historical", lambda *a, **kw: None)
         monkeypatch.setattr(weather, "fetch_alerts", lambda *a, **kw: [])

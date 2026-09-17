@@ -802,12 +802,16 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
 
         # Alerts depend on geocode for country_code
         name, cc, addr = _settle(fut_geocode, "reverse geocode", ("", "", {}))
+        # That address is in the country's own language, as the alert
+        # feeds' area names are. The name on the header is asked for
+        # again in the user's.
+        fut_name = pool.submit(_reverse_geocode, lat, lng, lang=runtime.lang)
         fut_alerts = pool.submit(
             fetch_alerts, lat, lng, cc or country_code,
             lang=runtime.lang, address=addr,
         )
 
-        result["name"] = name
+        result["name"] = _settle(fut_name, "place name", ("", "", {}))[0] or name
         result["country_code"] = cc or country_code
         result["data"] = _settle(fut_forecast, "forecast", None)
         result["aqi"] = _settle(fut_aqi, "air quality", None)

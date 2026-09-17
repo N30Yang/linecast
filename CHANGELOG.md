@@ -13,6 +13,8 @@ New this version:
 - Language: The Moon's almanac counsel and solunar periods, and the inch mark on rain, read in every language.
 - Language: A Norwegian terminal locale, nb_NO or nn_NO, puts linecast in Norwegian.
 - Language: The footer of the tides view reads in every language: the wave and swell directions, and the name of the Open-Meteo tide model.
+- Language: Place names read in the language linecast is running in, in weather, sky, and the JSON of sunshine, moon, and sky, as they already did in tides, radar, and maps.
+- Tides: A place name in the header keeps the capitals its language gives it, such as "préfecture d'Osaka".
 - Sunshine: The day can be read in a tradition's hours beside the civil clock. `linecast hours` saves a choice and `sunshine --hours` sets it for one run. HOURS.md describes each system and what it is checked against. Suggested by [@ylub](https://github.com/ylub) in [#95](https://github.com/ashuttl/linecast/discussions/95).
   - `halachic` reads the sha'ot zmaniyot and the zmanim from alot hashachar to tzeit, and `halachic-mga` reads them by the Magen Avraham.
   - `roman` reads the twelve horae and four vigiliae of Rome.

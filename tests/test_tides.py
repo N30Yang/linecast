@@ -132,6 +132,23 @@ class InfoLineTests(unittest.TestCase):
         self.assertNotIn("Δ", pill)
 
 
+class HeaderNameTests(unittest.TestCase):
+    """A station list's capitals are title-cased; a geocoder's name is
+    already written the way its language writes it."""
+
+    def _header(self, name):
+        runtime = TidesRuntime.from_sources(
+            tides.tides_parser().parse_args(["--print"]), environ={})
+        return re.sub(r"\033\[[0-9;]*m", "", tides._render_header_line(80, name, runtime))
+
+    def test_capitals_are_title_cased(self):
+        self.assertIn(" Portland, ME ", self._header("PORTLAND, me"))
+
+    def test_a_geocoders_name_is_left_alone(self):
+        self.assertIn(" Osaka, préfecture d'Osaka, Japon ",
+                      self._header("Osaka, préfecture d'Osaka, Japon"))
+
+
 class StaticRenderTests(unittest.TestCase):
     """--print output must be plain lines: no \\x00 overlay channel and no
     cursor-positioned tooltips (they only mean something under live_loop)."""

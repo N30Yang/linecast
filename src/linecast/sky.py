@@ -1275,7 +1275,7 @@ def main():
         return
 
     from linecast._sky_live import SkyApp, place_name
-    label = place_name(lat, lng, args.location)
+    label = place_name(lat, lng, args.location, lang=runtime.lang)
     if not runtime.live:
         now = _now()
         cols, rows = get_terminal_size()

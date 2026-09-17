@@ -541,10 +541,13 @@ def _render_tide_braille_rows(braille_rows, col_daylight, midnight_cols,
 # ---------------------------------------------------------------------------
 def _render_header_line(cols, station_name, runtime, offset_minutes=0):
     """Render the top line with pill-styled station name."""
-    # Title-case the city name but preserve short uppercase tokens (state/province codes)
+    # Title-case a station list's capitals but preserve short uppercase
+    # tokens (state/province codes). A name that arrives in mixed case is
+    # a geocoder's, and already written as its language writes it:
+    # "préfecture d'Osaka" is not improved by "Préfecture D'Osaka".
     if station_name:
-        parts = station_name.split(",")
-        parts = [p.strip().title() if len(p.strip()) > 2 else p.strip().upper()
+        parts = [p.strip() for p in station_name.split(",")]
+        parts = [p.upper() if len(p) <= 2 else p.title() if p.isupper() else p
                  for p in parts]
         name = ", ".join(parts)
     else:

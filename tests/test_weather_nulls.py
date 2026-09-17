@@ -270,6 +270,24 @@ class TestGather:
         assert result["alerts"] == []
         assert result["name"] == "Westbrook" and result["country_code"] == "US"
 
+    def test_the_name_is_in_the_users_language_and_the_address_is_not(self):
+        # MeteoAlarm's area names are in the country's language, so the
+        # address they are matched against has to be too.
+        def geocode(lat, lng, lang=None):
+            if lang == "fr":
+                return "Varsovie, Mazovie", "PL", {"city": "Varsovie"}
+            return "Warszawa, województwo mazowieckie", "PL", {"city": "Warszawa"}
+
+        with patch.object(weather, "_reverse_geocode", side_effect=geocode), \
+             patch.object(weather, "fetch_forecast", return_value={"v": 1}), \
+             patch.object(weather, "fetch_aqi", return_value=None), \
+             patch.object(weather, "fetch_historical", return_value=None), \
+             patch.object(weather, "fetch_alerts", return_value=[]) as alerts:
+            result = weather.gather(52.23, 21.01, "", _runtime("--lang", "fr"))
+        assert result["name"] == "Varsovie, Mazovie"
+        alerts.assert_called_once_with(52.23, 21.01, "PL", lang="fr",
+                                       address={"city": "Warszawa"})
+
     def test_a_geocoder_that_raises_keeps_the_forecast_and_the_typed_name(self):
         with patch.object(weather, "_reverse_geocode", side_effect=OSError("down")), \
              patch.object(weather, "fetch_forecast", return_value={"v": 1}), \

@@ -65,6 +65,7 @@ def _location_label(lat, lng):
     Prefers the label saved via `linecast location set`, then the cached
     reverse geocode (same source weather uses), then the address that
     reverse geocode returned beside an empty name, then bare coordinates.
+    The geocoder is asked in the running command's language.
     """
     try:
         from linecast._config import saved_location
@@ -78,8 +79,11 @@ def _location_label(lat, lng):
     except Exception:
         pass
     try:
+        from linecast._i18n import lang_of
+        from linecast._runtime import current_runtime
         from linecast._weather_sources import _reverse_geocode
-        name, _country, addr = _reverse_geocode(lat, lng)
+        name, _country, addr = _reverse_geocode(
+            lat, lng, lang=lang_of(current_runtime()))
         if name:
             return name
         from_address = _address_label(addr)
