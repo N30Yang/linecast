@@ -6,18 +6,23 @@ the one way of reading them, so the fallback order lives in one place.
 
 import re
 
-# The languages linecast speaks, as (code, English name), in the order the
-# README lists them. Every per-command table has an entry for each; the
-# `linecast language` command and the help page take their list from here.
+# The display order shared by help, `linecast language`, and completions;
+# keep both READMEs in step. English first, then loose regional clusters:
+# Romance, German/Dutch, Nordic, Slavic, Turkish, Swahili, East Asian,
+# Southeast Asian, and Esperanto last. Keep both Chinese scripts together.
 LANGUAGES = (
-    ("en", "English"), ("fr", "French"), ("es", "Spanish"), ("de", "German"),
-    ("it", "Italian"), ("pt", "Portuguese"), ("nl", "Dutch"), ("pl", "Polish"),
-    ("no", "Norwegian"), ("sv", "Swedish"), ("is", "Icelandic"), ("da", "Danish"),
-    ("fi", "Finnish"), ("ja", "Japanese"), ("ko", "Korean"),
+    ("en", "English"),
+    ("fr", "French"), ("es", "Spanish"), ("pt", "Portuguese"),
+    ("it", "Italian"), ("ro", "Romanian"),
+    ("de", "German"), ("nl", "Dutch"),
+    ("da", "Danish"), ("no", "Norwegian"), ("sv", "Swedish"),
+    ("is", "Icelandic"), ("fi", "Finnish"),
+    ("cs", "Czech"), ("pl", "Polish"), ("ru", "Russian"), ("uk", "Ukrainian"),
+    ("tr", "Turkish"), ("sw", "Swahili"),
     ("zh", "Simplified Chinese"), ("zh-Hant", "Traditional Chinese"),
-    ("th", "Thai"), ("id", "Indonesian"), ("uk", "Ukrainian"),
-    ("vi", "Vietnamese"), ("eo", "Esperanto"), ("tr", "Turkish"),
-    ("ru", "Russian"), ("ro", "Romanian"), ("cs", "Czech"), ("sw", "Swahili"),
+    ("ja", "Japanese"), ("ko", "Korean"),
+    ("th", "Thai"), ("vi", "Vietnamese"), ("id", "Indonesian"),
+    ("eo", "Esperanto"),
 )
 LANGUAGE_CODES = tuple(code for code, _name in LANGUAGES)
 LANGUAGE_NAMES = dict(LANGUAGES)

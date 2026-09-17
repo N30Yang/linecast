@@ -10,6 +10,7 @@ New this version:
 
 - Language: linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, and Swahili. `linecast language tr`, `eo`, `ru`, `ro`, `cs`, or `sw`, or a terminal locale in one of them, puts every view in that language, and the sky names its constellations in each and its brightest stars where the language has its own names. Turkish search takes a dotless ı or a dotted i alike, so `yildiz` finds Yıldız, and Esperanto search takes the x-system, so `gxemeloj` finds Ĝemeloj. (If you have your terminal set to the `eo` locale, please [reach out](https://github.com/ashuttl/linecast/discussions). I want to hear about it.)
 - Language: linecast speaks Chinese in the traditional script. `linecast language zh-Hant`, or a Taiwan, Hong Kong, or Macau terminal locale, puts every view in traditional characters, with the Chinese calendar and the Chinese sky as `zh` has them. `zh` is the simplified script, as before.
+- Language: Language lists follow a consistent regional order, with Chinese, Japanese, and Korean together and Esperanto last.
 - Language: The Moon's almanac counsel and solunar periods, and the inch mark on rain, read in every language.
 - Language: A Norwegian terminal locale, nb_NO or nn_NO, puts linecast in Norwegian.
 - Language: The footer of the tides view reads in every language: the wave and swell directions, and the name of the Open-Meteo tide model.

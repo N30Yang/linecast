@@ -6,6 +6,8 @@ import os
 import re
 import sys
 
+from linecast._i18n import LANGUAGE_CODES
+
 
 # ---------------------------------------------------------------------------
 # Debug logging
@@ -446,9 +448,8 @@ def _base_parser(prog, description):
     p.add_argument("--emoji", action="store_true",
                     help="use standard emoji icons (same as --icons emoji)")
     p.add_argument("--lang", default=None,
-                    help="language code (en, fr, es, de, it, pt, nl, pl, "
-                         "no, sv, is, da, fi, ja, ko, zh, zh-Hant, th, id, uk, vi, "
-                         "eo, tr, ru, ro, cs, or sw); 'linecast language' saves one")
+                    help=f"language code ({', '.join(LANGUAGE_CODES)}); "
+                         "'linecast language' saves one")
     p.add_argument("--classic-colors", action="store_true",
                     help="use pre-theme fixed color palette")
     p.add_argument("--legacy-colors", action="store_true",

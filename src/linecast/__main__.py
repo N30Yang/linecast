@@ -3,10 +3,17 @@
 import errno
 import os
 import sys
+from textwrap import fill
 from linecast._completion import available_shells, completion_help, render_completion
+from linecast._i18n import LANGUAGE_CODES
 
-HELP = """\
-linecast {version} — weather, sunlight, the moon, the sky, tides, radar, and maps for the terminal
+_LANGUAGE_HELP = fill(
+    ", ".join(LANGUAGE_CODES), width=95,
+    initial_indent="  linecast language    ", subsequent_indent=" " * 23,
+)
+
+HELP = f"""\
+linecast {{version}} — weather, sunlight, the moon, the sky, tides, radar, and maps for the terminal
 
   linecast weather     Conditions now, the day's temperature curve, the forecast, and alerts
   linecast sunshine    The sun's arc across the sky, dawn to dusk, or the whole year
@@ -18,8 +25,7 @@ linecast {version} — weather, sunlight, the moon, the sky, tides, radar, and m
 
 Settings (run alone to show, give a value to set):
   linecast location    A fixed place, instead of the one your IP address suggests
-  linecast language    en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, ja, ko, zh, zh-Hant,
-                       th, id, uk, vi, eo, tr, ru, ro, cs, or sw
+{_LANGUAGE_HELP}
   linecast units       metric or imperial
   linecast clock       12-hour or 24-hour
   linecast week        The day the moon calendar's week opens on: monday, sunday, or saturday

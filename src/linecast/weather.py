@@ -9,7 +9,7 @@ Alerts sourced from NWS (US), Environment Canada (CA), Bright Sky/DWD (DE),
 MET Norway (NO), Met \u00c9ireann (IE), JMA (Japan), CMA (China),
 MetService (NZ), and MeteoAlarm (34 European countries).
 
-Languages: en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, id, ja, ko, zh, th
+Languages: see `linecast language` for the full list.
 
 Usage: weather [--print] [--oneline] [--json] [--location LAT,LNG | PLACE] [--search CITY]
                [--icons SET] [--emoji] [--metric] [--imperial] [--12h] [--24h]
