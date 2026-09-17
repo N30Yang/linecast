@@ -12,6 +12,7 @@ New this version:
 - Language: linecast speaks Chinese in the traditional script. `linecast language zh-Hant`, or a Taiwan, Hong Kong, or Macau terminal locale, puts every view in traditional characters, with the Chinese calendar and the Chinese sky as `zh` has them. `zh` is the simplified script, as before.
 - Language: The Moon's almanac counsel and solunar periods, and the inch mark on rain, read in every language.
 - Language: A Norwegian terminal locale, nb_NO or nn_NO, puts linecast in Norwegian.
+- Language: The footer of the tides view reads in every language: the wave and swell directions, and the name of the Open-Meteo tide model.
 - Sunshine: The day can be read in a tradition's hours beside the civil clock. `linecast hours` saves a choice and `sunshine --hours` sets it for one run. HOURS.md describes each system and what it is checked against. Suggested by [@ylub](https://github.com/ylub) in [#95](https://github.com/ashuttl/linecast/discussions/95).
   - `halachic` reads the sha'ot zmaniyot and the zmanim from alot hashachar to tzeit, and `halachic-mga` reads them by the Magen Avraham.
   - `roman` reads the twelve horae and four vigiliae of Rome.

@@ -826,13 +826,14 @@ def render(station_id, station_name, station_meta=None, runtime=None,
             # Marine data is optional; never crash
             log_failure("marine/open-meteo", "marine line", exc, fallback="line omitted")
     dim = fg(*DIM_RGB)
-    pad = foot_width - visible_len(marine_str) - visible_len(provider.label)
+    source = provider.footer_label(runtime)
+    pad = foot_width - visible_len(marine_str) - visible_len(source)
     if marine_str and pad >= 2:
-        lines.append(f"{dim}{marine_str}{' ' * pad}{provider.label}{RESET}")
+        lines.append(f"{dim}{marine_str}{' ' * pad}{source}{RESET}")
     elif marine_str:
         lines.append(f"{dim}{marine_str}{RESET}")
     else:
-        lines.append(f"{dim}{provider.label}{RESET}")
+        lines.append(f"{dim}{source}{RESET}")
     if fullscreen:
         lines[-1] = _help.footer(lines[-1], cols, lang_of(runtime))
 

@@ -260,6 +260,13 @@ class ProviderRegistryTests(unittest.TestCase):
         self.assertEqual(OPENMETEO.name_for_id("om:1,2"), "Tide model")
         self.assertEqual(HKO.name_for_id("qub"), "Quarry Bay")
 
+    def test_footer_label_translates_a_description_not_a_name(self):
+        def runtime(lang):
+            return TidesRuntime(live=False, icons="nerd", lang=lang, metric=True, oneline=False)
+        self.assertEqual(NOAA.footer_label(runtime("fr")), "NOAA")
+        self.assertEqual(OPENMETEO.footer_label(runtime("en")), "Open-Meteo tide model")
+        self.assertEqual(OPENMETEO.footer_label(runtime("de")), "Open-Meteo-Gezeitenmodell")
+
     def test_records_call_through_the_modules(self):
         args = ("id", date(2026, 8, 20), date(2026, 8, 21), None)
         calls = [
