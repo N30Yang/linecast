@@ -187,6 +187,16 @@ linecast sunshine --hours japanese  # 今回だけ
 
 質問、要望、アイデアは[Discussions](https://github.com/ashuttl/linecast/discussions)へ。まとまった変更のプルリクエストは大歓迎です。新しいデータ提供元、ビューの改善、バグ修正など。大きな貢献も歓迎しますが、コードを書く前にディスカッションを始めてください。ここにあるビューはどれもゆっくり時間をかけて見つけたもので、新しいビューやコマンドには最初から同じ丁寧さが必要です。完成した形で届いたプルリクエストにそれを注ぐのは難しいのです。[ARCHITECTURE.md](ARCHITECTURE.md)がコードの地図です。この日本語訳への修正も歓迎します。
 
+## 系譜
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/minitel-terminatel-258.jpg" width="380" alt="3615 LINECAST">
+</p>
+
+<p align="center"><em>先行例。</em></p>
+
+Telic-Alcatelのビデオテックス端末が天気を描いています。1990年ごろ。写真は[minitel-alcatel.fr](https://www.minitel-alcatel.fr/)の収蔵品から。
+
 ## ライセンス
 
 [MIT](LICENSE)
