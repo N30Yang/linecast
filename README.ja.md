@@ -19,7 +19,7 @@
 
 ![Omarchyのデスクトップに並んだlinecastの天気、レーダー、月、一年、そして夕暮れの太陽](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/hero.png)
 
-linecastは、無料で公開されているデータを、macOS・Linux・Windowsで動く7つのライブなターミナルアプリに変えます。依存パッケージのない純粋なPythonで書かれ、色はターミナルのテーマに従い、アカウントもAPIキーも要りません。SSH越しでも、tmuxの中でも、ターミナルが動くところならどこでも動きます。
+linecastは、無料で公開されているデータから、macOS・Linux・Windowsで動く7つのターミナルアプリをつくります。どれもリアルタイムに更新され、マウスでも操作できます。依存パッケージのない純粋なPythonで書かれ、色はターミナルのテーマに従い、アカウントもAPIキーも要りません。SSH越しでも、tmuxの中でも、ターミナルが動くところならどこでも動きます。
 
 | コマンド | 表示するもの |
 | --- | --- |
@@ -96,7 +96,7 @@ linecast maps --view now
 
 ## 日本語で
 
-ターミナルの言語が日本語なら、linecastは日本語で話します。`weather` の警報は日本では気象庁から届き、画面の下の行にその名が出ます。`moon` は月相のとなりに旧暦の日付を添え、その夜を十六夜、立待月、居待月、寝待月、更待月と旧暦の日で呼び、進行中の二十四節気と次の節気の日、次の十五夜までの日数を示します。`sunshine --hours japanese` は、常用時のとなりに江戸の不定時法で一日を読みます。
+ターミナルの言語が日本語なら、linecastは日本語で話します。`weather` の警報は日本では気象庁から届き、画面の下の行にその名が出ます。`moon` は月相のとなりに旧暦の日付を添え、旧暦の日に応じて、その夜を十六夜、立待月、居待月、寝待月、更待月などの名で呼び、今の二十四節気と、次の節気を迎える日、次の十五夜までの日数を示します。`sunshine --hours japanese` は、常用時のとなりに江戸の不定時法で一日を読みます。
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather-kyoto.png" width="49%" alt="京都の天気、日本語で">
@@ -138,10 +138,10 @@ linecast clock 12
 
 ### 言語
 
-linecastは、ターミナルの言語が知っている25言語のひとつならその言語で、そうでなければ英語で話します。自分で選ぶには、毎回でも一回だけでも:
+ターミナルの言語がlinecastの知っている言語なら、その言語で話します。そうでなければ英語です。自分で選ぶには、既定値としてでも、一回だけでも指定できます:
 
 ```sh
-linecast language ja        # 毎回日本語で
+linecast language ja        # 既定を日本語に
 linecast language auto      # ターミナルに従う
 linecast radar --lang en    # 今回だけ
 ```
@@ -150,10 +150,10 @@ linecast radar --lang en    # 今回だけ
 
 ### 暦
 
-`moon` を日本語、中国語、韓国語、ベトナム語、タイ語で実行すると、その言語の伝統暦を使います。日本語なら旧暦です。自分で選ぶには、毎回でも一回だけでも:
+`moon` を日本語、中国語、韓国語、ベトナム語、タイ語で実行すると、その言語の伝統暦を使います。日本語なら旧暦です。自分で選ぶには、既定値としてでも、一回だけでも指定できます:
 
 ```sh
-linecast calendar hebrew            # 毎回ヘブライ暦で
+linecast calendar hebrew            # 既定をヘブライ暦に
 linecast calendar none              # 伝統暦なし
 linecast calendar auto              # 言語に従う
 linecast moon --calendar hawaiian   # 今回だけ
@@ -163,7 +163,7 @@ linecast moon --calendar hawaiian   # 今回だけ
 
 ### 時刻法
 
-`sunshine` は、常用時のとなりに、ある伝統の時刻法で一日を読むことができます。選ぶには、毎回でも一回だけでも:
+`sunshine` は、常用時のとなりに、ある伝統の時刻法で一日を読むことができます。選ぶには、既定値としてでも、一回だけでも指定できます:
 
 ```sh
 linecast hours japanese             # 江戸の不定時法。昼夜それぞれ六つの刻
@@ -177,7 +177,7 @@ linecast sunshine --hours japanese  # 今回だけ
 
 ### 星空の伝統
 
-`sky` は中国語では中国の星空を描き、他の言語ではIAUの星座を描きます。22の伝統から選ぶには `linecast culture` と `sky --culture` を使います。`sky` の中では `t` を押して一覧から選べます。名前と出典は[CULTURES.md](CULTURES.md)にあります。
+`sky` は中国語では中国の星空を描き、他の言語ではIAUの星座を描きます。22の伝統から選ぶには `linecast culture` と `sky --culture` を使います。`sky` の中では `t` を押して一覧から選べます。名前と出典は[CULTURES.md](CULTURES.md)にまとめています。
 
 ### そのほかの設定
 
@@ -185,7 +185,7 @@ linecast sunshine --hours japanese  # 今回だけ
 
 ## 貢献するには
 
-質問、要望、アイデアは[Discussions](https://github.com/ashuttl/linecast/discussions)へ。まとまった変更のプルリクエストは大歓迎です。新しいデータ提供元、ビューの改善、バグ修正など。大きな貢献も歓迎しますが、コードを書く前にディスカッションを始めてください。ここにあるビューはどれもゆっくり時間をかけて見つけたもので、新しいビューやコマンドには最初から同じ丁寧さが必要です。完成した形で届いたプルリクエストにそれを注ぐのは難しいのです。[ARCHITECTURE.md](ARCHITECTURE.md)がコードの地図です。この日本語訳への修正も歓迎します。
+質問、要望、アイデアは[Discussions](https://github.com/ashuttl/linecast/discussions)へ。まとまった変更のプルリクエストは大歓迎です。新しいデータ提供元、ビューの改善、バグ修正など。大きな貢献も歓迎しますが、コードを書く前にディスカッションを始めてください。ここにあるビューはどれも、時間をかけて形にしてきたものです。新しいビューやコマンドにも、最初から同じだけの丁寧さが必要です。完成してから届いたプルリクエストに、その丁寧さを後から加えるのは難しいからです。[ARCHITECTURE.md](ARCHITECTURE.md)がコードの地図です。この日本語訳への修正も歓迎します。
 
 ## 系譜
 
@@ -193,7 +193,7 @@ linecast sunshine --hours japanese  # 今回だけ
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/minitel-terminatel-258.jpg" width="380" alt="3615 LINECAST">
 </p>
 
-<p align="center"><em>先行例。</em></p>
+<p align="center"><em>先行技術。</em></p>
 
 Telic-Alcatelのビデオテックス端末が天気を描いています。1990年ごろ。写真は[minitel-alcatel.fr](https://www.minitel-alcatel.fr/)の収蔵品から。
 
