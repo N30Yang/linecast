@@ -1,0 +1,192 @@
+<div align="center">
+
+# linecast
+
+**天気、潮汐、太陽、月、地図、そしてプラネタリウムを、ターミナルで。『The Old Farmer's Almanac』とミニテルの出会い。**
+
+[![Tests](https://github.com/ashuttl/linecast/actions/workflows/test.yml/badge.svg)](https://github.com/ashuttl/linecast/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/linecast)](https://pypi.org/project/linecast/)
+[![Python](https://img.shields.io/pypi/pyversions/linecast)](https://pypi.org/project/linecast/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+<a href="https://terminaltrove.com/linecast/" title="linecast on Terminal Trove, the $HOME of all things in the terminal"><img src="https://cdn.terminaltrove.com/media/badges/tool_of_the_week/svg/terminal_trove_tool_of_the_week_green_on_dark_grey_bg.svg" alt="Terminal Trove Tool of The Week" height="36"></a>
+
+[English](README.md) | 日本語
+
+</div>
+
+*この日本語版は英語版READMEの要約です(v2.6.1 時点)。全文と最新の内容は[英語版](README.md)にあります。*
+
+![Omarchyのデスクトップに並んだlinecastの天気、レーダー、月、一年、そして夕暮れの太陽](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/hero.png)
+
+linecastは、無料で公開されているデータを、macOS・Linux・Windowsで動く7つのライブなターミナルアプリに変えます。依存パッケージのない純粋なPythonで書かれ、色はターミナルのテーマに従い、アカウントもAPIキーも要りません。SSH越しでも、tmuxの中でも、ターミナルが動くところならどこでも動きます。
+
+| コマンド | 表示するもの |
+| --- | --- |
+| `linecast weather` | 現在の天気、1時間ごとと7日間の予報、45か国の公式警報を載せた天気予報 |
+| `linecast sunshine` | 今日の太陽が空を渡る軌跡と、一年を通じた昼の長さ |
+| `linecast moon` | その場所から見た月。月の出と月の入りの時刻、次の満月と新月 |
+| `linecast sky` | 立っている場所から見た空。夜には、ターミナルのプラネタリウムが星、星座、惑星、月、天の川を映します |
+| `linecast tides` | 昼夜で陰影をつけた、スクロールできる潮汐曲線 |
+| `linecast radar` | 世界中の気象レーダーのアニメーション。警報、気温、風をターミナルの格子に描きます |
+| `linecast maps` | 街路地図、地形、回せる地球儀。今の昼夜と雲、地名検索、経路案内つき |
+
+**[インストール](#インストール) · [使い方](#使い方) · [日本語で](#日本語で) · [設定](#設定) · [貢献するには](#貢献するには)**
+
+## インストール
+
+[Homebrew](https://brew.sh/)で:
+
+```sh
+brew install linecast
+```
+
+または[uv](https://docs.astral.sh/uv/)で:
+
+```sh
+uv tool install linecast
+```
+
+`pipx install linecast` と `pip install linecast` も使えます。コミュニティによるパッケージが[AUR](https://aur.archlinux.org/packages/linecast)と[nixpkgs](https://search.nixos.org/packages?channel=unstable&show=linecast)(今のところunstableチャンネル)にもあります。linecastにはPython 3.10以降が必要です。
+
+何もインストールせずに試すには:
+
+```sh
+uvx linecast weather
+```
+
+curlだけでも動きます。[`get.sh`](get.sh)がマシンにあるPythonを探し、それでlinecastを実行します:
+
+```sh
+curl -sL https://raw.githubusercontent.com/ashuttl/linecast/main/get.sh | sh
+```
+
+これで `weather` が開きます。行末に `sh -s sunshine` を付けると別のツールが開き、`sh -s -- --metric` でフラグを渡せます。
+
+<details>
+<summary><strong>Windowsでは</strong></summary>
+
+Windows Terminalを使ってください。Git Bashとminttyは、linecastからはターミナルではなくパイプに見えるため、静止した出力になります。Windowsではインストール時に2つのパッケージが追加されます。Windowsに時間帯データベースがないための `tzdata` と、TLSがWindowsの信頼する証明書を使うようにする `truststore` です。アイコンは絵文字ですが、Nerd Fontを設定していれば `linecast icons nerd` でフルセットに切り替わります。
+
+</details>
+
+## 使い方
+
+どのコマンドも、[場所を保存する](#場所)までは、IPアドレスから推定した場所でライブに開きます。キー操作は `?` で表示されます。
+
+コマンドをそのまま、あるいはフラグ付きで試してみてください:
+
+```sh
+linecast weather --location "kyoto"
+linecast radar --location 44.35,-68.22
+linecast sky --culture hawaiian --location molokai
+linecast sunshine --year --location "vostok station"
+linecast moon --lang zh
+linecast tides --station "Burntcoat Head"
+linecast maps --view terrain --location "new zealand"
+linecast maps --from "477 congress street 04101" --to "portland head light" --profile bike
+linecast maps --view now
+```
+
+`--print` を付けると、ライブ表示の代わりに静止した1フレームを出力します。weather、sunshine、moon、sky、tidesには、生データを出す `--json` と、ステータスバー用の `--oneline` もあります。
+
+![ヒーロー画像のアニメーション版。気象レーダーが動いている](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/hero.gif)
+
+各アプリの詳しい説明とスクリーンショットは[英語版README](README.md#a-closer-look)に、それぞれのアプリのさまざまな状態は[GALLERY.md](GALLERY.md)にあります。
+
+## 日本語で
+
+ターミナルの言語が日本語なら、linecastは日本語で話します。`weather` の警報は日本では気象庁から届き、画面の下の行にその名が出ます。`moon` は月相のとなりに旧暦の日付を添え、その夜を十六夜、立待月、居待月、寝待月、更待月と旧暦の日で呼び、進行中の二十四節気と次の節気の日、次の十五夜までの日数を示します。`sunshine --hours japanese` は、常用時のとなりに江戸の不定時法で一日を読みます。
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather-kyoto.png" width="49%" alt="京都の天気、日本語で">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/moon-okinawa.png" width="49%" alt="沖縄の月、日本語で。十六夜、旧暦八月十六日">
+</p>
+
+## 設定
+
+設定は `~/.config/linecast/config.json` に保存されます。コマンドラインのフラグが環境変数より優先され、環境変数が保存した設定より優先されます。以下の設定コマンドを引数なしで実行すると現在の値が表示され、`auto` を渡すと既定値に戻ります。
+
+### 場所
+
+場所を一度保存すれば、すべてのコマンドがそれを使います。一回だけなら、フラグで渡します:
+
+```sh
+linecast location set "Kyoto"             # 地名で
+linecast location set 35.01,135.77        # または 緯度,経度 で
+linecast location search fuchu            # その名前が指しうる場所を一覧する
+linecast location auto                    # IPアドレスからの推定に戻す
+linecast weather --location "Nara"        # 今回だけ
+```
+
+地名は一度だけ検索され、最初に一致した場所が保存されます。それが違う場所だったときは、`search` で他の候補を確認できます。
+
+場所を保存せず、フラグでも渡していない場合、linecastは[ipinfo.io](https://ipinfo.io/)にネットワーク接続の場所を尋ねます。たいていは正しい都市ですが、時には外れ、VPNや社内ネットワークでは大きくずれます。SSH越しではサーバーの場所が推定されるので、そこでは場所を保存してください。回答は1時間キャッシュされます。場所を保存すれば、この問い合わせは一切行われません。
+
+### 単位と時計
+
+既定では、linecastはアメリカ合衆国ではヤード・ポンド法、それ以外ではメートル法を使います。時刻は、6:50 pmと書く国では12時間制、それ以外では24時間制です。日本では、メートル法と24時間制になります。好みを記憶させるには、次のコマンドを一度実行します:
+
+```sh
+linecast units imperial
+linecast clock 12
+```
+
+表示系のコマンドはどれも、一回限りの `--metric` と `--imperial` を受け付けます。時刻を表示するものは `--12h` と `--24h` も受け付けます。`weather` には気温だけを切り替える `--celsius` と `--fahrenheit` もあり、マイルと摂氏の組み合わせもできます。
+
+月のカレンダーは週を月曜日から始めます。ただし、日本、韓国、アメリカ合衆国、カナダ、ブラジル、メキシコなど、印刷されたカレンダーが日曜日から始まる国では日曜日から、エジプトと湾岸諸国では土曜日からです。`linecast week monday` で固定でき(`sunday` と `saturday` も)、`moon --week-start monday` なら一回だけです。
+
+### 言語
+
+linecastは、ターミナルの言語が知っている25言語のひとつならその言語で、そうでなければ英語で話します。自分で選ぶには、毎回でも一回だけでも:
+
+```sh
+linecast language ja        # 毎回日本語で
+linecast language auto      # ターミナルに従う
+linecast radar --lang en    # 今回だけ
+```
+
+言語は、英語(`en`)、フランス語(`fr`)、スペイン語(`es`)、ドイツ語(`de`)、イタリア語(`it`)、ポルトガル語(`pt`)、オランダ語(`nl`)、ポーランド語(`pl`)、ノルウェー語(`no`)、スウェーデン語(`sv`)、アイスランド語(`is`)、デンマーク語(`da`)、フィンランド語(`fi`)、日本語(`ja`)、韓国語(`ko`)、中国語の簡体字(`zh`)と繁体字(`zh-Hant`)、タイ語(`th`)、インドネシア語(`id`)、ウクライナ語(`uk`)、ベトナム語(`vi`)、エスペラント(`eo`)、トルコ語(`tr`)、ロシア語(`ru`)、ルーマニア語(`ro`)、チェコ語(`cs`)、スワヒリ語(`sw`)です。中国語のターミナルロケールは地域で字体を選びます。`zh_TW`、`zh_HK`、`zh_MO` は繁体字、`zh_CN`、`zh_SG` は簡体字です。
+
+### 暦
+
+`moon` を日本語、中国語、韓国語、ベトナム語、タイ語で実行すると、その言語の伝統暦を使います。日本語なら旧暦です。自分で選ぶには、毎回でも一回だけでも:
+
+```sh
+linecast calendar hebrew            # 毎回ヘブライ暦で
+linecast calendar none              # 伝統暦なし
+linecast calendar auto              # 言語に従う
+linecast moon --calendar hawaiian   # 今回だけ
+```
+
+暦は `chinese`、`japanese`、`korean`、`vietnamese`、`thai`、`hawaiian`、`samoan`、`chamorro`、`refaluwasch`、`islamic`、`hebrew`、`almanac` です。それぞれについては[CALENDARS.md](CALENDARS.md)にあります。
+
+### 時刻法
+
+`sunshine` は、常用時のとなりに、ある伝統の時刻法で一日を読むことができます。選ぶには、毎回でも一回だけでも:
+
+```sh
+linecast hours japanese             # 江戸の不定時法。昼夜それぞれ六つの刻
+linecast hours halachic             # グラの方式によるゼマニーム
+linecast hours roman                # 十二のホラと四つのウィギリア
+linecast hours none                 # 常用時のみ
+linecast sunshine --hours japanese  # 今回だけ
+```
+
+`auto` で設定を消します。それぞれについては[HOURS.md](HOURS.md)にあります。
+
+### 星空の伝統
+
+`sky` は中国語では中国の星空を描き、他の言語ではIAUの星座を描きます。22の伝統から選ぶには `linecast culture` と `sky --culture` を使います。`sky` の中では `t` を押して一覧から選べます。名前と出典は[CULTURES.md](CULTURES.md)にあります。
+
+### そのほかの設定
+
+色とアイコン、短い名前とシェル補完、表示がおかしいときの対処、環境変数、データの出典と対象範囲は、[英語版README](README.md#settings)にあります。
+
+## 貢献するには
+
+質問、要望、アイデアは[Discussions](https://github.com/ashuttl/linecast/discussions)へ。まとまった変更のプルリクエストは大歓迎です。新しいデータ提供元、ビューの改善、バグ修正など。大きな貢献も歓迎しますが、コードを書く前にディスカッションを始めてください。ここにあるビューはどれもゆっくり時間をかけて見つけたもので、新しいビューやコマンドには最初から同じ丁寧さが必要です。完成した形で届いたプルリクエストにそれを注ぐのは難しいのです。[ARCHITECTURE.md](ARCHITECTURE.md)がコードの地図です。この日本語訳への修正も歓迎します。
+
+## ライセンス
+
+[MIT](LICENSE)
