@@ -633,6 +633,16 @@ class TestSearch:
         from linecast._sky_search import targets
         return targets(_runtime(lang=lang))
 
+    def test_escape_and_quit_close_the_panel(self):
+        # Ctrl-C on Windows arrives as 'quit'; `q` is a letter here
+        from linecast._sky_search import SkySearch
+        for action in ("escape", "quit"):
+            panel = SkySearch(_runtime(), refresh=lambda: None)
+            panel.start()
+            panel.handle("char:v")
+            assert panel.handle(action) is None
+            assert not panel.open and panel.query == ""
+
     def test_finds_by_name_designation_and_constellation(self):
         from linecast._sky_search import search
         pool = self._pool()

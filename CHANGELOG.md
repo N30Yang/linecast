@@ -35,6 +35,7 @@ Fixes:
 - Radar: A location near the poles no longer fails to open.
 - Radar, maps, tides: Stale or damaged cached data is fetched again rather than kept, and a damaged street tile is skipped rather than failing the whole view.
 - Maps: A search result without coordinates no longer makes the whole search unavailable.
+- Sky, maps: On Windows, Ctrl-C closes an open search field, and a second quits. It did nothing before. Found by [@cygnostik](https://github.com/cygnostik) in [#114](https://github.com/ashuttl/linecast/issues/114).
 - Tides: The header shows the range only when the window holds both a high and a low. A station with one low a day printed a negative range.
 - Tides: A Canadian or TideCheck station whose details could not be fetched no longer ends the view in an error.
 - Moon: On a short window, the month grid is no longer cut off.

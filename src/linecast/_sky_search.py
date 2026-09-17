@@ -340,7 +340,7 @@ class SkySearch:
     def handle(self, action):
         """One key while open. Returns the chosen Target on Enter, the
         string "jump" when Enter takes the offered moment, else None."""
-        if action == "escape":
+        if action in ("escape", "quit"):
             self.close()
         elif action == "key:enter":
             if self.jump is not None:

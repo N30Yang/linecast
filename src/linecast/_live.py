@@ -370,6 +370,13 @@ def _read_key(fd, text=False):
                 }.get(b3)
         return 'escape'
 
+    # On Windows cbreak turns off the console's own Ctrl-C handling, so
+    # the keystroke arrives as ETX instead of a KeyboardInterrupt. It is
+    # read ahead of the text field, where `q` is a letter and Ctrl-C is
+    # the only quit there is.
+    if b == b'\x03':
+        return 'quit'
+
     if text:
         # Free-text capture: editing keys first, then any printable
         # character (assembling UTF-8 continuations), control bytes dropped.
@@ -404,10 +411,6 @@ def _read_key(fd, text=False):
             return None
 
     if b in (b'q', b'Q'):
-        return 'quit'
-    # On Windows cbreak turns off the console's own Ctrl-C handling, so
-    # the keystroke arrives as ETX instead of a KeyboardInterrupt.
-    if b == b'\x03':
         return 'quit'
     if b in (b'o', b'O'):
         return 'open'

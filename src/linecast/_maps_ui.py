@@ -110,7 +110,7 @@ class SearchState:
     def handle(self, action, lat, lon, zoom, lang="en"):
         """Consume one key.  Always returns True while the panel is open:
         nothing reaches the map behind it."""
-        if action == 'escape':
+        if action in ('escape', 'quit'):
             self.close()
         elif action == 'key:enter':
             self.submit(lang)

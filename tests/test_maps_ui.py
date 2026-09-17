@@ -141,6 +141,15 @@ class TestLifecycle:
         assert st.query == ""
         assert st.chosen is None
 
+    def test_quit_closes_the_panel_like_escape(self):
+        # Ctrl-C on Windows arrives as 'quit'; `q` is a letter here
+        st = state([result()])
+        st.start()
+        typed(st, "por")
+        assert st.handle('quit', 43.6, -70.2, 12) is True
+        assert not st.open
+        assert st.chosen is None
+
     def test_closing_cancels_the_pending_request(self):
         st = state()
         st.start()
