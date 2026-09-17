@@ -3,7 +3,7 @@
 Fetches the past 10 years of daily highs and lows, computes the mean
 high/low temperatures and precipitation for one calendar date, and
 averages each year's hottest and coldest day, which give the hourly
-temperature graph its scale under --temp-range climate.
+temperature graph its scale under --temp-range climate or auto.
 
 The Archive API is free, requires no key, and the data is immutable
 for past dates — so we cache aggressively (7 days).
@@ -20,6 +20,9 @@ from linecast._runtime import log_skipped
 
 _HISTORY_YEARS = 10
 _CACHE_MAX_AGE = 7 * 86400  # 7 days — historical data doesn't change
+# Per terminal character row, not per braille dot. At this resolution a
+# 10°C daily swing still has two rows in which to show its shape.
+_AUTO_MAX_CELSIUS_PER_ROW = 5.0
 
 
 @dataclass(frozen=True)
@@ -154,19 +157,21 @@ def _compute_averages(data, month: int, day: int) -> Optional[HistoricalAverages
     )
 
 
-def temperature_scale(runtime, historical, forecast_range):
+def temperature_scale(runtime, historical, forecast_range, n_rows=2):
     """The (low, high) the hourly temperature graph is drawn against.
 
-    --temp-range climate, the default, spans a typical year's hottest
+    --temp-range climate spans a typical year's hottest
     and coldest day at the location, so the graph holds still from day
     to day and a mild day looks mild; without an archive answer it is
     the forecast's own range, which --temp-range forecast asks for
     outright. world is the same span everywhere, -40 to 50°C. The
     climate and world spans widen, and only widen, when the forecast
     reaches past either end: a heat wave beyond the usual year touches
-    the top, as it should."""
-    mode = getattr(runtime, "temp_range", "climate")
-    if mode == "climate":
+    the top, as it should. auto (the default) uses that widened climate
+    span only when n_rows can show it at no more than 5°C (9°F) per
+    terminal row; otherwise it uses the forecast's own range."""
+    mode = getattr(runtime, "temp_range", "auto")
+    if mode in ("auto", "climate"):
         if historical is None or historical.year_low is None or historical.year_high is None:
             return forecast_range
         lo, hi = historical.year_low, historical.year_high
@@ -174,7 +179,12 @@ def temperature_scale(runtime, historical, forecast_range):
         lo, hi = (-40, 50) if runtime.celsius else (-40, 122)
     else:
         return forecast_range
-    return (min(lo, forecast_range[0]), max(hi, forecast_range[1]))
+    lo, hi = min(lo, forecast_range[0]), max(hi, forecast_range[1])
+    if mode == "auto":
+        max_per_row = _AUTO_MAX_CELSIUS_PER_ROW * (1 if runtime.celsius else 1.8)
+        if (hi - lo) / max(1, n_rows) > max_per_row:
+            return forecast_range
+    return lo, hi
 
 
 def format_historical_comparison(current_high: float, current_low: float,

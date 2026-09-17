@@ -19,6 +19,7 @@ New this version:
   - `islamic` reads the prayer times, Fajr to Isha, by the convention of the country shown or a named one, and counts down the fast in Ramadan. In Turkish the prayers are named as the Diyanet prints them, İmsak to Yatsı.
   - `swahili` reads Swahili time, saa moja at seven in the morning and seven at night, and is on by default in Swahili.
 - Sky: The Chinese sky names its brightest stars in Chinese, such as 北极二, and names 星宿, 龟 and 平 among the asterisms.
+- Weather: The hourly graph now defaults to `--temp-range auto`: it keeps the typical-year climate scale when there is room, and fits the forecast when that scale would exceed 5°C (9°F) per graph row. Resizing the terminal reconsiders the scale; explicit `climate`, `forecast`, and `world` choices keep their behavior.
 - Weather: Units are written as each language writes them.
 - Weather: Hong Kong's warnings read in Chinese when linecast does.
 

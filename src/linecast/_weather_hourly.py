@@ -1161,7 +1161,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     show_cloud: draw the cloud strip when the data has cloud cover; the
     dashboard turns it off in a window too short to spare the row.
     historical: the location's HistoricalAverages, which set the graph's
-    scale under --temp-range climate."""
+    scale under --temp-range climate or auto."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
     daily = data.get("daily", {})
@@ -1187,7 +1187,8 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     chart_hi = max(window_temps)
     # The curve is scaled to the whole forecast, so it holds still while
     # scrolling; --temp-range can widen that to the climate or the world.
-    value_range = temperature_scale(runtime, historical, window.get("all_temp_range"))
+    value_range = temperature_scale(runtime, historical, window.get("all_temp_range"),
+                                     n_rows=n_braille_rows)
 
     midnight_cols, _noon_cols, midnight_day_names = _compute_time_markers(
         window_dts, total_hours, graph_w, runtime

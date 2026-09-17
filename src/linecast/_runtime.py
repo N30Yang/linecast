@@ -474,7 +474,7 @@ def _add_clock_flags(p):
 
 
 # What the weather temperature graph spans; the first is the default.
-TEMP_RANGES = ("climate", "forecast", "world")
+TEMP_RANGES = ("auto", "climate", "forecast", "world")
 
 
 def weather_parser():
@@ -494,9 +494,10 @@ def weather_parser():
                     help="fahrenheit temperatures")
     p.add_argument("--temp-range", dest="temp_range",
                     choices=TEMP_RANGES, default=TEMP_RANGES[0],
-                    help="what the temperature graph spans: the location's "
-                         "climate over the past ten years, this forecast, or "
-                         "-40 to 50°C for the whole world")
+                    help="what the temperature graph spans: auto (default) uses "
+                         "climate unless it exceeds 5°C (9°F) per graph row; "
+                         "climate spans the past ten years, forecast fits this "
+                         "forecast, world spans -40 to 50°C")
     p.add_argument("--no-shading", action="store_true",
                     help="disable daylight shading on hourly chart")
     p.add_argument("--json", dest="json_mode", action="store_true",
@@ -884,7 +885,7 @@ class WeatherRuntime(RuntimeConfig):
     _legacy_units_env = "WEATHER_UNITS"
     # Defaults required: the base class ends in defaulted fields.
     celsius: bool = True
-    temp_range: str = "climate"
+    temp_range: str = "auto"
     shading: bool = True
 
     _parser = staticmethod(weather_parser)

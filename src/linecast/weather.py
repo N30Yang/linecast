@@ -14,7 +14,8 @@ Languages: en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, id, ja, ko, zh, t
 Usage: weather [--print] [--oneline] [--json] [--location LAT,LNG | PLACE] [--search CITY]
                [--icons SET] [--emoji] [--metric] [--imperial] [--12h] [--24h]
                [--celsius] [--fahrenheit]
-               [--temp-range forecast|climate|world] [--no-shading] [--lang fr] [--classic-colors]
+               [--temp-range auto|climate|forecast|world]
+               [--no-shading] [--lang fr] [--classic-colors]
 """
 
 import math

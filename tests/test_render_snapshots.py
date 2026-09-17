@@ -114,8 +114,7 @@ class TestWeatherSnapshot:
         _compare_or_create("weather_120x40.txt", output)
 
     def _toronto_archive(self):
-        # A typical Toronto year's extremes, in the fixture's units, for the
-        # default climate range.
+        # A typical Toronto year's extremes, in the fixture's units.
         from linecast._weather_historical import HistoricalAverages
         return HistoricalAverages(avg_high=41.2, avg_low=26.7, avg_precip=0.11,
                                   years=10, year_high=91.3, year_low=-3.6)
@@ -124,6 +123,24 @@ class TestWeatherSnapshot:
         output = _weather_render(80, 24, self._make_runtime(temp_range="climate"),
                                  historical=self._toronto_archive())
         _compare_or_create("weather_80x24_climate.txt", output)
+
+    def test_weather_auto_adapts_to_the_graph_height(self):
+        # Reuse the runtime across resizes, as the live dashboard does.
+        for live in (False, True):
+            runtime = self._make_runtime(live=live)
+            for rows, mode in ((24, "forecast"), (40, "climate"), (24, "forecast")):
+                auto = _weather_render(80, rows, runtime, historical=self._toronto_archive())
+                expected = _weather_render(
+                    80, rows, self._make_runtime(live=live, temp_range=mode),
+                    historical=self._toronto_archive(),
+                )
+                other = _weather_render(
+                    80, rows, self._make_runtime(
+                        live=live, temp_range="climate" if mode == "forecast" else "forecast"),
+                    historical=self._toronto_archive(),
+                )
+                assert auto == expected
+                assert auto != other
 
     def test_weather_80x24_climate_without_archive_is_the_forecast(self):
         # No archive answer: the graph falls back to the forecast's own range.
