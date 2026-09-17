@@ -485,7 +485,7 @@ NO_CAPITALS = frozenset({"ja", "ko", "zh", "zh-Hant", "th"})
 
 # The cultures' titles, for the status line, the culture command, and the
 # search panel. Stellarium's data gives each culture an English title;
-# this table gives the other twenty-two languages, keyed by the short name
+# this table gives the other twenty-six languages, keyed by the short name
 # `linecast culture` takes. A proper name (Boorong, Tukano) stays as it is
 # in the Latin-script languages and is transliterated in the others; a
 # name that is an adjective (Chinese, Norse) takes the language's own word.

@@ -15,7 +15,7 @@
 
 </div>
 
-*この日本語版は英語版READMEの要約です(v2.6.1 時点)。全文と最新の内容は[英語版](README.md)にあります。*
+この日本語版は英語版READMEの要約です（v2.6.1時点）。全文と最新の内容は[英語版](README.md)にあります。
 
 ![Omarchyのデスクトップに並んだlinecastの天気、レーダー、月、一年、そして夕暮れの太陽](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/hero.png)
 
@@ -23,13 +23,13 @@ linecastは、無料で公開されているデータから、macOS・Linux・Wi
 
 | コマンド | 表示するもの |
 | --- | --- |
-| `linecast weather` | 現在の天気、1時間ごとと7日間の予報、45か国の公式警報を載せた天気予報 |
+| `linecast weather` | 現在の天気、1時間ごとと7日間の予報、45か国の公式警報 |
 | `linecast sunshine` | 今日の太陽が空を渡る軌跡と、一年を通じた昼の長さ |
 | `linecast moon` | その場所から見た月。月の出と月の入りの時刻、次の満月と新月 |
-| `linecast sky` | 立っている場所から見た空。夜には、ターミナルのプラネタリウムが星、星座、惑星、月、天の川を映します |
+| `linecast sky` | 今いる場所から見た空。夜には、ターミナルのプラネタリウムが星、星座、惑星、月、天の川を映します |
 | `linecast tides` | 昼夜で陰影をつけた、スクロールできる潮汐曲線 |
-| `linecast radar` | 世界中の気象レーダーのアニメーション。警報、気温、風をターミナルの格子に描きます |
-| `linecast maps` | 街路地図、地形、回せる地球儀。今の昼夜と雲、地名検索、経路案内つき |
+| `linecast radar` | 世界中の気象レーダーをアニメーション表示。警報、気温、風もターミナルの格子に描きます |
+| `linecast maps` | 街路地図、地形、そして今の昼夜と雲を映した回せる地球儀。地名検索と経路案内つき |
 
 **[インストール](#インストール) · [使い方](#使い方) · [日本語で](#日本語で) · [設定](#設定) · [貢献するには](#貢献するには)**
 
@@ -47,7 +47,7 @@ brew install linecast
 uv tool install linecast
 ```
 
-`pipx install linecast` と `pip install linecast` も使えます。コミュニティによるパッケージが[AUR](https://aur.archlinux.org/packages/linecast)と[nixpkgs](https://search.nixos.org/packages?channel=unstable&show=linecast)(今のところunstableチャンネル)にもあります。linecastにはPython 3.10以降が必要です。
+`pipx install linecast` と `pip install linecast` も使えます。コミュニティによるパッケージが[AUR](https://aur.archlinux.org/packages/linecast)と[nixpkgs](https://search.nixos.org/packages?channel=unstable&show=linecast)（今のところunstableチャンネル）にもあります。linecastにはPython 3.10以降が必要です。
 
 何もインストールせずに試すには:
 
@@ -61,18 +61,18 @@ curlだけでも動きます。[`get.sh`](get.sh)がマシンにあるPythonを�
 curl -sL https://raw.githubusercontent.com/ashuttl/linecast/main/get.sh | sh
 ```
 
-これで `weather` が開きます。行末に `sh -s sunshine` を付けると別のツールが開き、`sh -s -- --metric` でフラグを渡せます。
+これで `weather` が開きます。行末の `sh` を `sh -s sunshine` にすると別のツールが開き、`sh -s -- --metric` ならフラグを渡せます。
 
 <details>
 <summary><strong>Windowsでは</strong></summary>
 
-Windows Terminalを使ってください。Git Bashとminttyは、linecastからはターミナルではなくパイプに見えるため、静止した出力になります。Windowsではインストール時に2つのパッケージが追加されます。Windowsに時間帯データベースがないための `tzdata` と、TLSがWindowsの信頼する証明書を使うようにする `truststore` です。アイコンは絵文字ですが、Nerd Fontを設定していれば `linecast icons nerd` でフルセットに切り替わります。
+Windows Terminalを使ってください。Git Bashとminttyは、linecastからはターミナルではなくパイプに見えるため、静止した出力になります。Windowsではインストール時に2つのパッケージが加わります。Windowsに独自のタイムゾーンデータベースがないための `tzdata` と、TLSにWindowsが信頼する証明書を使わせるための `truststore` です。アイコンは絵文字ですが、Nerd Fontを設定していれば `linecast icons nerd` でフルセットに切り替わります。
 
 </details>
 
 ## 使い方
 
-どのコマンドも、[場所を保存する](#場所)までは、IPアドレスから推定した場所でライブに開きます。キー操作は `?` で表示されます。
+どのコマンドも、[場所を保存する](#場所)までは、IPアドレスから推定した場所で開き、リアルタイムに更新されます。キー操作は `?` で表示されます。
 
 コマンドをそのまま、あるいはフラグ付きで試してみてください:
 
@@ -88,7 +88,7 @@ linecast maps --from "477 congress street 04101" --to "portland head light" --pr
 linecast maps --view now
 ```
 
-`--print` を付けると、ライブ表示の代わりに静止した1フレームを出力します。weather、sunshine、moon、sky、tidesには、生データを出す `--json` と、ステータスバー用の `--oneline` もあります。
+`--print` を付けると、更新し続ける表示の代わりに静止した1フレームを出力します。weather、sunshine、moon、sky、tidesには、生データを出す `--json` と、ステータスバー用の `--oneline` もあります。
 
 ![ヒーロー画像のアニメーション版。気象レーダーが動いている](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/hero.gif)
 
@@ -96,7 +96,15 @@ linecast maps --view now
 
 ## 日本語で
 
-ターミナルの言語が日本語なら、linecastは日本語で話します。`weather` の警報は日本では気象庁から届き、画面の下の行にその名が出ます。`moon` は月相のとなりに旧暦の日付を添え、旧暦の日に応じて、その夜を十六夜、立待月、居待月、寝待月、更待月などの名で呼び、今の二十四節気と、次の節気を迎える日、次の十五夜までの日数を示します。`sunshine --hours japanese` は、常用時のとなりに江戸の不定時法で一日を読みます。
+ターミナルの言語が日本語なら、linecastは日本語で話します。そうでないときは、次のいずれかで日本語にできます:
+
+```sh
+linecast language ja            # 既定を日本語に
+linecast weather --lang ja      # 今回だけ
+export LINECAST_LANG=ja         # 環境変数で。保存した設定より優先されます
+```
+
+`weather` の警報は日本では気象庁から届き、画面の下の行にその名が出ます。`moon` は月相のとなりに旧暦の日付を添え、旧暦の日付に応じて、その夜を十六夜、立待月、居待月、寝待月、更待月などの名で呼び、今の二十四節気と、次の節気を迎える日、次の十五夜までの日数を示します。`sunshine --hours japanese` は、常用時のとなりに江戸の不定時法で一日を読みます。
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather-kyoto.png" width="49%" alt="京都の天気、日本語で">
@@ -119,7 +127,7 @@ linecast location auto                    # IPアドレスからの推定に戻�
 linecast weather --location "Nara"        # 今回だけ
 ```
 
-地名は一度だけ検索され、最初に一致した場所が保存されます。それが違う場所だったときは、`search` で他の候補を確認できます。
+地名は一度だけ検索され、最初に一致した場所が保存されます。意図した場所でなかった場合は、`search` で他の候補を確認できます。
 
 場所を保存せず、フラグでも渡していない場合、linecastは[ipinfo.io](https://ipinfo.io/)にネットワーク接続の場所を尋ねます。たいていは正しい都市ですが、時には外れ、VPNや社内ネットワークでは大きくずれます。SSH越しではサーバーの場所が推定されるので、そこでは場所を保存してください。回答は1時間キャッシュされます。場所を保存すれば、この問い合わせは一切行われません。
 
@@ -134,11 +142,11 @@ linecast clock 12
 
 表示系のコマンドはどれも、一回限りの `--metric` と `--imperial` を受け付けます。時刻を表示するものは `--12h` と `--24h` も受け付けます。`weather` には気温だけを切り替える `--celsius` と `--fahrenheit` もあり、マイルと摂氏の組み合わせもできます。
 
-月のカレンダーは週を月曜日から始めます。ただし、日本、韓国、アメリカ合衆国、カナダ、ブラジル、メキシコなど、印刷されたカレンダーが日曜日から始まる国では日曜日から、エジプトと湾岸諸国では土曜日からです。`linecast week monday` で固定でき(`sunday` と `saturday` も)、`moon --week-start monday` なら一回だけです。
+月のカレンダーは週を月曜日から始めます。ただし、日本、韓国、アメリカ合衆国、カナダ、ブラジル、メキシコなど、印刷されたカレンダーが日曜日から始まる国では日曜日から、エジプトと湾岸諸国では土曜日からです。`linecast week monday` で固定でき（`sunday` と `saturday` も）、`moon --week-start monday` なら一回だけです。
 
 ### 言語
 
-ターミナルの言語がlinecastの知っている言語なら、その言語で話します。そうでなければ英語です。自分で選ぶには、既定値としてでも、一回だけでも指定できます:
+ターミナルの言語がlinecastの知っている言語なら、その言語で話します。そうでなければ英語です。自分で選ぶなら、既定値にも、その回だけにも指定できます:
 
 ```sh
 linecast language ja        # 既定を日本語に
@@ -146,11 +154,11 @@ linecast language auto      # ターミナルに従う
 linecast radar --lang en    # 今回だけ
 ```
 
-言語は、英語(`en`)、フランス語(`fr`)、スペイン語(`es`)、ドイツ語(`de`)、イタリア語(`it`)、ポルトガル語(`pt`)、オランダ語(`nl`)、ポーランド語(`pl`)、ノルウェー語(`no`)、スウェーデン語(`sv`)、アイスランド語(`is`)、デンマーク語(`da`)、フィンランド語(`fi`)、日本語(`ja`)、韓国語(`ko`)、中国語の簡体字(`zh`)と繁体字(`zh-Hant`)、タイ語(`th`)、インドネシア語(`id`)、ウクライナ語(`uk`)、ベトナム語(`vi`)、エスペラント(`eo`)、トルコ語(`tr`)、ロシア語(`ru`)、ルーマニア語(`ro`)、チェコ語(`cs`)、スワヒリ語(`sw`)です。中国語のターミナルロケールは地域で字体を選びます。`zh_TW`、`zh_HK`、`zh_MO` は繁体字、`zh_CN`、`zh_SG` は簡体字です。
+言語は、英語（`en`）、フランス語（`fr`）、スペイン語（`es`）、ドイツ語（`de`）、イタリア語（`it`）、ポルトガル語（`pt`）、オランダ語（`nl`）、ポーランド語（`pl`）、ノルウェー語（`no`）、スウェーデン語（`sv`）、アイスランド語（`is`）、デンマーク語（`da`）、フィンランド語（`fi`）、日本語（`ja`）、韓国語（`ko`）、中国語の簡体字（`zh`）と繁体字（`zh-Hant`）、タイ語（`th`）、インドネシア語（`id`）、ウクライナ語（`uk`）、ベトナム語（`vi`）、エスペラント（`eo`）、トルコ語（`tr`）、ロシア語（`ru`）、ルーマニア語（`ro`）、チェコ語（`cs`）、スワヒリ語（`sw`）です。中国語のターミナルロケールは地域で字体を選びます。`zh_TW`、`zh_HK`、`zh_MO` は繁体字、`zh_CN`、`zh_SG` は簡体字です。
 
 ### 暦
 
-`moon` を日本語、中国語、韓国語、ベトナム語、タイ語で実行すると、その言語の伝統暦を使います。日本語なら旧暦です。自分で選ぶには、既定値としてでも、一回だけでも指定できます:
+`moon` を日本語、中国語、韓国語、ベトナム語、タイ語で実行すると、その言語の伝統暦を使います。日本語なら旧暦です。自分で選ぶなら、既定値にも、その回だけにも指定できます:
 
 ```sh
 linecast calendar hebrew            # 既定をヘブライ暦に
@@ -159,11 +167,11 @@ linecast calendar auto              # 言語に従う
 linecast moon --calendar hawaiian   # 今回だけ
 ```
 
-暦は `chinese`、`japanese`、`korean`、`vietnamese`、`thai`、`hawaiian`、`samoan`、`chamorro`、`refaluwasch`、`islamic`、`hebrew`、`almanac` です。それぞれについては[CALENDARS.md](CALENDARS.md)にあります。
+暦は `chinese`、`japanese`、`korean`、`vietnamese`、`thai`、`hawaiian`、`samoan`、`chamorro`、`refaluwasch`、`islamic`、`hebrew`、`almanac` です。それぞれの説明は[CALENDARS.md](CALENDARS.md)にあります。
 
 ### 時刻法
 
-`sunshine` は、常用時のとなりに、ある伝統の時刻法で一日を読むことができます。選ぶには、既定値としてでも、一回だけでも指定できます:
+`sunshine` は、常用時のとなりに、ある伝統の時刻法で一日を読むことができます。選ぶなら、既定値にも、その回だけにも指定できます:
 
 ```sh
 linecast hours japanese             # 江戸の不定時法。昼夜それぞれ六つの刻
@@ -173,7 +181,7 @@ linecast hours none                 # 常用時のみ
 linecast sunshine --hours japanese  # 今回だけ
 ```
 
-`auto` で設定を消します。それぞれについては[HOURS.md](HOURS.md)にあります。
+`auto` で設定を消します。それぞれの説明は[HOURS.md](HOURS.md)にあります。
 
 ### 星空の伝統
 
@@ -185,7 +193,7 @@ linecast sunshine --hours japanese  # 今回だけ
 
 ## 貢献するには
 
-質問、要望、アイデアは[Discussions](https://github.com/ashuttl/linecast/discussions)へ。まとまった変更のプルリクエストは大歓迎です。新しいデータ提供元、ビューの改善、バグ修正など。大きな貢献も歓迎しますが、コードを書く前にディスカッションを始めてください。ここにあるビューはどれも、時間をかけて形にしてきたものです。新しいビューやコマンドにも、最初から同じだけの丁寧さが必要です。完成してから届いたプルリクエストに、その丁寧さを後から加えるのは難しいからです。[ARCHITECTURE.md](ARCHITECTURE.md)がコードの地図です。この日本語訳への修正も歓迎します。
+質問、要望、アイデアは[Discussions](https://github.com/ashuttl/linecast/discussions)へ。新しいデータソース、ビューの改善、バグ修正といった、まとまった変更のプルリクエストは大歓迎です。大きな貢献も歓迎しますが、コードを書く前にディスカッションを始めてください。ここにあるビューはどれも、時間をかけて形にしてきたものです。新しいビューやコマンドにも、最初から同じだけの丁寧さが必要です。完成してから届いたプルリクエストに、その丁寧さを後から加えるのは難しいからです。[ARCHITECTURE.md](ARCHITECTURE.md)がコードの地図です。この日本語訳への修正も歓迎します。
 
 ## 系譜
 
