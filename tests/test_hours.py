@@ -637,7 +637,7 @@ class TestPainting:
         assert lines[0][1:].startswith("7:52 · 1h = 62m")
         assert lines[0][:-1].endswith("Jerusalem · 2:30p")
         assert "mincha ketana 4:10p (in 1h 41m)" in lines[-1]
-        assert lines[-1].endswith("? keys")
+        assert lines[-1].endswith("? help")
         # The chart gave up a row for the line: 24 rows, two of text.
         assert len(lines) == 24
 

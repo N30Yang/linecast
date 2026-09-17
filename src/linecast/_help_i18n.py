@@ -4,7 +4,7 @@ from linecast._i18n import lookup
 
 _STRINGS = {
     'en': {
-        'hint_keys': 'keys',
+        'hint_help': 'help',
         'key_wheel': 'wheel',
         'key_space': 'space',
         'key_hover': 'hover',
@@ -41,7 +41,7 @@ _STRINGS = {
         'satellite': 'radar / satellite',
     },
     'fr': {
-        'hint_keys': 'touches',
+        'hint_help': 'aide',
         'key_wheel': 'molette',
         'key_space': 'espace',
         'key_hover': 'survol',
@@ -78,7 +78,7 @@ _STRINGS = {
         'satellite': 'radar / satellite',
     },
     'es': {
-        'hint_keys': 'teclas',
+        'hint_help': 'ayuda',
         'key_wheel': 'rueda',
         'key_space': 'espacio',
         'key_hover': 'puntero',
@@ -115,7 +115,7 @@ _STRINGS = {
         'satellite': 'radar / satélite',
     },
     'de': {
-        'hint_keys': 'Tasten',
+        'hint_help': 'Hilfe',
         'key_wheel': 'Rad',
         'key_space': 'Leertaste',
         'key_hover': 'Zeigen',
@@ -152,7 +152,7 @@ _STRINGS = {
         'satellite': 'Radar / Satellit',
     },
     'it': {
-        'hint_keys': 'tasti',
+        'hint_help': 'aiuto',
         'key_wheel': 'rotella',
         'key_space': 'spazio',
         'key_hover': 'puntatore',
@@ -189,7 +189,7 @@ _STRINGS = {
         'satellite': 'radar / satellite',
     },
     'pt': {
-        'hint_keys': 'teclas',
+        'hint_help': 'ajuda',
         'key_wheel': 'roda',
         'key_space': 'espaço',
         'key_hover': 'ponteiro',
@@ -226,7 +226,7 @@ _STRINGS = {
         'satellite': 'radar / satélite',
     },
     'nl': {
-        'hint_keys': 'toetsen',
+        'hint_help': 'help',
         'key_wheel': 'wiel',
         'key_space': 'spatie',
         'key_hover': 'aanwijzen',
@@ -263,7 +263,7 @@ _STRINGS = {
         'satellite': 'radar / satelliet',
     },
     'pl': {
-        'hint_keys': 'klawisze',
+        'hint_help': 'pomoc',
         'key_wheel': 'kółko',
         'key_space': 'spacja',
         'key_hover': 'wskaż',
@@ -300,7 +300,7 @@ _STRINGS = {
         'satellite': 'radar / satelita',
     },
     'no': {
-        'hint_keys': 'taster',
+        'hint_help': 'hjelp',
         'key_wheel': 'hjul',
         'key_space': 'mellomrom',
         'key_hover': 'pek',
@@ -337,7 +337,7 @@ _STRINGS = {
         'satellite': 'radar / satellitt',
     },
     'sv': {
-        'hint_keys': 'tangenter',
+        'hint_help': 'hjälp',
         'key_wheel': 'hjul',
         'key_space': 'mellanslag',
         'key_hover': 'peka',
@@ -374,7 +374,7 @@ _STRINGS = {
         'satellite': 'radar / satellit',
     },
     'is': {
-        'hint_keys': 'lyklar',
+        'hint_help': 'hjálp',
         'key_wheel': 'hjól',
         'key_space': 'bilslá',
         'key_hover': 'benda',
@@ -411,7 +411,7 @@ _STRINGS = {
         'satellite': 'ratsjá / gervitungl',
     },
     'da': {
-        'hint_keys': 'taster',
+        'hint_help': 'hjælp',
         'key_wheel': 'hjul',
         'key_space': 'mellemrum',
         'key_hover': 'peg',
@@ -448,7 +448,7 @@ _STRINGS = {
         'satellite': 'radar / satellit',
     },
     'fi': {
-        'hint_keys': 'näppäimet',
+        'hint_help': 'ohje',
         'key_wheel': 'rulla',
         'key_space': 'välilyönti',
         'key_hover': 'osoita',
@@ -485,7 +485,7 @@ _STRINGS = {
         'satellite': 'tutka / satelliitti',
     },
     'ja': {
-        'hint_keys': 'キー',
+        'hint_help': 'ヘルプ',
         'key_wheel': 'ホイール',
         'key_space': 'スペース',
         'key_hover': 'ホバー',
@@ -522,7 +522,7 @@ _STRINGS = {
         'satellite': 'レーダー / 衛星',
     },
     'ko': {
-        'hint_keys': '키',
+        'hint_help': '도움말',
         'key_wheel': '휠',
         'key_space': '스페이스',
         'key_hover': '호버',
@@ -559,7 +559,7 @@ _STRINGS = {
         'satellite': '레이더 / 위성',
     },
     'zh': {
-        'hint_keys': '按键',
+        'hint_help': '帮助',
         'key_wheel': '滚轮',
         'key_space': '空格',
         'key_hover': '悬停',
@@ -596,7 +596,7 @@ _STRINGS = {
         'satellite': '雷达 / 卫星',
     },
     'zh-Hant': {
-        'hint_keys': '按鍵',
+        'hint_help': '說明',
         'key_wheel': '滾輪',
         'key_space': '空白鍵',
         'key_hover': '懸停',
@@ -633,7 +633,7 @@ _STRINGS = {
         'satellite': '雷達 / 衛星',
     },
     'th': {
-        'hint_keys': 'ปุ่มลัด',
+        'hint_help': 'วิธีใช้',
         'key_wheel': 'ล้อเมาส์',
         'key_space': 'สเปซ',
         'key_hover': 'ชี้',
@@ -670,7 +670,7 @@ _STRINGS = {
         'satellite': 'เรดาร์ / ดาวเทียม',
     },
     'id': {
-        'hint_keys': 'tombol',
+        'hint_help': 'bantuan',
         'key_wheel': 'roda',
         'key_space': 'spasi',
         'key_hover': 'arahkan',
@@ -707,7 +707,7 @@ _STRINGS = {
         'satellite': 'radar / satelit',
     },
     'uk': {
-        'hint_keys': 'клавіші',
+        'hint_help': 'довідка',
         'key_wheel': 'коліщатко',
         'key_space': 'пробіл',
         'key_hover': 'наведення',
@@ -744,7 +744,7 @@ _STRINGS = {
         'satellite': 'радар / супутник',
     },
     'vi': {
-        'hint_keys': 'phím',
+        'hint_help': 'trợ giúp',
         'key_wheel': 'con lăn',
         'key_space': 'phím cách',
         'key_hover': 'rê chuột',
@@ -781,7 +781,7 @@ _STRINGS = {
         'satellite': 'radar / vệ tinh',
     },
     'eo': {
-        'hint_keys': 'klavoj',
+        'hint_help': 'helpo',
         'key_wheel': 'rado',
         'key_space': 'spaco',
         'key_hover': 'ŝvebo',
@@ -818,7 +818,7 @@ _STRINGS = {
         'satellite': 'radaro / satelito',
     },
     'tr': {
-        'hint_keys': 'tuşlar',
+        'hint_help': 'yardım',
         'key_wheel': 'tekerlek',
         'key_space': 'boşluk',
         'key_hover': 'üzerine gelme',
@@ -855,7 +855,7 @@ _STRINGS = {
         'satellite': 'radar / uydu',
     },
     'ru': {
-        'hint_keys': 'клавиши',
+        'hint_help': 'справка',
         'key_wheel': 'колёсико',
         'key_space': 'пробел',
         'key_hover': 'наведение',
@@ -892,7 +892,7 @@ _STRINGS = {
         'satellite': 'радар / спутник',
     },
     'ro': {
-        'hint_keys': 'taste',
+        'hint_help': 'ajutor',
         'key_wheel': 'rotiță',
         'key_space': 'spațiu',
         'key_hover': 'cursor',
@@ -929,7 +929,7 @@ _STRINGS = {
         'satellite': 'radar / satelit',
     },
     'cs': {
-        'hint_keys': 'klávesy',
+        'hint_help': 'nápověda',
         'key_wheel': 'kolečko',
         'key_space': 'mezerník',
         'key_hover': 'najetí',
@@ -966,7 +966,7 @@ _STRINGS = {
         'satellite': 'radar / družice',
     },
     "sw": {
-        "hint_keys": "vitufe",
+        "hint_help": "msaada",
         "key_wheel": "gurudumu",
         "key_space": "space",
         "key_hover": "elekeza kishale",

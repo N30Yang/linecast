@@ -23,6 +23,7 @@ New this version:
 - Weather: The hourly graph now defaults to `--temp-range auto`: it keeps the typical-year climate scale when there is room, and fits the forecast when that scale would exceed 5°C (9°F) per graph row. Resizing the terminal reconsiders the scale; explicit `climate`, `forecast`, and `world` choices keep their behavior.
 - Weather: Units are written as each language writes them.
 - Weather: Hong Kong's warnings read in Chinese when linecast does.
+- Live views: The hint that points to the `?` panel reads `? help` rather than `? keys`, in every language.
 
 Fixes:
 

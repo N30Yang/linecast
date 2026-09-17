@@ -16,7 +16,7 @@ from linecast._i18n import lookup
 
 _STRINGS = {
     "en": {
-        "hint": "wasd · v view · / search · ? keys",
+        "hint": "wasd · v view · / search · ? help",
         "hint_route": "D directions · n clear",
         "unavailable": "terrain unavailable ({err})",
         "streets_unavailable": "street tiles unavailable ({err})",
@@ -91,7 +91,7 @@ _STRINGS = {
         "hov_urban": "built-up",
     },
     "fr": {
-        "hint": "wasd · v vue · / recherche · ? touches",
+        "hint": "wasd · v vue · / recherche · ? aide",
         "hint_route": "D itinéraire · n effacer",
         "unavailable": "relief indisponible ({err})",
         "streets_unavailable": "tuiles indisponibles ({err})",
@@ -166,7 +166,7 @@ _STRINGS = {
         "hov_urban": "zone urbaine",
     },
     "es": {
-        "hint": "wasd · v vista · / buscar · ? teclas",
+        "hint": "wasd · v vista · / buscar · ? ayuda",
         "hint_route": "D ruta · n borrar",
         "unavailable": "terreno no disponible ({err})",
         "streets_unavailable": "mosaicos no disponibles ({err})",
@@ -241,7 +241,7 @@ _STRINGS = {
         "hov_urban": "zona urbana",
     },
     "de": {
-        "hint": "wasd · v Ansicht · / Suche · ? Tasten",
+        "hint": "wasd · v Ansicht · / Suche · ? Hilfe",
         "hint_route": "D Route · n löschen",
         "unavailable": "Gelände nicht verfügbar ({err})",
         "streets_unavailable": "Kacheln nicht verfügbar ({err})",
@@ -316,7 +316,7 @@ _STRINGS = {
         "hov_urban": "Siedlung",
     },
     "it": {
-        "hint": "wasd · v vista · / cerca · ? tasti",
+        "hint": "wasd · v vista · / cerca · ? aiuto",
         "hint_route": "D percorso · n cancella",
         "unavailable": "terreno non disponibile ({err})",
         "streets_unavailable": "tessere non disponibili ({err})",
@@ -391,7 +391,7 @@ _STRINGS = {
         "hov_urban": "area urbana",
     },
     "pt": {
-        "hint": "wasd · v vista · / buscar · ? teclas",
+        "hint": "wasd · v vista · / buscar · ? ajuda",
         "hint_route": "D rota · n limpar",
         "unavailable": "terreno indisponível ({err})",
         "streets_unavailable": "blocos indisponíveis ({err})",
@@ -466,7 +466,7 @@ _STRINGS = {
         "hov_urban": "área urbana",
     },
     "nl": {
-        "hint": "wasd · v weergave · / zoeken · ? toetsen",
+        "hint": "wasd · v weergave · / zoeken · ? help",
         "hint_route": "D route · n wissen",
         "unavailable": "terrein niet beschikbaar ({err})",
         "streets_unavailable": "tegels niet beschikbaar ({err})",
@@ -541,7 +541,7 @@ _STRINGS = {
         "hov_urban": "bebouwing",
     },
     "pl": {
-        "hint": "wasd · v widok · / szukaj · ? klawisze",
+        "hint": "wasd · v widok · / szukaj · ? pomoc",
         "hint_route": "D trasa · n wyczyść",
         "unavailable": "teren niedostępny ({err})",
         "streets_unavailable": "kafelki niedostępne ({err})",
@@ -616,7 +616,7 @@ _STRINGS = {
         "hov_urban": "zabudowa",
     },
     "no": {
-        "hint": "wasd · v visning · / søk · ? taster",
+        "hint": "wasd · v visning · / søk · ? hjelp",
         "hint_route": "D rute · n tøm",
         "unavailable": "terreng utilgjengelig ({err})",
         "streets_unavailable": "fliser utilgjengelige ({err})",
@@ -691,7 +691,7 @@ _STRINGS = {
         "hov_urban": "bebyggelse",
     },
     "sv": {
-        "hint": "wasd · v vy · / sök · ? tangenter",
+        "hint": "wasd · v vy · / sök · ? hjälp",
         "hint_route": "D rutt · n rensa",
         "unavailable": "terräng otillgänglig ({err})",
         "streets_unavailable": "rutor otillgängliga ({err})",
@@ -766,7 +766,7 @@ _STRINGS = {
         "hov_urban": "bebyggelse",
     },
     "da": {
-        "hint": "wasd · v visning · / søg · ? taster",
+        "hint": "wasd · v visning · / søg · ? hjælp",
         "hint_route": "D rute · n ryd",
         "unavailable": "terræn utilgængelig ({err})",
         "streets_unavailable": "fliser utilgængelige ({err})",
@@ -841,7 +841,7 @@ _STRINGS = {
         "hov_urban": "bebyggelse",
     },
     "is": {
-        "hint": "wasd · v sýn · / leit · ? lyklar",
+        "hint": "wasd · v sýn · / leit · ? hjálp",
         "hint_route": "D leið · n hreinsa",
         "unavailable": "landslag ótiltækt ({err})",
         "streets_unavailable": "flísar ótiltækar ({err})",
@@ -916,7 +916,7 @@ _STRINGS = {
         "hov_urban": "byggð",
     },
     "fi": {
-        "hint": "wasd · v näkymä · / haku · ? näppäimet",
+        "hint": "wasd · v näkymä · / haku · ? ohje",
         "hint_route": "D reitti · n tyhjennä",
         "unavailable": "maasto ei saatavilla ({err})",
         "streets_unavailable": "ruudut eivät saatavilla ({err})",
@@ -991,7 +991,7 @@ _STRINGS = {
         "hov_urban": "taajama",
     },
     "ja": {
-        "hint": "wasd · v 表示 · / 検索 · ? キー",
+        "hint": "wasd · v 表示 · / 検索 · ? ヘルプ",
         "hint_route": "D 経路 · n 消去",
         "unavailable": "地形データ利用不可 ({err})",
         "streets_unavailable": "タイル利用不可 ({err})",
@@ -1066,7 +1066,7 @@ _STRINGS = {
         "hov_urban": "市街地",
     },
     "ko": {
-        "hint": "wasd · v 보기 · / 검색 · ? 키",
+        "hint": "wasd · v 보기 · / 검색 · ? 도움말",
         "hint_route": "D 경로 · n 지우기",
         "unavailable": "지형 사용 불가 ({err})",
         "streets_unavailable": "타일 사용 불가 ({err})",
@@ -1141,7 +1141,7 @@ _STRINGS = {
         "hov_urban": "시가지",
     },
     "zh": {
-        "hint": "wasd · v 视图 · / 搜索 · ? 按键",
+        "hint": "wasd · v 视图 · / 搜索 · ? 帮助",
         "hint_route": "D 路线 · n 清除",
         "unavailable": "地形不可用 ({err})",
         "streets_unavailable": "瓦片不可用 ({err})",
@@ -1216,7 +1216,7 @@ _STRINGS = {
         "hov_urban": "城区",
     },
     "zh-Hant": {
-        "hint": "wasd · v 視圖 · / 搜尋 · ? 按鍵",
+        "hint": "wasd · v 視圖 · / 搜尋 · ? 說明",
         "hint_route": "D 路線 · n 清除",
         "unavailable": "地形不可用 ({err})",
         "streets_unavailable": "圖磚不可用 ({err})",
@@ -1291,7 +1291,7 @@ _STRINGS = {
         "hov_urban": "市區",
     },
     "th": {
-        "hint": "wasd · v มุมมอง · / ค้นหา · ? ปุ่มลัด",
+        "hint": "wasd · v มุมมอง · / ค้นหา · ? วิธีใช้",
         "hint_route": "D เส้นทาง · n ล้าง",
         "unavailable": "ข้อมูลภูมิประเทศใช้งานไม่ได้ ({err})",
         "streets_unavailable": "ไทล์แผนที่ใช้งานไม่ได้ ({err})",
@@ -1366,7 +1366,7 @@ _STRINGS = {
         "hov_urban": "เขตเมือง",
     },
     "id": {
-        "hint": "wasd · v tampilan · / cari · ? tombol",
+        "hint": "wasd · v tampilan · / cari · ? bantuan",
         "hint_route": "D rute · n hapus",
         "unavailable": "medan tidak tersedia ({err})",
         "streets_unavailable": "ubin tidak tersedia ({err})",
@@ -1441,7 +1441,7 @@ _STRINGS = {
         "hov_urban": "kawasan terbangun",
     },
     "uk": {
-        "hint": "wasd · v вигляд · / пошук · ? клавіші",
+        "hint": "wasd · v вигляд · / пошук · ? довідка",
         "hint_route": "D маршрут · n очистити",
         "unavailable": "рельєф недоступний ({err})",
         "streets_unavailable": "тайли вулиць недоступні ({err})",
@@ -1516,7 +1516,7 @@ _STRINGS = {
         "hov_urban": "забудова",
     },
     "vi": {
-        "hint": "wasd · v chế độ · / tìm · ? phím",
+        "hint": "wasd · v chế độ · / tìm · ? trợ giúp",
         "hint_route": "D chỉ đường · n xóa",
         "unavailable": "không có địa hình ({err})",
         "streets_unavailable": "không có ô bản đồ đường phố ({err})",
@@ -1591,7 +1591,7 @@ _STRINGS = {
         "hov_urban": "khu đô thị",
     },
     "eo": {
-        "hint": "wasd · v vido · / serĉi · ? klavoj",
+        "hint": "wasd · v vido · / serĉi · ? helpo",
         "hint_route": "D itinero · n forviŝi",
         "unavailable": "tereno ne haveblas ({err})",
         "streets_unavailable": "stratmapaj kaheloj ne haveblas ({err})",
@@ -1666,7 +1666,7 @@ _STRINGS = {
         "hov_urban": "urba areo",
     },
     "tr": {
-        "hint": "wasd · v görünüm · / ara · ? tuşlar",
+        "hint": "wasd · v görünüm · / ara · ? yardım",
         "hint_route": "D yol tarifi · n temizle",
         "unavailable": "arazi kullanılamıyor ({err})",
         "streets_unavailable": "sokak karoları kullanılamıyor ({err})",
@@ -1741,7 +1741,7 @@ _STRINGS = {
         "hov_urban": "yerleşim alanı",
     },
     "ru": {
-        "hint": "wasd · v вид · / поиск · ? клавиши",
+        "hint": "wasd · v вид · / поиск · ? справка",
         "hint_route": "D маршрут · n очистить",
         "unavailable": "рельеф недоступен ({err})",
         "streets_unavailable": "тайлы улиц недоступны ({err})",
@@ -1818,7 +1818,7 @@ _STRINGS = {
         "hov_urban": "застройка",
     },
     "ro": {
-        "hint": "wasd · v vedere · / caută · ? taste",
+        "hint": "wasd · v vedere · / caută · ? ajutor",
         "hint_route": "D traseu · n șterge",
         "unavailable": "terenul nu este disponibil ({err})",
         "streets_unavailable": "dalele străzilor nu sunt disponibile ({err})",
@@ -1893,7 +1893,7 @@ _STRINGS = {
         "hov_urban": "zonă construită",
     },
     "cs": {
-        "hint": "wasd · v zobrazení · / hledat · ? klávesy",
+        "hint": "wasd · v zobrazení · / hledat · ? nápověda",
         "hint_route": "D trasa · n smazat",
         "unavailable": "terén není k dispozici ({err})",
         "streets_unavailable": "dlaždice ulic nejsou k dispozici ({err})",
@@ -1970,7 +1970,7 @@ _STRINGS = {
         "hov_urban": "zástavba",
     },
     "sw": {
-        "hint": "wasd · v mwonekano · / tafuta · ? vitufe",
+        "hint": "wasd · v mwonekano · / tafuta · ? msaada",
         "hint_route": "D maelekezo · n futa",
         "unavailable": "mandhari haipatikani ({err})",
         "streets_unavailable": "ramani za mitaa hazipatikani ({err})",
