@@ -147,6 +147,12 @@ class LocationPicker:
             return ''
         searching = self.search.open
         width = min(cols, 56)
+        if not searching:
+            labels = [label for _item, label in self.items()]
+            labels += ['● ' + label for item, label in self.items()
+                       if isinstance(item, Result) and place_key(item) == current]
+            labels.append(ms('search_hint', self.lang))
+            width = min(width, max(visible_len(label) for label in labels) + 2)
         col = cols - width + 1
         self.bounds = (col, cols)
         surface = _theme.surface_bg(0.10)
