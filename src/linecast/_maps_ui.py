@@ -174,7 +174,7 @@ class SearchState:
         except Exception as exc:                # a fetcher must never crash
             log_failure("maps/search", "worker", exc, fallback="panel shows error")
             results, status = [], "error"       # the live loop's worker
-        self._publish(gen, results, status, auto=True)
+        self._publish(gen, results, status, auto=True, lang=lang)
 
     def _ask_once(self, query, lang):
         """The single Nominatim query, on Enter and nowhere else.
@@ -197,11 +197,11 @@ class SearchState:
                 log_failure("maps/search", "one-shot worker", exc,
                             fallback="panel shows error")
                 results, status = [], "error"
-            self._publish(gen, results, status, auto=False)
+            self._publish(gen, results, status, auto=False, lang=lang)
 
         threading.Thread(target=body, daemon=True).start()
 
-    def _publish(self, gen, results, status, auto):
+    def _publish(self, gen, results, status, auto, lang="en"):
         with self._lock:
             if gen != self.gen or not self.open:
                 return                  # superseded, or the panel is gone
@@ -212,7 +212,7 @@ class SearchState:
                     self.chosen = results[0]
                     self.open = False
                 elif status == "error":
-                    self._ask_once(self.query, "en")
+                    self._ask_once(self.query, lang)
         self._refresh()
 
 

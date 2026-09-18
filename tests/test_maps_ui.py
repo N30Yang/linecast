@@ -351,6 +351,29 @@ class TestCommit:
         assert seen == [("obscure", "en")]
         assert [r.name for r in st.results] == ["Found by name"]
 
+    @pytest.mark.parametrize("lang", ["fr", "ja", "zh-Hant"])
+    @pytest.mark.parametrize("enter_before_reply", [True, False])
+    def test_failed_search_fallback_keeps_the_language(self, lang, enter_before_reply):
+        seen = []
+
+        def one_shot(query, language):
+            seen.append((query, language))
+            return [result("Found by name")]
+
+        st = state(fail=True, one_shot=one_shot)
+        st.start()
+        st.handle('char:Paris', 43.6, -70.2, 12, lang)
+        if enter_before_reply:
+            st.handle('key:enter', 43.6, -70.2, 12, lang)
+        FakeTimer.armed[-1].fire()
+        if not enter_before_reply:
+            st.handle('key:enter', 43.6, -70.2, 12, lang)
+        assert len(FakeThread.started) == 1
+        FakeThread.started[-1].run_now()
+        assert seen == [("Paris", lang)]
+        assert st.open and st.chosen is None
+        assert [r.name for r in st.results] == ["Found by name"]
+
     def test_the_one_shot_lists_rather_than_jumping(self):
         # By the time it answers the user has been waiting; a list they
         # can look at beats a jump they did not choose.
