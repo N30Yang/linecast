@@ -259,7 +259,9 @@ def search_overlay(state, cols, rows, lang="en"):
 
     line = 2
     limit = min(MAX_ROWS, max(0, rows - 3))
-    for i, result in enumerate(state.results[:limit]):
+    # Follow the selection when the terminal cannot fit every suggestion.
+    start = min(max(0, state.sel - limit + 1), max(0, len(state.results) - limit))
+    for i, result in enumerate(state.results[start:start + limit], start):
         body = " " + _fit(_label(result), width - 2)
         body += " " * max(0, width - visible_len(body))
         if i == state.sel:

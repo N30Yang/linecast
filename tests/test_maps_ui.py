@@ -442,6 +442,27 @@ class TestOverlay:
         placed = [int(m) for m in re.findall(r"\033\[(\d+);1H", panel)]
         assert max(placed) <= 6
 
+    @pytest.mark.parametrize('rows', [6, 10, 24])
+    @pytest.mark.parametrize('action', ['back', 'fwd'])
+    def test_arrow_selection_stays_visible_and_enter_chooses_it(self, rows, action):
+        st = self._open([result(f"Place {i}", "") for i in range(8)])
+        for _ in range(9):  # walk the whole list and wrap in either direction
+            st.handle(action, 43.6, -70.2, 12)
+            panel = mu.search_overlay(st, 80, rows)
+            selected = st.results[st.sel]
+            assert f"\033[7m {selected.name} " in panel
+            placed = [int(m) for m in re.findall(r"\033\[(\d+);1H", panel)]
+            assert max(placed) <= rows
+        st.handle('key:enter', 43.6, -70.2, 12)
+        assert st.take_chosen() is selected
+
+    def test_shrinking_the_terminal_keeps_the_selected_result_visible(self):
+        st = self._open([result(f"Place {i}", "") for i in range(8)])
+        st.handle('fwd', 43.6, -70.2, 12)  # wrap to the final suggestion
+        for rows in (24, 6, 24):
+            panel = mu.search_overlay(st, 80, rows)
+            assert "\033[7m Place 7 " in panel
+
     def test_the_empty_and_error_states_each_get_one_row(self):
         for status, text in (("none", "no matches"),
                              ("error", "search unavailable")):
