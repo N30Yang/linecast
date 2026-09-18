@@ -192,11 +192,7 @@ def _prose(sentence):
 
 
 def narrative_lines(data, now, width, runtime=None):
-    """The prose under the graph, packed into as few lines as it fits on.
-
-    A sentence per line leaves most of a wide terminal empty and takes
-    rows the graph wants on a narrow one, so sentences share a line while
-    there is room and only spill onto another when there is not."""
+    """The prose under the graph, wrapped as one continuous paragraph."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
     daily = data.get("daily", {})
@@ -219,25 +215,22 @@ def narrative_lines(data, now, width, runtime=None):
         return []
 
     # Read as prose, so the sentences are punctuated as prose: a full stop
-    # between two sharing a line and at the end of every one.  Which mark
+    # between sentences and at the end of the paragraph.  Which mark
     # that is, and whether a space follows it, is the language's business.
     join = _s("sentence_join", runtime)
     end = _s("sentence_end", runtime)
 
     budget = max(1, width)
-    rows = [sentences[0]]
-    for sentence in sentences[1:]:
-        joined = rows[-1] + join + sentence
-        if visible_len(joined + end) <= budget:
-            rows[-1] = joined
-        else:
-            rows.append(sentence)
-    # A sentence with nothing to share its line can still outrun a narrow
-    # terminal, and a line the terminal wraps itself pushes the header off
-    # the top of the screen.  Wrap it here instead.
-    return [_prose(line)
-            for row in rows
-            for line in wrap_display_width(row + end, budget)]
+    rows = wrap_display_width(join.join(sentences) + end, budget)
+    # Give a lone final word some company when it fits, without adding a
+    # row or leaving another lone word behind.  Languages without spaces
+    # keep the display-width wrapper's natural breaks.
+    if len(rows) > 1 and len(rows[-1].split()) == 1:
+        before, space, word = rows[-2].rpartition(" ")
+        last = word + " " + rows[-1]
+        if space and len(before.split()) > 1 and visible_len(last) <= budget:
+            rows[-2:] = [before, last]
+    return [_prose(line) for line in rows]
 
 
 # ---------------------------------------------------------------------------

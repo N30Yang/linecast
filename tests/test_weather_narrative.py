@@ -127,7 +127,7 @@ class TestFeelsSentence:
 
 
 class TestNarrativePacking:
-    """Sentences share a line while there is room for them."""
+    """Sentences flow together across line breaks."""
 
     DATA = {
         "current": {"temperature_2m": 40, "apparent_temperature": 30,
@@ -147,11 +147,14 @@ class TestNarrativePacking:
         assert len(lines) == 1
         assert ". " in self._plain(lines)[0]
 
-    def test_the_same_two_take_a_line_each_when_narrow(self):
+    def test_the_same_two_flow_as_a_paragraph_when_narrow(self):
         lines = self._plain(narrative_lines(self.DATA, NOON, 40, _runtime()))
 
-        assert all(". " not in line for line in lines)
-        assert " ".join(lines).count(".") == 2
+        assert lines == [
+            "Today will be about the same temperature",
+            "as yesterday. The wind is making it",
+            "feel cooler.",
+        ]
 
     def test_every_sentence_is_punctuated(self):
         for width in (40, 200):
@@ -297,8 +300,9 @@ class TestPrecipitationPeak:
 
     def test_swahili_drizzle_keeps_its_noun_class_when_it_turns_to_rain(self):
         codes = [51, 53, 63, 65, 63, 0]
-        assert self._sentence(self._hourly(codes), lang="sw", use_24h=True) == \
-            "Manyunyu mepesi yatageuka kuwa mvua kubwa baada ya muda wa masaa mawili hivi, yataisha karibu saa 23:00"
+        assert self._sentence(self._hourly(codes), lang="sw", use_24h=True) == (
+            "Manyunyu mepesi yatageuka kuwa mvua kubwa baada ya muda wa masaa mawili hivi, "
+            "yataisha karibu saa 23:00")
 
     def test_rain_that_starts_light_says_when_it_turns_heavy(self):
         # Dry now, light rain from 21:00 building to heavy rain at 02:00
@@ -315,5 +319,6 @@ class TestPrecipitationPeak:
 
     def test_swahili_drizzle_that_starts_later_keeps_its_noun_class_when_it_turns(self):
         codes = [0, 0, 0, 0, 51, 53, 65, 0]
-        assert self._sentence(self._hourly(codes), lang="sw", use_24h=True) == \
-            "Manyunyu mepesi huenda yakaanza baada ya muda wa masaa mawili hivi na yatageuka kuwa mvua kubwa usiku"
+        assert self._sentence(self._hourly(codes), lang="sw", use_24h=True) == (
+            "Manyunyu mepesi huenda yakaanza baada ya muda wa masaa mawili hivi "
+            "na yatageuka kuwa mvua kubwa usiku")
