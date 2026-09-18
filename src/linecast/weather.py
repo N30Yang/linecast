@@ -683,7 +683,8 @@ class WeatherApp(_live.LiveApp):
         self.historical = historical
         self.country = country
         from linecast._weather_locations import LocationPicker
-        self.locations = LocationPicker(runtime.lang, location_name or f"{lat:.2f}, {lng:.2f}")
+        self.locations = LocationPicker(runtime.lang)
+        self._update_location_picker()
         self._state_lock = threading.RLock()
         self._generation = 0
         self._location_worker = None
@@ -753,6 +754,15 @@ class WeatherApp(_live.LiveApp):
         self._location_worker = threading.Thread(target=fetch, daemon=True)
         self._location_worker.start()
 
+    def _update_location_picker(self):
+        from linecast._config import saved_location
+        saved = saved_location()
+        self.locations.location_name = self.location_name or f"{self.lat:.2f}, {self.lng:.2f}"
+        self.locations.is_default = bool(
+            saved and (round(saved['lat'], 4), round(saved['lng'], 4))
+            == (round(self.lat, 4), round(self.lng, 4)))
+        self.locations.sel = 0
+
     def _save_default_location(self):
         """Persist the displayed place using the CLI's shared location setting."""
         from linecast._config import read_config, write_config
@@ -766,6 +776,7 @@ class WeatherApp(_live.LiveApp):
             log_failure('weather', 'save default location', exc, fallback='keep previous default')
             self.flash([ls('save_failed', self.runtime.lang)], seconds=5)
             return
+        self._update_location_picker()
         self.flash([ls('saved', self.runtime.lang, name=label)])
 
     def _finish_location(self):
@@ -792,11 +803,10 @@ class WeatherApp(_live.LiveApp):
         self.historical = result.get('historical')
         self.country = result.get('country_code', '')
         self.location_name = result.get('name') or place.name
-        self.locations.location_name = self.location_name
+        self._update_location_picker()
         apply_india_aqi(self.aqi, self.country)
         self.fetched, self.attempted = _t.monotonic(), None
         self.locations.recent.remember(place)
-        self.locations.sel = 0
 
     def text_mode(self):
         return self.locations.search.open

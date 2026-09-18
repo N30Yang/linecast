@@ -64,6 +64,7 @@ class LocationPicker:
     def __init__(self, lang, location_name=""):
         self.lang = lang
         self.location_name = location_name
+        self.is_default = False
         self.recent = RecentLocations()
         self.search = LocationSearch()
         self.open = False
@@ -89,7 +90,7 @@ class LocationPicker:
         items = [(p, p.name + (f', {p.detail}' if p.detail else ''))
                  for p in self.recent.places]
         items.append(('add', '+ ' + ls('add', self.lang)))
-        if self.location_name:
+        if self.location_name and not self.is_default:
             items.append(('save', '★ ' + ls('save', self.lang, name=self.location_name)))
         if self.recent.places:
             items.append(('clear', '× ' + ls('clear', self.lang)))

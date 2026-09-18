@@ -354,7 +354,12 @@ def comparative_sentence(daily, now, runtime=None):
         runtime = current_runtime(WeatherRuntime)
     hi_temps = daily.get("temperature_2m_max", [])
 
-    # With past_days=1: index 0=yesterday, 1=today, 2=tomorrow
+    # Resolve the dates in cached forecasts too: index 1 only means
+    # today on the day of the fetch. Undated series use past_days=1.
+    if daily.get("time") is not None:
+        by_date = dict(zip(daily["time"], hi_temps))
+        hi_temps = [by_date.get((now.date() + timedelta(days=offset)).isoformat())
+                    for offset in (-1, 0, 1)]
     if len(hi_temps) < 3:
         return ""
 

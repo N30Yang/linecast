@@ -36,6 +36,7 @@ New this version:
 
 Fixes:
 
+- Weather: Cached forecasts use the current date for temperature comparisons and the JSON output's today and upcoming forecasts. Expired forecasts no longer return old hours as upcoming weather.
 - Maps: Editing a search clears the old suggestions and cancels any pending Enter, so a changed query cannot send the map to an unintended place.
 - Weather: Startup waits at most 30 seconds for data providers and keeps completed results; Ctrl-C exits cleanly while loading.
 - Weather: The hours after a clock change read by the clock there. The day after the clocks changed ran an hour off, sunrise and sunset with it.
