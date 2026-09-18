@@ -14,6 +14,7 @@ from linecast._weather_i18n import (
 )
 from linecast._weather_style import (MUTED, TEXT, WIND_COLOR, _aqi_color,
                                      _colored_temp, _india_aqi_color)
+from linecast._weather_sources import _local_now_for_data
 
 
 def location_control(name, width, runtime):
@@ -23,7 +24,7 @@ def location_control(name, width, runtime):
 
 
 def render_header(data, width, location_name="", runtime=None, aqi_data=None, historical=None,
-                  location_menu=False):
+                  location_menu=False, now=None):
     """Current conditions header line."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
@@ -55,14 +56,17 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     if historical is not None:
         try:
             from linecast._weather_historical import format_historical_comparison
-            daily = data.get("daily", {})
-            hi_temps = daily.get("temperature_2m_max", [])
-            lo_temps = daily.get("temperature_2m_min", [])
-            # Index 1 = today (with past_days=1)
-            if (len(hi_temps) > 1 and len(lo_temps) > 1
-                    and hi_temps[1] is not None and lo_temps[1] is not None):
+            daily = data.get("daily") or {}
+            hi_temps = daily.get("temperature_2m_max") or []
+            lo_temps = daily.get("temperature_2m_min") or []
+            # A cached forecast's second entry may no longer be today.
+            today = (now if now is not None else _local_now_for_data(data)).date().isoformat()
+            index = next((i for i, day in enumerate(daily.get("time") or [])
+                          if day == today), -1)
+            if (0 <= index < min(len(hi_temps), len(lo_temps))
+                    and hi_temps[index] is not None and lo_temps[index] is not None):
                 hist_text = format_historical_comparison(
-                    hi_temps[1], lo_temps[1], historical, runtime,
+                    hi_temps[index], lo_temps[index], historical, runtime,
                 )
                 if hist_text:
                     left_hist = f"  {MUTED}({hist_text})"

@@ -540,7 +540,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
 
     # Header
     lines.append(render_header(data, cols, location_name, runtime=runtime, aqi_data=aqi_data,
-                               historical=historical, location_menu=location_menu))
+                               historical=historical, location_menu=location_menu, now=now_local))
     if notice:
         lines.append(notice)
     if blank_after_header:

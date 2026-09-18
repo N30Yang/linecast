@@ -1,7 +1,7 @@
 """Tests for historical weather comparison feature."""
 
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -352,7 +352,8 @@ class TestHeaderIntegration:
         runtime = WeatherRuntime(live=False, icons="nerd", lang="en",
                                  celsius=False, metric=False, shading=True,
                                  oneline=False)
-        result = render_header(data, 120, "Test City", runtime=runtime, historical=hist)
+        result = render_header(data, 120, "Test City", runtime=runtime, historical=hist,
+                               now=datetime(2026, 3, 27, 12))
         assert isinstance(result, str)
         assert len(result) > 0
         # The annotation should appear somewhere in the header
