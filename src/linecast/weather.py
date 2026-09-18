@@ -26,7 +26,7 @@ from datetime import datetime
 
 from linecast import _live, _theme
 from linecast._i18n import GEOCODER_UNTRANSLATED, fmt_percent, sentence_24h
-from linecast._graphics import bg, fg, get_terminal_size
+from linecast._graphics import bg, fg, get_terminal_size, visible_len
 from linecast._location import country_for_defaults, resolve_location
 from linecast._runtime import (
     WeatherRuntime, install_banner, log_failure, set_current, weather_parser,
@@ -415,7 +415,7 @@ def forecast_notice(data, runtime, live=False, fetching=False, failed_at=None):
 
 def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, mouse_pos=None,
                      active_alert=None, modal_scroll=0, aqi_data=None, historical=None,
-                     notice=None, country_code=""):
+                     notice=None, country_code="", location_menu=False):
     """Build the complete weather dashboard from preloaded data.
 
     `notice` is a line for under the header -- forecast_notice's, when
@@ -537,7 +537,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
 
     # Header
     lines.append(render_header(data, cols, location_name, runtime=runtime, aqi_data=aqi_data,
-                               historical=historical))
+                               historical=historical, location_menu=location_menu))
     if notice:
         lines.append(notice)
     if blank_after_header:
@@ -679,49 +679,166 @@ class WeatherApp(_live.LiveApp):
         self.location_name = location_name
         self.historical = historical
         self.country = country
+        from linecast._weather_locations import LocationPicker
+        self.locations = LocationPicker(runtime.lang, location_name or f"{lat:.2f}, {lng:.2f}")
+        self._state_lock = threading.RLock()
+        self._generation = 0
+        self._location_worker = None
+        self._location_result = None
+        self._loading = None
+        self._location_hit = None
         self._worker = None
         self.attempted = None   # local time the last refresh finished
 
-    def _refresh(self):
-        """Fetch fresh data and swap it in, off the render thread.
-
-        `fetched` moves whatever the outcome — before the worker dies,
-        so render never sees a dead worker with a stale stamp — and a
-        dead network is asked once per interval, not once per repaint.
-        """
+    def _refresh(self, generation, lat, lng, country):
+        """Refresh a snapshot of the location; discard it if the user moved."""
+        data, alerts, aqi = None, self.alerts, self.aqi
         try:
-            data = fetch_forecast(self.lat, self.lng, self.runtime)
-            alerts = fetch_alerts(self.lat, self.lng, self.country,
-                                  lang=self.runtime.lang)
-            aqi = fetch_aqi(self.lat, self.lng)
-            apply_india_aqi(aqi, self.country)
-            if data:
-                self.data = data
-            self.alerts = alerts
-            self.aqi = aqi
+            data = fetch_forecast(lat, lng, self.runtime)
+            alerts = fetch_alerts(lat, lng, country, lang=self.runtime.lang)
+            aqi = fetch_aqi(lat, lng)
+            apply_india_aqi(aqi, country)
         except Exception as exc:
-            log_failure("weather", "live refresh", exc,
-                        fallback="view stays stale")
+            log_failure("weather", "live refresh", exc, fallback="view stays stale")
         finally:
-            self.fetched = _t.monotonic()
-            # When the notice says a fetch failed.  Cleared by a current
-            # forecast, so that at midnight, when it stops being current,
-            # the line does not report a fetch that succeeded as failed.
-            self.attempted = (None if forecast_is_todays(self.data)
-                              else _local_now_for_data(self.data))
+            with self._state_lock:
+                if generation == self._generation:
+                    if data:
+                        self.data = data
+                    self.alerts, self.aqi = alerts, aqi
+                    self.fetched = _t.monotonic()
+                    self.attempted = (None if forecast_is_todays(self.data)
+                                      else _local_now_for_data(self.data))
         _live.nudge()
 
     def _refreshing(self):
         return bool(self._worker and self._worker.is_alive())
 
     def _start_refresh(self):
-        if not self._refreshing():
-            self._worker = threading.Thread(target=self._refresh, daemon=True)
+        if not self._refreshing() and self._loading is None:
+            self._worker = threading.Thread(
+                target=self._refresh,
+                args=(self._generation, self.lat, self.lng, self.country), daemon=True)
             self._worker.start()
+
+    def _choose_location(self, place):
+        from linecast._weather_locations_i18n import ls
+        if place is None:
+            return
+        if place == 'save':
+            self._save_default_location()
+            return
+        with self._state_lock:
+            self._generation += 1
+            generation = self._generation
+            self._location_result = None
+            self._loading = place
+            self._worker = None
+            self.flash([ls('loading', self.runtime.lang, name=place.name)], busy=True)
+
+        def fetch():
+            try:
+                result = gather(place.lat, place.lon, "", self.runtime, geo_label=place.name)
+            except Exception as exc:
+                log_failure("weather", "change location", exc, fallback="keep current location")
+                result = None
+            with self._state_lock:
+                if generation == self._generation:
+                    self._location_result = (place, result)
+            _live.nudge()
+
+        self._location_worker = threading.Thread(target=fetch, daemon=True)
+        self._location_worker.start()
+
+    def _save_default_location(self):
+        """Persist the displayed place using the CLI's shared location setting."""
+        from linecast._config import read_config, write_config
+        from linecast._weather_locations_i18n import ls
+        label = self.location_name or f"{self.lat:.2f}, {self.lng:.2f}"
+        try:
+            config = read_config()
+            config['location'] = dict(lat=self.lat, lng=self.lng, label=label, country=self.country)
+            write_config(config)
+        except OSError as exc:
+            log_failure('weather', 'save default location', exc, fallback='keep previous default')
+            self.flash([ls('save_failed', self.runtime.lang)], seconds=5)
+            return
+        self.flash([ls('saved', self.runtime.lang, name=label)])
+
+    def _finish_location(self):
+        """Commit on the UI thread, so recents and panels never change mid-input."""
+        from linecast._maps_search import Result
+        from linecast._weather_locations_i18n import ls
+        if self._location_result is None:
+            return
+        place, result = self._location_result
+        self._location_result = self._loading = None
+        self.clear_flash()
+        if not result or not result.get('data'):
+            self.flash([ls('failed', self.runtime.lang, name=place.name)], seconds=5)
+            return
+        # Keep the departure point too, so the first trip has a way back.
+        if not any(round(p.lat, 4) == round(self.lat, 4) and
+                   round(p.lon, 4) == round(self.lng, 4) for p in self.locations.recent.places):
+            self.locations.recent.remember(
+                Result(self.location_name, '', self.lat, self.lng, 'point'))
+        self.lat, self.lng = place.lat, place.lon
+        self.data = result['data']
+        self.alerts = result.get('alerts') or []
+        self.aqi = result.get('aqi')
+        self.historical = result.get('historical')
+        self.country = result.get('country_code', '')
+        self.location_name = result.get('name') or place.name
+        self.locations.location_name = self.location_name
+        apply_india_aqi(self.aqi, self.country)
+        self.fetched, self.attempted = _t.monotonic(), None
+        self.locations.recent.remember(place)
+        self.locations.sel = 0
+
+    def text_mode(self):
+        return self.locations.search.open
+
+    def intercept(self, action):
+        if self.locations.active:
+            self._choose_location(self.locations.handle(action, self.lat, self.lng))
+            return True
+        return False
+
+    def on_wheel(self, direction, col, row):
+        if not self.locations.active:
+            return NotImplemented  # keep the forecast and alert modal's usual scrolling
+        self.locations.handle('fwd' if direction > 0 else 'back', self.lat, self.lng)
+        return True
+
+    def on_drag(self, dcol, drow, done):
+        # Opt in to live_loop's press/release tracking for clicks.
+        return False
+
+    def on_click(self, col, row):
+        if self.locations.active:
+            self._choose_location(self.locations.click(col, row))
+            return True
+        if (row == 1 and self._location_hit
+                and self._location_hit[0] <= col <= self._location_hit[1]):
+            self.locations.start()
+            return True
+        return False
+
+    def stop(self):
+        self.clear_flash()
+        self.locations.close()
+        with self._state_lock:
+            self._generation += 1
 
     def on_action(self, key):
         """`r` asks for a newer forecast now rather than at the next
         interval -- the retry the stale-forecast line offers."""
+        if key == "l":
+            self.locations.start()
+            return True
+        if key == "/":
+            self.locations.choose('add')
+            return True
         if key == "r":
             self._start_refresh()
             return True
@@ -729,37 +846,52 @@ class WeatherApp(_live.LiveApp):
 
     def render(self, offset_minutes=0, mouse_pos=None, active_alert=None,
                modal_scroll=0):
+        with self._state_lock:
+            self._finish_location()
+            return self._render(offset_minutes, mouse_pos, active_alert, modal_scroll)
+
+    def _render(self, offset_minutes, mouse_pos, active_alert, modal_scroll):
         if _t.monotonic() - self.fetched >= 300:
             self._start_refresh()
         notice = forecast_notice(self.data, self.runtime, live=True,
-                                 fetching=self._refreshing(),
-                                 failed_at=self.attempted)
+                                 fetching=self._refreshing(), failed_at=self.attempted)
+        panel = self.locations.active
         output, alert_rows = render_from_data(
-            self.data,
-            self.alerts,
-            self.runtime,
+            self.data, self.alerts, self.runtime,
             location_name=self.location_name,
             offset_minutes=offset_minutes,
-            mouse_pos=mouse_pos,
-            active_alert=active_alert,
+            mouse_pos=None if panel else mouse_pos,
+            active_alert=None if panel else active_alert,
             modal_scroll=modal_scroll,
-            aqi_data=self.aqi,
-            historical=self.historical,  # cached — doesn't need re-fetch
-            notice=notice,
-            country_code=self.country,
+            aqi_data=self.aqi, historical=self.historical,
+            notice=notice, country_code=self.country,
+            location_menu=True,
         )
-        flash = self.flash_overlay(*get_terminal_size())
-        if flash:
-            body, _, floating = output.partition("\x00")
-            output = _live.overlay(body, floating + flash)
+        cols, rows = get_terminal_size()
+        # The live header always reserves space for its location control.
+        from linecast._weather_sections import location_control
+        label = location_control(self.location_name, cols, self.runtime)
+        self._location_hit = (cols - visible_len(label) + 1, cols)
+        floating = self.flash_overlay(cols, rows)
+        if panel:
+            floating += self.locations.overlay(cols, rows, (round(self.lat, 4), round(self.lng, 4)))
+            alert_rows = {}  # a panel click must not open an alert beneath it
+        if floating:
+            body, _, previous = output.partition("\x00")
+            output = _live.overlay(body, previous + floating)
         return output, alert_rows
 
     def help_panel(self):
         from linecast._help import HelpPanel, entries
+        from linecast._maps_search import ATTRIBUTION
+        from linecast._weather_locations_i18n import ls
         return HelpPanel('weather', self.runtime.lang, content=lambda cols, rows:
+                         [('l', ls('locations', self.runtime.lang)),
+                          ('/', ls('add', self.runtime.lang))] +
                          entries('weather', self.runtime.lang,
                                  credits=(forecast_attribution(self.runtime.lang),
-                                          alert_attribution(self.country, self.runtime.lang))))
+                                          alert_attribution(self.country, self.runtime.lang),
+                                          ATTRIBUTION)))
 
     def on_open(self, idx):
         if 0 <= idx < len(self.alerts):

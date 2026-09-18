@@ -16,7 +16,14 @@ from linecast._weather_style import (MUTED, TEXT, WIND_COLOR, _aqi_color,
                                      _colored_temp, _india_aqi_color)
 
 
-def render_header(data, width, location_name="", runtime=None, aqi_data=None, historical=None):
+def location_control(name, width, runtime):
+    from linecast._help import fit
+    from linecast._weather_locations_i18n import ls
+    return fit(name or ls('locations', runtime.lang), max(0, min(width - 2, width // 2))) + ' ▼'
+
+
+def render_header(data, width, location_name="", runtime=None, aqi_data=None, historical=None,
+                  location_menu=False):
     """Current conditions header line."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
@@ -110,6 +117,8 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
             parts.append(f"{_s('gusts', runtime)} {fmt_wind(gusts, runtime)}")
         wind_part = f"{WIND_COLOR}{'  '.join(parts)}"
     loc_part = f"{MUTED}{location_name}" if location_name else ""
+    if location_menu:
+        loc_part = f"{MUTED}{location_control(location_name, width, runtime)}"
 
     def _join_right(*parts):
         filled = [p for p in parts if p]
@@ -151,6 +160,20 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     result = _assemble(left, right)
     if result:
         return result
+
+    if location_menu:
+        # The live location is a control: keep it even when conditions are long.
+        for compact in (left_core + left_feels, left_core):
+            result = _assemble(compact, loc_part)
+            if result:
+                return result
+        from linecast._help import fit
+        label = location_control(location_name, width, runtime)
+        room = max(0, width - visible_len(label) - 1)
+        core = f"{icon} {name}" + (f"  {temp:.0f}{deg}" if temp is not None else "")
+        plain = fit(core, room)
+        return f"{TEXT}{plain}{' ' * max(0, width - visible_len(plain) - visible_len(label))}" \
+               f"{MUTED}{label}{RESET}"
 
     # Drop location
     right = _join_right(wind_part)

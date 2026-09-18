@@ -214,6 +214,31 @@ def menu_box(lines, cols, rows, title="", sel=None, border="", fill="",
         for i, line in enumerate(out))
 
 
+def toast_box(text, cols, rows, icon=""):
+    """A compact, rounded notification above the bottom-right of the view."""
+    from linecast import _theme
+    from linecast._graphics import RESET, bg, fg, visible_len
+    from linecast._help import fit
+    if cols < 1 or rows < 1:
+        return ""
+    surface = _theme.surface_bg(0.10)
+    ink = fg(*_theme.ensure_contrast(_theme.theme_fg, surface, 4.5))
+    border = fg(*_theme.ensure_contrast(_theme.surface_bg(0.55), surface, 2.2))
+    fill = bg(*surface)
+    label = f"{icon} {text}" if icon else text
+    if cols < 8 or rows < 4:
+        # A tiny terminal still gets the spinner, without an overflowing box.
+        return f"\033[{rows};1H{fill}{ink}{fit(label, cols)}{RESET}"
+    label = fit(label, min(60, cols - 8))
+    inner = visible_len(label) + 2
+    left, top = cols - inner - 3, rows - 3
+    lines = [f"{border}╭{'─' * inner}╮",
+             f"{border}│{ink} {label} {border}│",
+             f"{border}╰{'─' * inner}╯"]
+    return ''.join(f"\033[{top + i};{left}H{fill}{line}{RESET}"
+                   for i, line in enumerate(lines))
+
+
 # ---------------------------------------------------------------------------
 # Mouse decoding
 # ---------------------------------------------------------------------------
@@ -579,7 +604,8 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
               When set it takes the wheel over entirely (no time-scrub,
               no frame-step, no modal scroll — the caller decides, e.g.
               zoom vs panel scroll). Return truthy to re-render; falsy
-              leaves the frame alone (a clamped zoom).
+              leaves the frame alone (a clamped zoom). Return NotImplemented
+              to use the loop's normal forecast/frame/modal scrolling.
               Default None preserves existing behavior exactly.
     text_mode: optional callable() -> bool consulted before each key read.
                While truthy, printable input arrives at intercept as
@@ -752,11 +778,11 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
             wheel_cb = _normalize_wheel_cb(cb)
             if wheel_cb in (64, 65):
                 if on_wheel is not None:
-                    # Caller owns the wheel outright (zoom, panel scroll,
-                    # …) — no scrub fallback.
-                    if on_wheel(1 if wheel_cb == 64 else -1, cx, cy):
-                        return _coalesce_or_repaint()  # rapid wheel
-                    return None
+                    # A view can own the wheel, or defer to ordinary scrolling
+                    # when its panel is closed.
+                    handled = on_wheel(1 if wheel_cb == 64 else -1, cx, cy)
+                    if handled is not NotImplemented:
+                        return _coalesce_or_repaint() if handled else None
                 if active_alert is not None:
                     # Scroll the modal
                     modal_scroll += 3 if wheel_cb == 65 else -3
@@ -1018,7 +1044,7 @@ class LiveApp:
         return False
 
     def on_wheel(self, direction, col, row):
-        """The wheel, owned outright: +1 up / -1 down at (col, row)."""
+        """The wheel: +1 up / -1 down. NotImplemented defers to loop scrolling."""
         return False
 
     def intercept(self, action):
@@ -1045,27 +1071,53 @@ class LiveApp:
     def stop(self):
         """The loop is over; park any thread that was serving it."""
 
-    _flash = None  # (paragraphs, deadline) while a note is up
+    _flash = None  # (paragraphs, deadline, busy) while a note is up
+    _flash_timer = None
 
-    def flash(self, paragraphs, seconds=3.0):
-        """Float a note in the middle of the screen for `seconds`: what a
-        key just changed, say. `paragraphs` are plain text, wrapped to
-        the box at render time. The loop repaints when it is time to
-        take the note down."""
-        self._flash = (list(paragraphs), _time.monotonic() + seconds)
-        timer = threading.Timer(seconds + 0.05, nudge)
+    def clear_flash(self):
+        """Dismiss a note and cancel its next repaint."""
+        self._flash = None
+        if self._flash_timer is not None:
+            self._flash_timer.cancel()
+            self._flash_timer = None
+
+    def _flash_repaint(self, seconds):
+        if self._flash_timer is not None:
+            return
+
+        def repaint():
+            if self._flash_timer is timer:
+                # Clear before waking: the next render may start immediately.
+                self._flash_timer = None
+                nudge()
+
+        timer = threading.Timer(seconds, repaint)
         timer.daemon = True
+        self._flash_timer = timer
         timer.start()
 
+    def flash(self, paragraphs, seconds=3.0, *, busy=False):
+        """Float a brief note, or an animated toast until clear_flash().
+
+        A busy toast stays above the view without moving its rows. Its
+        timer only wakes the live loop; all painting belongs to the loop.
+        """
+        self.clear_flash()
+        self._flash = (list(paragraphs), _time.monotonic() + seconds, busy)
+        self._flash_repaint(0.08 if busy else seconds + 0.05)
+
     def flash_overlay(self, cols, rows):
-        """The note for overlay()'s floating channel, boxed like the help
-        panel and the pickers, or "" once it has expired. A view's render
-        lays it over its own overlay."""
+        """The current note on overlay()'s floating channel."""
         if self._flash is None:
             return ""
-        paragraphs, deadline = self._flash
+        paragraphs, deadline, busy = self._flash
+        if busy:
+            from linecast._spinner import SPINNER_FRAMES
+            spinner = SPINNER_FRAMES[int(_time.monotonic() / 0.08) % len(SPINNER_FRAMES)]
+            self._flash_repaint(0.08)
+            return toast_box(' '.join(paragraphs), cols, rows, icon=spinner)
         if _time.monotonic() >= deadline:
-            self._flash = None
+            self.clear_flash()
             return ""
         from linecast._graphics import fg
         from linecast._help import wrap
@@ -1096,4 +1148,5 @@ class LiveApp:
                       play_interval=self.play_interval, help_panel=self.help_panel(),
                       **self.hooks())
         finally:
+            self.clear_flash()
             self.stop()
