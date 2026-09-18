@@ -36,6 +36,7 @@ New this version:
 
 Fixes:
 
+- Downloads: Incomplete compressed responses no longer replace cached data, and responses containing multiple gzip members are read in full. Maps can retry an incomplete tile download instead of keeping it indefinitely.
 - Weather: The header's historical average comparison uses today's temperature from cached forecasts and is omitted when the forecast no longer covers today.
 - Weather: Cached forecasts use the current date for temperature comparisons and the JSON output's today and upcoming forecasts. Expired forecasts no longer return old hours as upcoming weather.
 - Maps: Editing a search clears the old suggestions and cancels any pending Enter, so a changed query cannot send the map to an unintended place.

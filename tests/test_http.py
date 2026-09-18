@@ -5,6 +5,7 @@ No network: http.client's connection classes are replaced with a fake
 that records requests and replays scripted responses.
 """
 
+import gzip
 import http.client
 import subprocess
 import sys
@@ -128,13 +129,11 @@ class TestFetchBytes:
         assert headers["Accept-Encoding"] == "gzip"
 
     def test_declared_gzip_body_inflated(self, conns):
-        import gzip
         conns.script = [_Response(body=gzip.compress(b'{"daily": 1}'),
                                   headers={"content-encoding": "gzip"})]
         assert _http.fetch_bytes("https://h.example/") == b'{"daily": 1}'
 
     def test_inflated_body_past_the_limit_refused(self, conns):
-        import gzip
         conns.script = [_Response(body=gzip.compress(b"\0" * 1000),
                                   headers={"Content-Encoding": "gzip"})]
         with pytest.raises(ValueError):
@@ -143,7 +142,6 @@ class TestFetchBytes:
     def test_undeclared_gzip_body_left_for_the_caller(self, conns):
         # static tile hosts serve pre-gzipped bodies with no
         # Content-Encoding; _vtiles sniffs and inflates those itself
-        import gzip
         raw = gzip.compress(b"tile")
         conns.script = [_Response(body=raw)]
         assert _http.fetch_bytes("https://h.example/") == raw
@@ -154,7 +152,6 @@ class TestFetchBytes:
         assert _http.fetch_bytes("https://h.example/") == b"not gzip"
 
     def test_proxied_path_inflates_too(self, monkeypatch):
-        import gzip
         import urllib.request
         seen = {}
 
@@ -289,6 +286,25 @@ class TestFetchBytes:
 
 
 class TestFetchBytesCached:
+    @pytest.mark.parametrize("stale", [None, b"previous complete tile"])
+    def test_incomplete_gzip_never_replaces_the_cache(self, conns, tmp_path, stale):
+        path = tmp_path / "t.png"
+        if stale is not None:
+            path.write_bytes(stale)
+            __import__("os").utime(path, (0, 0))
+        # The HTTP transfer is complete, but the gzip trailer is missing.
+        body = gzip.compress(b"new tile")[:-8]
+        headers = (f"Content-Length: {len(body)}\r\n"
+                   "Content-Encoding: gzip").encode()
+        conns.script = [_wire_response(body, headers)]
+
+        assert _http.fetch_bytes_cached(path, 60, "https://h.example/") == stale
+        if stale is None:
+            assert not path.exists()
+        else:
+            assert path.read_bytes() == stale
+        assert conns.instances[0].closed
+
     @pytest.mark.parametrize("stale", [None, b"previous complete tile"])
     def test_truncated_response_never_replaces_the_cache(self, conns, tmp_path, stale):
         path = tmp_path / "t.png"
@@ -454,8 +470,44 @@ class TestBodyCap:
         assert _http.fetch_bytes("https://h.example/", limit=100) == b"x" * 100
 
     def test_gunzip_bomb_is_refused(self):
-        import gzip
         bomb = gzip.compress(b"\0" * 10_000_000)
         with pytest.raises(ValueError):
             _http.gunzip_limited(bomb, 1_000_000)
         assert _http.gunzip_limited(gzip.compress(b"streets"), 100) == b"streets"
+
+
+class TestGunzip:
+    @pytest.mark.parametrize("parts", [(b"streets",), (b"str", b"eets"), (b"", b"")])
+    def test_all_members_fit_at_the_exact_limit(self, parts):
+        body = b"".join(gzip.compress(part) for part in parts)
+        expected = b"".join(parts)
+        assert _http.gunzip_limited(body, len(expected)) == expected
+
+    @pytest.mark.parametrize("parts, limit", [
+        ((b"streets",), 0),
+        ((b"str", b"eets"), 6),
+        ((b"streets", b"x"), 7),
+    ])
+    def test_limit_applies_to_the_whole_body(self, parts, limit):
+        body = b"".join(gzip.compress(part) for part in parts)
+        with pytest.raises(ValueError, match="exceeds cap"):
+            _http.gunzip_limited(body, limit)
+
+    @pytest.mark.parametrize("missing", [1, 8, 12])
+    @pytest.mark.parametrize("prefix", [b"", gzip.compress(b"first member")],
+                             ids=["first", "second"])
+    def test_incomplete_member_is_refused(self, missing, prefix):
+        body = prefix + gzip.compress(b"streets")[:-missing]
+        with pytest.raises(ValueError):
+            _http.gunzip_limited(body, 100)
+
+    @pytest.mark.parametrize("offset", [-8, -4])
+    def test_checksum_and_size_are_checked_even_at_the_limit(self, offset):
+        body = bytearray(gzip.compress(b"streets"))
+        body[offset] ^= 1
+        with pytest.raises(ValueError):
+            _http.gunzip_limited(bytes(body), 7)
+
+    def test_negative_limit_is_refused(self):
+        with pytest.raises(ValueError):
+            _http.gunzip_limited(gzip.compress(b"streets"), -1)

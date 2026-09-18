@@ -175,6 +175,16 @@ class TestFetchTile:
         assert vt.fetch_tile(14, 4994, 5978) == b"tilebytes"
         assert len(calls) == 1
 
+    def test_incomplete_gzip_is_not_cached(self, cache, canned_tilejson, monkeypatch):
+        calls = []
+        self._stub(monkeypatch, gzip.compress(b"tilebytes")[:-8], calls)
+        assert vt.fetch_tile(14, 4994, 5978) is None
+        cached = cache / "maps" / "vt" / "20260802_080001_pt" / "14_4994_5978.pbf"
+        assert not cached.exists()
+        self._stub(monkeypatch, gzip.compress(b"complete tile"), calls)
+        assert vt.fetch_tile(14, 4994, 5978) == b"complete tile"
+        assert len(calls) == 2
+
     def test_empty_tile_cached_and_not_refetched(
             self, cache, canned_tilejson, monkeypatch):
         # OpenFreeMap answers HTTP 200 with 0 bytes for ocean/empty
