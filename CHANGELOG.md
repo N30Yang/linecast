@@ -15,6 +15,7 @@ New this version:
 - Language: A Norwegian terminal locale, nb_NO or nn_NO, puts linecast in Norwegian.
 - Language: The footer of the tides view reads in every language: the wave and swell directions, and the name of the Open-Meteo tide model.
 - Language: Place names read in the language linecast is running in, in weather, sky, and the JSON of sunshine, moon, and sky, as they already did in tides, radar, and maps. In traditional Chinese a typed place is named from OpenStreetMap, which has the characters that the Open-Meteo index lacks.
+- Weather: The rain sentence says when the rain turns heavier: "Light drizzle becoming heavy rain around 23h, ending overnight", not just "Light drizzle ending overnight", and "Light rain likely starting around 21h, becoming heavy rain overnight".
 - Weather: A typed place is named as the geocoder found it, such as "Tobermory, Ontario", rather than by the district around the point.
 - Location: A region named for its city is no longer repeated: "Busan, South Korea", not "Busan, Busan, South Korea".
 - Tides: A place name in the header keeps the capitals its language gives it, such as "préfecture d'Osaka".
@@ -32,6 +33,7 @@ New this version:
 
 Fixes:
 
+- Weather: Startup waits at most 30 seconds for data providers and keeps completed results; Ctrl-C exits cleanly while loading.
 - Weather: The hours after a clock change read by the clock there. The day after the clocks changed ran an hour off, sunrise and sunset with it.
 - Weather: The day and night tint of the hourly chart no longer shifts by an hour on the night the machine's clocks change.
 - Weather: A gap in the forecast or an unexpected answer from a warning feed no longer ends the view in an error. A missing current temperature is left off rather than shown as 0°.

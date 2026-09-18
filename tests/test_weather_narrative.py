@@ -234,3 +234,86 @@ class TestFeelsStringsAreTranslated:
                 if lang != "en":
                     assert table[key] != _STRINGS["en"][key], \
                         f"{lang}/{key} is still English"
+
+class TestPrecipitationPeak:
+    """A run of rain is named by what it is now, and says when it turns heavier."""
+
+    EVENING = datetime(2026, 9, 17, 18, 10)
+
+    @staticmethod
+    def _hourly(codes, amounts=None, start=18):
+        hours = range(start, start + len(codes))
+        hourly = {
+            "time": [f"2026-09-1{7 + h // 24}T{h % 24:02d}:00" for h in hours],
+            "weather_code": codes,
+            "precipitation_probability": [80 if c else 0 for c in codes],
+        }
+        if amounts is not None:
+            hourly["precipitation"] = amounts
+        return hourly
+
+    def _sentence(self, hourly, **overrides):
+        from linecast._weather_sections import precipitation_sentence
+        return precipitation_sentence(hourly, self.EVENING, _runtime(**overrides))
+
+    def test_drizzle_now_names_the_heavy_rain_to_come_and_when_it_ends(self):
+        # 18:00 light drizzle through heavy rain at 23:00, dry from 02:00
+        codes = [51, 51, 53, 61, 63, 65, 63, 61, 0, 0]
+        amounts = [0.01, 0.01, 0.02, 0.1, 0.2, 0.34, 0.2, 0.05, 0, 0]
+        assert self._sentence(self._hourly(codes, amounts)) == \
+            "Light drizzle becoming heavy rain around 23h, ending overnight"
+        assert self._sentence(self._hourly(codes, amounts), use_24h=False) == \
+            "Light drizzle becoming heavy rain around 11pm, ending overnight"
+
+    def test_a_run_that_keeps_its_name_reads_as_before(self):
+        codes = [61, 61, 61, 61, 0]
+        amounts = [0.05, 0.08, 0.06, 0.04, 0]
+        assert self._sentence(self._hourly(codes, amounts)) == \
+            "Light rain ending in a couple hours"
+
+    def test_the_peak_is_the_hour_with_the_most_rain_as_the_bar_draws_it(self):
+        # Heavy showers at 22:00 carry less water than the rain at 23:00
+        codes = [61, 61, 61, 61, 82, 63, 63, 0]
+        amounts = [0.05, 0.05, 0.05, 0.05, 0.1, 0.4, 0.2, 0]
+        assert self._sentence(self._hourly(codes, amounts)) == \
+            "Light rain becoming rain around 23h, ending overnight"
+
+    def test_without_amounts_the_heaviest_code_is_the_peak(self):
+        codes = [51, 53, 63, 65, 63, 0]
+        assert self._sentence(self._hourly(codes)) == \
+            "Light drizzle becoming heavy rain in a couple hours, ending around 23h"
+
+    def test_a_let_up_is_not_called_a_turn(self):
+        # More water later, but a lighter code: the run stays "rain"
+        codes = [63, 63, 61, 61, 61, 0]
+        amounts = [0.1, 0.1, 0.3, 0.3, 0.3, 0]
+        assert self._sentence(self._hourly(codes, amounts)) == \
+            "Rain ending around 23h"
+
+    def test_a_run_through_the_day_can_still_turn_heavy(self):
+        codes = [61] * 10 + [65] * 10 + [61] * 6
+        assert self._sentence(self._hourly(codes)) == \
+            "Light rain becoming heavy rain overnight, continuing through the day"
+
+    def test_swahili_drizzle_keeps_its_noun_class_when_it_turns_to_rain(self):
+        codes = [51, 53, 63, 65, 63, 0]
+        assert self._sentence(self._hourly(codes), lang="sw", use_24h=True) == \
+            "Manyunyu mepesi yatageuka kuwa mvua kubwa baada ya muda wa masaa mawili hivi, yataisha karibu saa 23:00"
+
+    def test_rain_that_starts_light_says_when_it_turns_heavy(self):
+        # Dry now, light rain from 21:00 building to heavy rain at 02:00
+        codes = [0, 0, 0, 61, 61, 63, 63, 65, 65, 63, 0]
+        amounts = [0, 0, 0, 0.02, 0.05, 0.1, 0.15, 0.3, 0.25, 0.1, 0]
+        assert self._sentence(self._hourly(codes, amounts)) == \
+            "Light rain likely starting in a couple hours, becoming heavy rain overnight"
+
+    def test_rain_that_starts_and_stays_light_reads_as_before(self):
+        codes = [0, 0, 0, 0, 61, 61, 61, 0]
+        amounts = [0, 0, 0, 0, 0.05, 0.05, 0.05, 0]
+        assert self._sentence(self._hourly(codes, amounts)) == \
+            "Light rain likely starting in a couple hours"
+
+    def test_swahili_drizzle_that_starts_later_keeps_its_noun_class_when_it_turns(self):
+        codes = [0, 0, 0, 0, 51, 53, 65, 0]
+        assert self._sentence(self._hourly(codes), lang="sw", use_24h=True) == \
+            "Manyunyu mepesi huenda yakaanza baada ya muda wa masaa mawili hivi na yatageuka kuwa mvua kubwa usiku"

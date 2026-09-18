@@ -398,6 +398,46 @@ _PRECIP_DESCS = {
     95: "thunderstorms", 96: "thunderstorms", 99: "thunderstorms",
 }
 
+# How hard each precipitation code falls, one step at a time, so a run
+# of rain can say when it turns heavy without calling a let-up a turn.
+_PRECIP_RANK = {
+    51: 1, 53: 2, 55: 3, 56: 2, 57: 3,
+    61: 2, 63: 3, 65: 4, 66: 3, 67: 4,
+    71: 2, 73: 3, 75: 4, 77: 1,
+    80: 2, 81: 3, 82: 4, 85: 3, 86: 4,
+    95: 4, 96: 5, 99: 5,
+}
+
+
+def _peak_hour(run, amounts, codes):
+    """The hour in a run of precipitation worth naming on its own, or None.
+
+    The peak is the hour with the most forecast, the tallest column of
+    the bar under the chart; with no amounts it is the hour of the
+    heaviest code.  It is named only when its code is a step up from
+    the current hour's, so "rain becoming light rain" is never said,
+    and a run that keeps its name says nothing more.
+    """
+    def amount(idx):
+        return (amounts[idx] if idx < len(amounts) else 0) or 0
+
+    def rank(idx):
+        return _PRECIP_RANK.get(codes[idx] if idx < len(codes) else 0, 0)
+
+    first = run[0][0]
+    later = run[1:]
+    if not later:
+        return None
+    if any(amount(i) for i, _ in run):
+        i, dt = max(later, key=lambda h: amount(h[0]))
+        if amount(i) <= amount(first):
+            return None
+    else:
+        i, dt = max(later, key=lambda h: rank(h[0]))
+    if rank(i) <= rank(first):
+        return None
+    return i, dt
+
 
 def precipitation_sentence(hourly, now, runtime=None):
     """Plain-text description of upcoming precipitation."""
@@ -407,6 +447,7 @@ def precipitation_sentence(hourly, now, runtime=None):
     times = hourly.get("time", [])
     precip_prob = hourly.get("precipitation_probability", [])
     codes = hourly.get("weather_code", [])
+    amounts = hourly.get("precipitation") or []
 
     if not times or not precip_prob or not codes:
         return ""
@@ -470,21 +511,37 @@ def precipitation_sentence(hourly, now, runtime=None):
             return form.format(day=day_names[dt.weekday()])
         return _s("on_day", runtime, day=day_names[dt.weekday()])
 
+    def run_from(n):
+        """The wet hours from window[n] on, and the first dry hour after them."""
+        run = [window[n]]
+        for i, dt in window[n + 1:]:
+            if not is_precip(i):
+                return run, dt
+            run.append((i, dt))
+        return run, None
+
+    def sentence(key, run, **words):
+        """The template for `key`, or its "becoming" form when the run
+        has an hour heavier than its first worth naming."""
+        peak = _peak_hour(run, amounts, codes)
+        if peak:
+            key += "_becoming"
+            words.update(peak=desc(peak[0]), peak_time=time_phrase(peak[1]))
+        return _precip_s(key, codes[run[0][0]], runtime, **words)
+
     first_idx = window[0][0]
 
     if is_precip(first_idx):
-        current_desc = desc(first_idx)
-        for i, dt in window[1:]:
-            if not is_precip(i):
-                return _precip_s("ending", codes[first_idx], runtime,
-                                 desc=_ucfirst(current_desc), time=time_phrase(dt))
-        return _precip_s("continuing", codes[first_idx], runtime,
-                         desc=_ucfirst(current_desc))
+        run, end = run_from(0)
+        if end:
+            return sentence("ending", run, desc=_ucfirst(desc(first_idx)),
+                            time=time_phrase(end))
+        return sentence("continuing", run, desc=_ucfirst(desc(first_idx)))
 
-    for i, dt in window[1:]:
+    for n, (i, dt) in enumerate(window[1:], 1):
         if is_precip(i):
-            return _precip_s("starting", codes[i], runtime,
-                             desc=_ucfirst(desc(i)), time=time_phrase(dt))
+            run, _ = run_from(n)
+            return sentence("starting", run, desc=_ucfirst(desc(i)), time=time_phrase(dt))
     return ""
 
 

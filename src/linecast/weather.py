@@ -772,6 +772,9 @@ class WeatherApp(_live.LiveApp):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+_FETCH_CEILING = 30  # shared wall-clock budget for the dashboard providers
+
+
 def gather(lat, lng, country_code, runtime, geo_label=""):
     """Everything the dashboard is built from, fetched side by side.
 
@@ -779,62 +782,84 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
     historical.  Each is taken from its own fetch on its own: a
     provider that raises -- an alert feed with a null where a string
     was expected, say -- costs only its own entry, logged under --debug,
-    and never the air quality or the climate scale fetched beside it."""
-    from concurrent.futures import ThreadPoolExecutor
+    and never the air quality or the climate scale fetched beside it.
+    All providers share one deadline; completed results survive a timeout."""
+    from concurrent.futures import Future, TimeoutError
     from datetime import date
+
+    deadline = _t.monotonic() + _FETCH_CEILING
+
+    def _submit(fetch, *args, **kwargs):
+        future = Future()
+        if _t.monotonic() >= deadline:
+            future.set_exception(TimeoutError("weather fetch deadline reached"))
+            return future
+
+        def run():
+            try:
+                future.set_result(fetch(*args, **kwargs))
+            except BaseException as exc:
+                future.set_exception(exc)
+
+        # Executor workers are joined at interpreter exit, even when their
+        # parent is a daemon. A wedged provider must not hold up Ctrl-C.
+        threading.Thread(target=run, daemon=True).start()
+        return future
 
     def _settle(future, what, fallback):
         # With the traceback: a worker that failed is the one thing a
         # --debug transcript exists to explain.
         try:
-            return future.result()
+            return future.result(timeout=max(0, deadline - _t.monotonic()))
+        except TimeoutError as exc:
+            log_failure("worker", what, exc, fallback="omitted after fetch deadline")
+            return fallback
         except Exception as exc:
             log_failure("worker", what, exc, fallback="omitted", trace=True)
             return fallback
 
     result = {}
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        fut_geocode = pool.submit(_reverse_geocode, lat, lng)
-        fut_forecast = pool.submit(fetch_forecast, lat, lng, runtime)
-        fut_aqi = pool.submit(fetch_aqi, lat, lng)
-        today = date.today()
-        fut_hist = pool.submit(fetch_historical, lat, lng, today,
-                               celsius=runtime.celsius, metric=runtime.metric)
+    fut_geocode = _submit(_reverse_geocode, lat, lng)
+    fut_forecast = _submit(fetch_forecast, lat, lng, runtime)
+    fut_aqi = _submit(fetch_aqi, lat, lng)
+    today = date.today()
+    fut_hist = _submit(fetch_historical, lat, lng, today,
+                       celsius=runtime.celsius, metric=runtime.metric)
 
-        # Alerts depend on geocode for country_code
-        name, cc, addr = _settle(fut_geocode, "reverse geocode", ("", "", {}))
-        # That address is in the country's own language, as the alert
-        # feeds' area names are. A typed place is shown by the forward
-        # geocoder's label, which names what was asked for; with only
-        # coordinates, or a language that label cannot be in, Nominatim
-        # is asked again for the name in the user's.
-        fut_name = None
-        if not geo_label or runtime.lang in GEOCODER_UNTRANSLATED:
-            fut_name = pool.submit(_reverse_geocode, lat, lng, lang=runtime.lang)
-        fut_alerts = pool.submit(
-            fetch_alerts, lat, lng, cc or country_code,
-            lang=runtime.lang, address=addr,
-        )
+    # Alerts depend on geocode for country_code
+    name, cc, addr = _settle(fut_geocode, "reverse geocode", ("", "", {}))
+    # That address is in the country's own language, as the alert
+    # feeds' area names are. A typed place is shown by the forward
+    # geocoder's label, which names what was asked for; with only
+    # coordinates, or a language that label cannot be in, Nominatim
+    # is asked again for the name in the user's.
+    fut_name = None
+    if not geo_label or runtime.lang in GEOCODER_UNTRANSLATED:
+        fut_name = _submit(_reverse_geocode, lat, lng, lang=runtime.lang)
+    fut_alerts = _submit(
+        fetch_alerts, lat, lng, cc or country_code,
+        lang=runtime.lang, address=addr,
+    )
 
-        localized = _settle(fut_name, "place name", ("", "", {}))[0] if fut_name else ""
-        result["name"] = localized or without_country(geo_label) or name
-        result["country_code"] = cc or country_code
-        result["data"] = _settle(fut_forecast, "forecast", None)
-        result["aqi"] = _settle(fut_aqi, "air quality", None)
-        result["historical"] = _settle(fut_hist, "historical averages", None)
-        # The archive was asked for the machine's day, which is the
-        # location's until the date line or a midnight comes between.
-        # Then it is asked again for the day it is there: the download
-        # covers the whole year, so the second answer comes from the
-        # first's cache (issue #110).
-        if result["data"]:
-            there = _local_now_for_data(result["data"]).date()
-            if there != today:
-                result["historical"] = _settle(
-                    pool.submit(fetch_historical, lat, lng, there,
-                                celsius=runtime.celsius, metric=runtime.metric),
-                    "historical averages", None)
-        result["alerts"] = _settle(fut_alerts, "alerts", [])
+    localized = _settle(fut_name, "place name", ("", "", {}))[0] if fut_name else ""
+    result["name"] = localized or without_country(geo_label) or name
+    result["country_code"] = cc or country_code
+    result["data"] = _settle(fut_forecast, "forecast", None)
+    result["aqi"] = _settle(fut_aqi, "air quality", None)
+    result["historical"] = _settle(fut_hist, "historical averages", None)
+    # The archive was asked for the machine's day, which is the
+    # location's until the date line or a midnight comes between.
+    # Then it is asked again for the day it is there: the download
+    # covers the whole year, so the second answer comes from the
+    # first's cache (issue #110).
+    if result["data"]:
+        there = _local_now_for_data(result["data"]).date()
+        if there != today:
+            result["historical"] = _settle(
+                _submit(fetch_historical, lat, lng, there,
+                        celsius=runtime.celsius, metric=runtime.metric),
+                "historical averages", None)
+    result["alerts"] = _settle(fut_alerts, "alerts", [])
 
     # A place no geocoder can name shows its coordinates, as radar and
     # maps do — never the timezone city, which can be a continent away
@@ -845,6 +870,13 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
 
 
 def main():
+    try:
+        _main()
+    except KeyboardInterrupt:
+        sys.exit(130)
+
+
+def _main():
     args = weather_parser().parse_args()
     runtime = WeatherRuntime.from_sources(args)
     set_current(runtime)
@@ -869,39 +901,13 @@ def main():
         runtime = WeatherRuntime.from_sources(args, country=own)
         set_current(runtime)
 
-    # Fetch data in parallel for faster startup
-    done = threading.Event()
-    result = {}
+    # JSON stdout must contain only the payload; Spinner clears its line
+    # on cancellation. gather bounds all providers with one deadline.
+    from contextlib import nullcontext
+    from linecast._spinner import Spinner
+    with nullcontext() if runtime.json_mode else Spinner():
+        result = gather(lat, lng, country_code, runtime, geo_label)
 
-    def _fetch():
-        try:
-            result.update(gather(lat, lng, country_code, runtime, geo_label))
-        except Exception as exc:
-            # Whatever landed in `result` is shown; a forecast that did
-            # not is the "Could not fetch weather data" exit below.
-            log_failure("worker", "weather fetch", exc, fallback="the data in hand",
-                        trace=True)
-        finally:
-            # Release the spinner no matter what escapes above — the main
-            # thread must never wait forever on a fetch that died.
-            done.set()
-
-    t = threading.Thread(target=_fetch, daemon=True)
-    t.start()
-
-    # Animated spinner while waiting (suppressed for --json: stdout must
-    # carry nothing but the payload). The ceiling is a backstop well above
-    # the individual fetch timeouts: if the thread somehow wedges, give up
-    # and fall through to the no-data exit rather than spin forever.
-    _FETCH_CEILING = 60
-    if runtime.json_mode:
-        done.wait(_FETCH_CEILING)
-    else:
-        from linecast._spinner import Spinner
-        with Spinner():
-            done.wait(_FETCH_CEILING)
-
-    t.join(1)
     location_name = result.get("name", "")
     final_country = result.get("country_code", "")
     data = result.get("data")

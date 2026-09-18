@@ -421,7 +421,9 @@ class TestTablesComplete:
     # ma-class agreement for drizzle.
     EXTRAS = {"linecast._sunshine_i18n": {"in_days_few", "days_ago_few"},
               "linecast._moon_i18n": {"in_days_one", "in_days_many"},
-              "linecast._weather_i18n": {"starting_ma", "ending_ma", "continuing_ma"}}
+              "linecast._weather_i18n": {"starting_ma", "ending_ma", "continuing_ma",
+                                        "ending_becoming_ma", "continuing_becoming_ma",
+                                        "starting_becoming_ma"}}
     VARIANTS = {"linecast._sunshine_i18n": ("_dawn", "_dusk")}
 
     def _tables(self):
