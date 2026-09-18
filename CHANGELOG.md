@@ -36,6 +36,7 @@ New this version:
 
 Fixes:
 
+- Maps: Overlapping search and directions requests keep their rate limits, including after the computer wakes from sleep.
 - Downloads: Incomplete compressed responses no longer replace cached data, and responses containing multiple gzip members are read in full. Maps can retry an incomplete tile download instead of keeping it indefinitely.
 - Weather: The header's historical average comparison uses today's temperature from cached forecasts and is omitted when the forecast no longer covers today.
 - Weather: Cached forecasts use the current date for temperature comparisons and the JSON output's today and upcoming forecasts. Expired forecasts no longer return old hours as upcoming weather.

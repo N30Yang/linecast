@@ -18,7 +18,6 @@ Both are OpenStreetMap: attribute "© OpenStreetMap contributors".
 
 import hashlib
 import math
-import time
 import urllib.parse
 
 from linecast import user_agent
@@ -26,6 +25,7 @@ from linecast._cache import read_cache, read_stale, write_cache
 from linecast._http import fetch_json
 from linecast._i18n import accept_language
 from linecast._paths import cache_dir
+from linecast._rate_limit import RateLimit
 from linecast._runtime import debug_log, log_failure
 
 PHOTON_URL = "https://photon.komoot.io/api"
@@ -38,8 +38,7 @@ ATTRIBUTION = "© OpenStreetMap contributors"
 PHOTON_LANGS = ("en", "de", "fr")
 
 _SEARCH_TTL = 7 * 86400
-_NOMINATIM_INTERVAL = 1.0  # seconds between network hits, per policy
-_last_hit = 0.0
+_throttle = RateLimit(1.0, "nominatim")
 
 # Fallback view heights (degrees of latitude) for results that arrive
 # without an extent — roughly "what you'd want to see" per feature class.
@@ -169,18 +168,6 @@ def _photon_extent(extent):
 def _cache_path(query, lang):
     key = hashlib.md5(f"{lang}|{query.strip().lower()}".encode()).hexdigest()
     return cache_dir("maps", "search", f"{key[:12]}.json")
-
-
-def _throttle():
-    """Hold the line at one request per second, sleeping the remainder."""
-    global _last_hit
-    now = time.monotonic()
-    wait = _NOMINATIM_INTERVAL - (now - _last_hit)
-    if wait > 0:
-        debug_log(f"nominatim: waiting {wait:.2f}s for the rate limit")
-        time.sleep(wait)
-        now += wait
-    _last_hit = now
 
 
 def nominatim_search(query: str, lang: str = "en", limit: int = 8,
