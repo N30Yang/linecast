@@ -556,7 +556,7 @@ def nudge():
 def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
               auto_play=False, play_interval=0.6, on_action=None, on_drag=None,
               intercept=None, play_gate=None, on_wheel=None, text_mode=None,
-              on_click=None, help_panel=None):
+              on_click=None, help_panel=None, clamp_offset=None):
     """Run render_fn() in a loop on the alternate screen buffer.
 
     render_fn: callable(offset_minutes=0) returning (display_string, metadata)
@@ -568,6 +568,9 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
     mouse: if True, enable SGR mouse tracking and pass mouse_pos to render_fn.
     on_open: optional callback(alert_index) called when user presses 'o' on a modal.
     scroll_step: minutes to advance/retreat per scroll or arrow key event.
+    clamp_offset: optional callable(offset_minutes) returning a bounded offset.
+                  Applied to each time-scrub event, even in a coalesced burst,
+                  and before rendering, so finite views cannot overscroll.
     auto_play: if True, run an animation loop instead of time-scrubbing.
                render_fn also receives play_frame (monotonic frame counter) and
                playing (bool). Space toggles play/pause — pausing homes
@@ -759,7 +762,11 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                 playing = False
                 play_frame += step
             else:
+                if clamp_offset is not None:
+                    offset = clamp_offset(offset)
                 offset += step * scroll_step
+                if clamp_offset is not None:
+                    offset = clamp_offset(offset)
             return _coalesce_or_repaint()  # rapid scrolling
         elif action == 'reset':
             if auto_play:
@@ -791,7 +798,11 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                     playing = False
                     play_frame += 1 if wheel_cb == 64 else -1
                 else:
+                    if clamp_offset is not None:
+                        offset = clamp_offset(offset)
                     offset += scroll_step if wheel_cb == 64 else -scroll_step
+                    if clamp_offset is not None:
+                        offset = clamp_offset(offset)
                 return _coalesce_or_repaint()  # rapid scrolling
             if is_rel:
                 # Button release — completes a drag gesture if one
@@ -894,6 +905,8 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                               modal_scroll=modal_scroll)
             if auto_play:
                 kwargs.update(play_frame=play_frame, playing=playing)
+            if clamp_offset is not None:
+                offset = clamp_offset(offset)
             result = render_fn(offset_minutes=offset, **kwargs)
             # render_fn may return (output, metadata) or just output
             if isinstance(result, tuple):
@@ -1024,7 +1037,11 @@ class LiveApp:
     play_interval = 0.6  # seconds per frame while playing
 
     HOOKS = ("on_action", "on_drag", "on_wheel", "intercept", "on_click",
-             "on_open", "play_gate", "text_mode")
+             "on_open", "play_gate", "text_mode", "clamp_offset")
+
+    def clamp_offset(self, offset_minutes):
+        """Bound time scrubbing to the view's available data."""
+        return offset_minutes
 
     def render(self, **frame):
         """The frame: a string, or (string, alert_row_map).

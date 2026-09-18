@@ -138,6 +138,7 @@ class TestTuning:
         assert WeatherApp.mouse is True
         assert set(_app(lambda: 0.0).hooks()) == {
             "on_open", "on_action", "intercept", "text_mode", "on_click", "on_drag", "on_wheel",
+            "clamp_offset",
         }
 
 

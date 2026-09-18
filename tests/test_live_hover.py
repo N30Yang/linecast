@@ -12,7 +12,7 @@ if _src not in sys.path:
 from linecast import _framebuffer, _live
 
 
-def run_loop(monkeypatch, script, **hooks):
+def run_loop(monkeypatch, script, render_fn=None, coalesce=False, **hooks):
     """Run live_loop on a fake terminal and clock.
 
     script is a list of (seconds of stillness, action): the terminal
@@ -42,7 +42,8 @@ def run_loop(monkeypatch, script, **hooks):
                                settle=lambda timeout, replies=1: None, wait=wait)
     monkeypatch.setattr(_live._term, 'LiveTerminal', lambda fd: terminal)
     monkeypatch.setenv('LINECAST_FRAME_SYNC', '0')
-    monkeypatch.setattr(_live._term, 'wait_readable', lambda fd, timeout: False)
+    monkeypatch.setattr(_live._term, 'wait_readable',
+                        lambda fd, timeout: coalesce and pending[0][0] == 0)
     monkeypatch.setattr(_live, '_read_key', read)
     monkeypatch.setattr(_live, '_time', SimpleNamespace(
         monotonic=lambda: clock[0], time=lambda: clock[0]))
@@ -55,7 +56,7 @@ def run_loop(monkeypatch, script, **hooks):
         frames.append(mouse_pos)
         return "."
 
-    _live.live_loop(render, interval=3600, mouse=True, **hooks)
+    _live.live_loop(render_fn or render, interval=3600, mouse=True, **hooks)
     return frames
 
 

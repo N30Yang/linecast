@@ -397,6 +397,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
         "dts": window_dts,
         "total_hours": total_hours,
         "hours_shown": hours_shown,
+        "offset_minutes": (window_start_dt - current_hour_dt).total_seconds() / 60,
         "all_temps": temps,
         "all_winds": wind_speeds,
         "all_wind_dirs": wind_directions,

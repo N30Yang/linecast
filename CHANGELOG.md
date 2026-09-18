@@ -8,6 +8,7 @@ linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, Greek, Swahili, an
 
 New this version:
 
+- Weather: Scrolling back from either end of the hourly chart responds immediately, even after extra wheel or arrow-key input at the limit.
 - Language: Added Greek (`el`) across the views, with Greek weather forecast prose, dates, and controls. Use `linecast language el` or `--lang el`.
 - Weather: Change location from the top-right menu, with search suggestions and the ten most recent locations. Recent locations are saved between runs and can be cleared from the menu. A loading toast with an animated spinner appears while the new forecast loads. The menu sizes itself to its contents, separates places from its actions, and can save the displayed place as the default for all views.
 - Language: linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, and Swahili. `linecast language tr`, `eo`, `ru`, `ro`, `cs`, or `sw`, or a terminal locale in one of them, puts every view in that language, and the sky names its constellations in each and its brightest stars where the language has its own names. Turkish search takes a dotless ı or a dotted i alike, so `yildiz` finds Yıldız, and Esperanto search takes the x-system, so `gxemeloj` finds Ĝemeloj. (If you have your terminal set to the `eo` locale, please [reach out](https://github.com/ashuttl/linecast/discussions). I want to hear about it.)

@@ -823,6 +823,14 @@ class WeatherApp(_live.LiveApp):
         self.locations.handle('fwd' if direction > 0 else 'back', self.lat, self.lng)
         return True
 
+    def clamp_offset(self, offset_minutes):
+        with self._state_lock:
+            cols, _ = get_terminal_size()
+            window = _prepare_hourly_window(
+                self.data.get("hourly", {}), _local_now_for_data(self.data),
+                max(10, cols), offset_minutes=offset_minutes)
+            return window["offset_minutes"] if window else 0
+
     def on_drag(self, dcol, drow, done):
         # Opt in to live_loop's press/release tracking for clicks.
         return False
