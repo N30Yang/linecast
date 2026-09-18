@@ -51,7 +51,8 @@ def read_limited(resp: "http.client.HTTPResponse", limit: int) -> bytes:
 
     An honest oversized response is refused from its Content-Length
     before a byte is read; a lying or chunked one is cut off as soon as
-    the stream crosses the limit.
+    the stream crosses the limit.  An early EOF before Content-Length
+    bytes have arrived is a failed fetch, never a cacheable partial body.
     """
     declared = getattr(resp, "length", None)
     if declared is not None and declared > limit:
@@ -61,6 +62,11 @@ def read_limited(resp: "http.client.HTTPResponse", limit: int) -> bytes:
     while True:
         chunk = resp.read(_CHUNK)
         if not chunk:
+            # HTTPResponse.read(amt) does not raise on a short body as
+            # read() does, so streaming must check the original length.
+            if declared is not None and total < declared:
+                from http.client import IncompleteRead
+                raise IncompleteRead(b"".join(chunks), declared - total)
             return b"".join(chunks)
         total += len(chunk)
         if total > limit:

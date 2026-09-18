@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import time
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -48,6 +49,17 @@ class _Sock:
 
     def settimeout(self, value):
         self.timeouts.append(value)
+
+
+def _wire_response(body, headers):
+    """Use the real parser: sized reads can silently accept a short body."""
+    class Socket:
+        def makefile(self, *args):
+            return BytesIO(b"HTTP/1.1 200 OK\r\n" + headers + b"\r\n\r\n" + body)
+
+    response = http.client.HTTPResponse(Socket())
+    response.begin()
+    return response
 
 
 class _FakeConn:
@@ -277,6 +289,21 @@ class TestFetchBytes:
 
 
 class TestFetchBytesCached:
+    @pytest.mark.parametrize("stale", [None, b"previous complete tile"])
+    def test_truncated_response_never_replaces_the_cache(self, conns, tmp_path, stale):
+        path = tmp_path / "t.png"
+        if stale is not None:
+            path.write_bytes(stale)
+            __import__("os").utime(path, (0, 0))
+        conns.script = [_wire_response(b"short", b"Content-Length: 10")]
+
+        assert _http.fetch_bytes_cached(path, 60, "https://h.example/") == stale
+        if stale is None:
+            assert not path.exists()
+        else:
+            assert path.read_bytes() == stale
+        assert conns.instances[0].closed
+
     def test_fresh_cache_skips_the_network(self, conns, tmp_path):
         path = tmp_path / "t.png"
         path.write_bytes(b"cached")
@@ -387,6 +414,24 @@ class TestVersion:
 
 class TestBodyCap:
     """The streamed size limit: nothing past the cap is kept."""
+
+    @pytest.mark.parametrize("size", [0, 5, _http._CHUNK + 5])
+    def test_truncated_content_length_is_refused(self, size):
+        body = b"x" * size
+        response = _wire_response(body, f"Content-Length: {size + 10}".encode())
+        with pytest.raises(http.client.IncompleteRead) as info:
+            _http.read_limited(response, size + 100)
+        assert info.value.partial == body
+        assert info.value.expected == 10
+
+    @pytest.mark.parametrize("body, headers, expected", [
+        (b"", b"Content-Length: 0", b""),
+        (b"complete", b"Content-Length: 8", b"complete"),
+        (b"complete", b"Connection: close", b"complete"),
+        (b"8\r\ncomplete\r\n0\r\n\r\n", b"Transfer-Encoding: chunked", b"complete"),
+    ])
+    def test_complete_wire_response_is_accepted(self, body, headers, expected):
+        assert _http.read_limited(_wire_response(body, headers), 100) == expected
 
     def test_oversized_body_is_refused(self, conns):
         conns.script = [_Response(body=b"x" * 300)]
