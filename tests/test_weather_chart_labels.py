@@ -27,7 +27,7 @@ _WIDTH = 100
 
 
 def _forecast():
-    """A week of hourly data with windy spells and high-UV afternoons."""
+    """A week of hourly data with windy spells and sunny afternoons."""
     times = [(_T0 + timedelta(hours=i)).isoformat() for i in range(_HOURS)]
     temps = [10 + 8 * math.sin(i / 24 * 2 * math.pi) for i in range(_HOURS)]
     winds = [18 + 12 * math.sin(i / 17 * 2 * math.pi) + 4 * math.sin(i / 5)
@@ -154,7 +154,7 @@ class TestUVLabels:
         for offset in _offsets():
             _, uv = _rows(offset)
             for _, text in _labels(uv, _UV_LABEL):
-                assert 6 <= int(text[2:]) <= 15, f"{text} at offset {offset}"
+                assert 3 <= int(text[2:]) <= 15, f"{text} at offset {offset}"
 
     def test_labels_hold_still_while_scrolling(self):
         _assert_labels_creep(_UV_LABEL, 1)

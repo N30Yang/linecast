@@ -33,6 +33,16 @@ from linecast._weather_style import (
     _temp_color,
 )
 
+# The UV index from which the WHO says to protect skin: "moderate" starts
+# at 3. The chart labels a reading once it rounds to this, so what is
+# shown and what is judged agree.
+UV_LABEL_MIN = 3
+
+
+def _uv_label_value(uv):
+    """The whole number a UV reading is labelled with."""
+    return int(round(uv))
+
 
 def _daylight_factor(col_dt, sun_events):
     """Return a brightness factor (0.0-1.0) for a given datetime.
@@ -1058,17 +1068,17 @@ def _place_wind_labels(winds, wind_dirs, total_hours, graph_w, runtime):
 
 
 def _place_uv_labels(uv_values, total_hours, graph_w, runtime):
-    """Place UV index labels where UV is remarkable (>= 6)."""
-    if not uv_values or max(uv_values, default=0) < 6:
+    """Place UV index labels where protection is called for (UV_LABEL_MIN up)."""
+    if not uv_values or _uv_label_value(max(uv_values, default=0)) < UV_LABEL_MIN:
         return []
 
     col_uv = _interpolate_columns(uv_values, graph_w)
     candidates = []
     for x in _sample_columns(graph_w, total_hours):
-        uv = col_uv[x]
-        if uv < 6:
+        uv = _uv_label_value(col_uv[x])
+        if uv < UV_LABEL_MIN:
             continue
-        candidates.append((x, f"{_s('uv', runtime)}{uv:.0f}"))
+        candidates.append((x, f"{_s('uv', runtime)}{uv}"))
     return _place_labels(candidates, graph_w)
 
 
@@ -1122,7 +1132,7 @@ def _render_wind_row(window_winds, window_wind_dirs, total_hours, graph_w, runti
 
 def _render_uv_row(window_uv, total_hours, graph_w, runtime,
                     midnight_cols=None, hover_col=None, now_col=None):
-    """Render UV index labels at positions where UV is remarkable (>= 6)."""
+    """Render UV index labels where protection is called for (UV_LABEL_MIN up)."""
     placed = _place_uv_labels(window_uv, total_hours, graph_w, runtime)
     return _render_label_canvas(_labels_to_canvas(placed, graph_w), graph_w, UV_COLOR,
                                 midnight_cols=midnight_cols, hover_col=hover_col,
@@ -1272,7 +1282,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     window_uv = window.get("uv", [])
     wind_threshold = 25 if runtime.metric else 15
     has_global_wind = window.get("all_wind_max", 0) > wind_threshold
-    has_global_uv = window.get("all_uv_max", 0) >= 6
+    has_global_uv = _uv_label_value(window.get("all_uv_max", 0)) >= UV_LABEL_MIN
     has_global_precip = window.get("all_precip_max", 0) > 0
 
     # Place wind and UV labels on the full dataset, then move the ones that
