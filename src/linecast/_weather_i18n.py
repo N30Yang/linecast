@@ -95,6 +95,7 @@ DAY_NAMES = {
     "cs": ["po", "út", "st", "čt", "pá", "so", "ne"],
     # glibc sw_TZ (Kamusi): compact labels keep the Juma- days distinct.
     "sw": ["J3", "J4", "J5", "Alh", "Ij", "J1", "J2"],
+    "el": ['Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ', 'Κυρ'],
 }
 
 FULL_DAY_NAMES = {
@@ -125,6 +126,7 @@ FULL_DAY_NAMES = {
     "ro": ["luni", "marți", "miercuri", "joi", "vineri", "sâmbătă", "duminică"],
     "cs": ["pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota", "neděle"],
     "sw": ["Jumatatu", "Jumanne", "Jumatano", "Alhamisi", "Ijumaa", "Jumamosi", "Jumapili"],
+    "el": ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή'],
 }
 
 WMO_NAMES_I18N = {
@@ -458,6 +460,36 @@ WMO_NAMES_I18N = {
         96: "Mvua ya radi",
         99: "Mvua ya radi",
     },
+    "el": {
+        0: 'Αίθριος καιρός',
+        1: 'Γενικά αίθριος',
+        2: 'Λίγες νεφώσεις',
+        3: 'Νεφελώδης καιρός',
+        45: 'Ομίχλη',
+        48: 'Ομίχλη με απόθεση πάχνης',
+        51: 'Ασθενές ψιλόβροχο',
+        53: 'Ψιλόβροχο',
+        55: 'Έντονο ψιλόβροχο',
+        56: 'Παγωμένο ψιλόβροχο',
+        57: 'Έντονο παγωμένο ψιλόβροχο',
+        61: 'Ασθενής βροχή',
+        63: 'Βροχή',
+        65: 'Ισχυρή βροχή',
+        66: 'Παγωμένη βροχή',
+        67: 'Ισχυρή παγωμένη βροχή',
+        71: 'Ασθενής χιονόπτωση',
+        73: 'Χιονόπτωση',
+        75: 'Πυκνή χιονόπτωση',
+        77: 'Κοκκώδες χιόνι',
+        80: 'Ασθενείς μπόρες',
+        81: 'Μπόρες',
+        82: 'Ισχυρές μπόρες',
+        85: 'Μπόρες χιονιού',
+        86: 'Ισχυρές μπόρες χιονιού',
+        95: 'Καταιγίδα',
+        96: 'Καταιγίδα με χαλάζι',
+        99: 'Καταιγίδα με ισχυρή χαλαζόπτωση',
+    },
 }
 
 _PRECIP_DESCS_I18N = {
@@ -735,14 +767,42 @@ _PRECIP_DESCS_I18N = {
         96: "mvua ya radi",
         99: "mvua ya radi",
     },
+    # Greek forecast subjects are plural phenomena. Their feminine forms
+    # also work after "σε" in a transition, without changing the case.
+    "el": {
+        51: 'ασθενείς ψιχάλες',
+        53: 'ψιχάλες',
+        55: 'έντονες ψιχάλες',
+        56: 'παγωμένες ψιχάλες',
+        57: 'έντονες παγωμένες ψιχάλες',
+        61: 'ασθενείς βροχές',
+        63: 'βροχές',
+        65: 'ισχυρές βροχές',
+        66: 'παγωμένες βροχές',
+        67: 'ισχυρές παγωμένες βροχές',
+        71: 'ασθενείς χιονοπτώσεις',
+        73: 'χιονοπτώσεις',
+        75: 'πυκνές χιονοπτώσεις',
+        77: 'πτώσεις κοκκώδους χιονιού',
+        80: 'ασθενείς μπόρες',
+        81: 'μπόρες',
+        82: 'ισχυρές μπόρες',
+        85: 'μπόρες χιονιού',
+        86: 'ισχυρές μπόρες χιονιού',
+        95: 'καταιγίδες',
+        96: 'καταιγίδες με χαλάζι',
+        99: 'καταιγίδες με ισχυρή χαλαζόπτωση',
+    },
 }
 
 # The preposition before a weekday changes shape in Russian and Czech
 # before some days, and keeps it before their abbreviations: "во вт",
-# "ve st", "ve čt". Keyed by weekday() where it differs from `on_day`.
+# "ve st", "ve čt". Greek Saturday takes the neuter article "το".
+# Keyed by weekday() where it differs from `on_day`.
 ON_DAY_FORMS = {
     "ru": {1: "во {day}"},
     "cs": {2: "ve {day}", 3: "ve {day}"},
+    "el": {5: "το {day}"},
 }
 
 # Localized UI strings
@@ -2972,6 +3032,84 @@ _STRINGS = {
         "hist_above_avg": "{diff} juu ya wastani",
         "hist_below_avg": "{diff} chini ya wastani",
     },
+    "el": {
+        'today': 'Σήμερα',
+        'today_short': 'Σήμ',
+        'forecast_stale': 'Η πρόγνωση είναι από {day}· δεν ήταν δυνατή η λήψη νεότερης.',
+        'forecast_stale_at': 'Η πρόγνωση είναι από {day}· η προσπάθεια ενημέρωσης στις {time} απέτυχε.',
+        'forecast_stale_at_one': 'Η πρόγνωση είναι από {day}· η προσπάθεια ενημέρωσης στη {time} απέτυχε.',
+        'forecast_fetching': 'Λήψη νεότερης πρόγνωσης…',
+        'retry_run': 'Εκτελέστε ξανά για νέα προσπάθεια.',
+        'retry_key': 'Πατήστε r για νέα προσπάθεια.',
+        'credit_forecast': 'Μετεωρολογικά δεδομένα: {source}',
+        'credit_alerts': 'Προειδοποιήσεις: {source}',
+        'metric_unit_sep': ' ',
+        'feels': 'αισθητή',
+        'wind': 'Άνεμος',
+        'gusts': 'ριπές',
+        'humidity': 'Υγρασία',
+        'chance': 'πιθανότητα {p}',
+        'chance_of': 'πιθανότητα {what} {p}',
+        'amount_between': '{amount} από {a} έως {b}',
+        'amount_all_day': '{amount} στη διάρκεια της ημέρας',
+        'cloud': 'Νεφοκάλυψη {p}',
+        'heaviest_around': 'μεγαλύτερη ένταση γύρω στις {time}',
+        'heaviest_around_one': 'μεγαλύτερη ένταση γύρω στη {time}',
+        'dew_pt': 'Σημ. δρόσου',
+        'uv': 'UV',
+        'aqi': 'AQI',
+        'precip_inch': '″',
+        'until': 'έως',
+        'sentence_end': '.',
+        'sentence_join': '. ',
+        'feels_humid': 'Η υψηλή υγρασία αυξάνει την αισθητή θερμοκρασία',
+        'feels_sun': 'Ο ήλιος αυξάνει την αισθητή θερμοκρασία',
+        'feels_wind': 'Ο άνεμος μειώνει την αισθητή θερμοκρασία',
+        'feels_dry': 'Ο ξηρός αέρας μειώνει την αισθητή θερμοκρασία',
+        'same_temp': 'περίπου στα ίδια επίπεδα με {ref_day}',
+        'bit_warmer': 'λίγο υψηλότερη από {ref_day}',
+        'bit_cooler': 'λίγο χαμηλότερη από {ref_day}',
+        'warmer': 'υψηλότερη από {ref_day}',
+        'cooler': 'χαμηλότερη από {ref_day}',
+        'much_warmer': 'πολύ υψηλότερη από {ref_day}',
+        'much_cooler': 'πολύ χαμηλότερη από {ref_day}',
+        'today_subj': 'Σήμερα',
+        'tomorrow_subj': 'Αύριο',
+        'yesterday': 'χθες',
+        'today_ref': 'σήμερα',
+        'will_be': '{subject} η θερμοκρασία θα είναι {comparison}',
+        'ending': '{desc} θα σταματήσουν {time}',
+        'continuing': '{desc} θα συνεχιστούν όλη την ημέρα',
+        'ending_becoming': '{desc} θα εξελιχθούν σε {peak} {peak_time} και τα φαινόμενα θα σταματήσουν {time}',
+        'continuing_becoming': '{desc} θα εξελιχθούν σε {peak} {peak_time} και τα φαινόμενα θα συνεχιστούν όλη την ημέρα',
+        'starting': '{desc} πιθανότατα θα αρχίσουν {time}',
+        'starting_becoming': '{desc} πιθανότατα θα αρχίσουν {time} και θα εξελιχθούν σε {peak} {peak_time}',
+        'shortly': 'σύντομα',
+        'in_about_an_hour': 'σε περίπου μία ώρα',
+        'in_a_couple_hours': 'σε δυο ώρες περίπου',
+        'around': 'γύρω στις {time}',
+        'around_one': 'γύρω στη {time}',
+        'overnight': 'μέσα στη νύχτα',
+        'early_tomorrow_morning': 'αύριο νωρίς το πρωί',
+        'tomorrow_morning': 'αύριο το πρωί',
+        'tomorrow_afternoon': 'αύριο το απόγευμα',
+        'tomorrow_evening': 'αύριο το βράδυ',
+        'on_day': 'την {day}',
+        'past_precip': 'Το τελευταίο 24ωρο καταγράφηκαν {amt} {ptype}',
+        'snow': 'χιονιού',
+        'rain': 'βροχής',
+        'mixed_precip': 'μεικτών κατακρημνισμάτων',
+        'Snow': 'Χιόνι',
+        'Rain': 'Βροχή',
+        'Mix': 'Μεικτά',
+        'q_to_close': 'q για κλείσιμο',
+        'o_to_open': 'o για άνοιγμα στο πρόγραμμα περιήγησης',
+        'scroll': 'κύλιση',
+        'space_to_now': 'space για επιστροφή στο τώρα',
+        'hist_near_avg': 'κοντά στον μέσο όρο',
+        'hist_above_avg': '{diff} πάνω από τον μέσο όρο',
+        'hist_below_avg': '{diff} κάτω από τον μέσο όρο',
+    },
 }
 
 
@@ -2984,7 +3122,14 @@ def fmt_wind(speed, runtime):
 
 def _s(key, runtime, **kwargs):
     """Look up a localized string, with optional format substitution."""
-    return lookup(_STRINGS, key, lang_of(runtime), **kwargs)
+    lang = lang_of(runtime)
+    if lang == "el" and key + "_one" in _STRINGS[lang]:
+        # "στη 1", but "στις 2": also accept 01:00 and compact tooltip
+        # times such as 1:30p. The clock format still follows the user.
+        import re
+        if re.match(r"0?1(?:\D|$)", str(kwargs.get("time", ""))):
+            key += "_one"
+    return lookup(_STRINGS, key, lang, **kwargs)
 
 
 def _precip_s(key, code, runtime, **kwargs):

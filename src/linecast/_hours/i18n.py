@@ -118,6 +118,12 @@ _HOURS_STRINGS = {
         "koku": "koku 1",
         "fast": "mfungo",
     },
+    "el": {
+        'night': 'νύχτα',
+        'in_time': 'σε {dur}',
+        'koku': '1 koku',
+        'fast': 'νηστεία',
+    },
 }
 
 # The sunrise and sunset marks read in the language's own words, since

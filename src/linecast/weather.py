@@ -243,6 +243,9 @@ def _precip_kind_lower(code, runtime):
     """The precipitation type as a word mid-sentence: "rain", not "Rain",
     where the language has the lowercase form, and the row label otherwise."""
     kind = _precip_type(code)
+    if runtime.lang == "el" and kind == "Mix":
+        # The row is nominative; "probability of" needs the genitive.
+        return _s("mixed_precip", runtime)
     return _s(kind.lower(), runtime) if has_string(kind.lower()) else _s(kind, runtime)
 
 

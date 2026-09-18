@@ -102,7 +102,7 @@ WIKIDATA_LANG = {
     "fr": "fr", "es": "es", "de": "de", "it": "it", "pt": "pt", "nl": "nl",
     "pl": "pl", "no": "nb", "sv": "sv", "is": "is", "da": "da", "fi": "fi",
     "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id", "uk": "uk",
-    "vi": "vi", "eo": "eo", "tr": "tr", "ru": "ru", "ro": "ro", "cs": "cs",
+    "vi": "vi", "eo": "eo", "tr": "tr", "ru": "ru", "ro": "ro", "cs": "cs", "el": "el",
 }
 
 # The traditional form of each simplified character the Chinese names use,
@@ -596,6 +596,22 @@ OVERRIDES = {
             "Abt's Star": "阿布特星", "Pearce's Star": "皮爾斯星",
             "Plaskett's Star": "普拉斯基特星",
         },
+        # Greek observing names: Eugenides Foundation, "Το βάθος του ουρανού",
+        # https://www.eef.edu.gr/el/arthra/to-bathos-tou-ouranou/
+        # NOA, "Η Μεγάλη Άρκτος και ένας ουρανός που αγνοούμε",
+        # https://magazine.noa.gr/archives/3144
+        # and the Ainos Dark Sky Guide (Kefalonia Geopark, 2021).
+        "el": {
+            'Sirius': 'Σείριος',
+            'Arcturus': 'Αρκτούρος',
+            'Vega': 'Βέγας',
+            'Altair': 'Αλτάιρ',
+            'Deneb': 'Ντένεμπ',
+            'Antares': 'Αντάρης',
+            'Polaris': 'Πολικός Αστέρας',
+            'Rigel': 'Ρίγκελ',
+            'Aldebaran': 'Αλντεμπαράν',
+        },
     },
     "constellations": {
         # Noorali T. Jiwaji, "Namna Ya Kuelewa Nyota Za Mbinguni":
@@ -772,6 +788,40 @@ OVERRIDES = {
             "TrA": "Güney Üçgeni", "Tri": "Üçgen", "Tuc": "Tukan", "UMa": "Büyükayı",
             "UMi": "Küçükayı", "Vel": "Yelken", "Vir": "Başak", "Vol": "Uçanbalık",
             "Vul": "Tilkicik",
+        },
+        # Greek chart names: https://www.astronomia.gr/wiki/index.php?title=Αστερισμός
+        # Use the IAU codes (the source table has typos for Scl and Hor).
+        "el": {
+            'And': 'Ανδρομέδα', 'Ant': 'Αντλία', 'Aps': 'Πτηνόν',
+            'Aqr': 'Υδροχόος', 'Aql': 'Αετός', 'Ara': 'Βωμός',
+            'Ari': 'Κριός', 'Aur': 'Ηνίοχος', 'Boo': 'Βοώτης',
+            'Cae': 'Γλυφείον', 'Cam': 'Καμηλοπάρδαλις', 'Cnc': 'Καρκίνος',
+            'CVn': 'Θηρευτικοί Κύνες', 'CMa': 'Μέγας Κύων', 'CMi': 'Μικρός Κύων',
+            'Cap': 'Αιγόκερως', 'Car': 'Τρόπις', 'Cas': 'Κασσιόπη',
+            'Cen': 'Κένταυρος', 'Cep': 'Κηφεύς', 'Cet': 'Κήτος',
+            'Cha': 'Χαμαιλέων', 'Cir': 'Διαβήτης', 'Col': 'Περιστερά',
+            'Com': 'Κόμη Βερενίκης', 'CrA': 'Νότιος Στέφανος', 'CrB': 'Βόρειος Στέφανος',
+            'Crv': 'Κόραξ', 'Crt': 'Κρατήρ', 'Cru': 'Νότιος Σταυρός',
+            'Cyg': 'Κύκνος', 'Del': 'Δελφίνι', 'Dor': 'Δοράς',
+            'Dra': 'Δράκων', 'Equ': 'Ιππάριον', 'Eri': 'Ηριδανός',
+            'For': 'Κάμινος', 'Gem': 'Δίδυμοι', 'Gru': 'Γερανός',
+            'Her': 'Ηρακλής', 'Hor': 'Ωρολόγιον', 'Hya': 'Ύδρα',
+            'Hyi': 'Ύδρος', 'Ind': 'Ινδός', 'Lac': 'Σαύρα',
+            'Leo': 'Λέων', 'LMi': 'Μικρός Λέων', 'Lep': 'Λαγωός',
+            'Lib': 'Ζυγός', 'Lup': 'Λύκος', 'Lyn': 'Λυγξ',
+            'Lyr': 'Λύρα', 'Men': 'Τράπεζα', 'Mic': 'Μικροσκόπιον',
+            'Mon': 'Μονόκερως', 'Mus': 'Μυία', 'Nor': 'Γνώμων',
+            'Oct': 'Οκτάς', 'Oph': 'Οφιούχος', 'Ori': 'Ωρίωνας',
+            'Pav': 'Ταώς', 'Peg': 'Πήγασος', 'Per': 'Περσεύς',
+            'Phe': 'Φοίνιξ', 'Pic': 'Οκρίβας', 'Psc': 'Ιχθύες',
+            'PsA': 'Νότιος Ιχθύς', 'Pup': 'Πρύμνη', 'Pyx': 'Πυξίς',
+            'Ret': 'Δίκτυον', 'Sge': 'Βέλος', 'Sgr': 'Τοξότης',
+            'Sco': 'Σκορπιός', 'Scl': 'Γλύπτης', 'Sct': 'Ασπίς',
+            'Ser': 'Όφις', 'Sex': 'Εξάς', 'Tau': 'Ταύρος',
+            'Tel': 'Τηλεσκόπιον', 'Tri': 'Τρίγωνον', 'TrA': 'Νότιον Τρίγωνον',
+            'Tuc': 'Τουκάνα', 'UMa': 'Μεγάλη Άρκτος', 'UMi': 'Μικρή Άρκτος',
+            'Vel': 'Ιστία', 'Vir': 'Παρθένος', 'Vol': 'Ιπτάμενος Ιχθύς',
+            'Vul': 'Αλώπηξ',
         },
     },
 }

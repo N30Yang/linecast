@@ -544,6 +544,26 @@ _SUNSHINE_STRINGS = {
         "sunrise": "jua kuchomoza",
         "sunset": "jua kutua",
     },
+    "el": {
+        'today': 'σήμερα',
+        'in_day': 'σε {n} ημέρα',
+        'in_days': 'σε {n} ημέρες',
+        'day_ago': 'πριν από {n} ημέρα',
+        'days_ago': 'πριν από {n} ημέρες',
+        'sky_night': 'νύχτα',
+        'sky_astronomical': 'αστρονομικό λυκόφως',
+        'sky_nautical': 'ναυτικό λυκόφως',
+        'sky_civil': 'πολιτικό λυκόφως',
+        'sky_astronomical_dawn': 'αστρονομικό λυκαυγές',
+        'sky_nautical_dawn': 'ναυτικό λυκαυγές',
+        'sky_civil_dawn': 'πολιτικό λυκαυγές',
+        'sky_day': 'φως ημέρας',
+        'midnight_sun': 'ήλιος του μεσονυκτίου',
+        'polar_night': 'πολική νύχτα',
+        'solar_noon': 'ηλιακό μεσημέρι',
+        'sunrise': 'ανατολή',
+        'sunset': 'δύση',
+    },
 }
 
 # Month-axis labels where the first three letters of the MONTHS_I18N name
@@ -552,6 +572,9 @@ _SUNSHINE_STRINGS = {
 # letters.
 # Everything else takes the first letters of the MONTHS_I18N name.
 _AXIS_MONTHS = {
+    # Ιουν / Ιουλ both become Ιου in three cells. Month numbers keep
+    # the year axis unambiguous; dates still use the Greek month names.
+    "el": [str(m) for m in range(1, 13)],
     "fi": ["tam", "hel", "maa", "huh", "tou", "kes",
            "hei", "elo", "syy", "lok", "mar", "jou"],
     "fr": ["jan", "fév", "mar", "avr", "mai", "jun",
@@ -568,7 +591,7 @@ _AXIS_MONTHS = {
     # T1 … T12, as Vietnamese charts letter their months.
     "vi": [f"T{m}" for m in range(1, 13)],
 }
-_NUMERIC_AXIS_LANGS = frozenset({"ja", "ko", "zh", "zh-Hant", "vi"})
+_NUMERIC_AXIS_LANGS = frozenset({"ja", "ko", "zh", "zh-Hant", "vi", "el"})
 
 
 def _ss(key, runtime, **kwargs):

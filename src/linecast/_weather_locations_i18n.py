@@ -58,6 +58,9 @@ _WORDS = {
            'Nepodařilo se načíst počasí pro {name}. Zkuste to znovu.'),
     'sw': ('Maeneo', 'Ongeza eneo', 'Futa maeneo ya hivi karibuni', 'Inapakia {name}…',
            'Haikuweza kupakia hali ya hewa ya {name}. Tafadhali jaribu tena.'),
+    'el': ('Τοποθεσίες', 'Προσθήκη τοποθεσίας', 'Εκκαθάριση πρόσφατων τοποθεσιών',
+           'Φόρτωση: {name}…',
+           'Δεν ήταν δυνατή η φόρτωση του καιρού για την τοποθεσία {name}. Δοκιμάστε ξανά.'),
 }
 _STRINGS = {lang: dict(zip(('locations', 'add', 'clear', 'loading', 'failed'), words))
             for lang, words in _WORDS.items()}
@@ -122,6 +125,9 @@ _DEFAULT_WORDS = {
            'Nepodařilo se uložit výchozí místo. Zkuste to znovu.'),
     'sw': ('Hifadhi {name} kama chaguomsingi', '{name} imehifadhiwa kama eneo chaguomsingi kwa mionekano yote.',
            'Haikuweza kuhifadhi eneo chaguomsingi. Tafadhali jaribu tena.'),
+    'el': ('Αποθήκευση ως προεπιλογή: {name}',
+           'Η τοποθεσία {name} αποθηκεύτηκε ως προεπιλογή για όλες τις προβολές.',
+           'Δεν ήταν δυνατή η αποθήκευση της προεπιλεγμένης τοποθεσίας. Δοκιμάστε ξανά.'),
 }
 for _lang, _words in _DEFAULT_WORDS.items():
     _STRINGS[_lang].update(zip(('save', 'saved', 'save_failed'), _words))

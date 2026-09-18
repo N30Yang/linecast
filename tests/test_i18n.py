@@ -424,7 +424,8 @@ class TestTablesComplete:
               "linecast._weather_i18n": {"starting_ma", "ending_ma", "continuing_ma",
                                         "ending_becoming_ma", "continuing_becoming_ma",
                                         "starting_becoming_ma"}}
-    VARIANTS = {"linecast._sunshine_i18n": ("_dawn", "_dusk")}
+    VARIANTS = {"linecast._sunshine_i18n": ("_dawn", "_dusk"),
+                "linecast._weather_i18n": ("_one",)}
 
     def _tables(self):
         import importlib

@@ -367,6 +367,19 @@ _STRINGS = {
         "radar_unavailable": "rada haipatikani ({err})",
         "no_frames": "hakuna picha za rada",
     },
+    "el": {
+        'loading': 'φόρτωση…',
+        'hint': 'space αναπαραγωγή/παύση · κύλιση/←→ καρέ · +/- ζουμ · σύρσιμο / wasd μετακίνηση · c θερμ. · W άνεμος · t θέμα · S δορυφόρος · q έξοδος',
+        'theme': 'θέμα',
+        'now': 'τώρα',
+        'near': '{dist} {unit} {dir} από {name}',
+        'compass': 'Β ΒΑ Α ΝΑ Ν ΝΔ Δ ΒΔ',
+        'forecast': 'πρόγνωση',
+        'echo_pct': 'ηχώ {pct}%',
+        'cloud_pct': 'νεφοκάλυψη {pct}%',
+        'radar_unavailable': 'το ραντάρ δεν είναι διαθέσιμο ({err})',
+        'no_frames': 'δεν υπάρχουν διαθέσιμα καρέ ραντάρ',
+    },
 }
 
 

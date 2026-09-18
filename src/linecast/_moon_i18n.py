@@ -770,6 +770,35 @@ _MOON_STRINGS = {
         "autumn_equinox": "Ikwinoksi ya Septemba",
         "winter_solstice": "Solstisi ya Desemba",
     },
+    "el": {
+        'illuminated': 'φωτισμός {pct}%',
+        'age': 'ημέρα {age} από {total}',
+        'lunar_age': 'ηλικία Σελήνης: {age} ημ.',
+        'up_now': 'Πάνω από τον ορίζοντα',
+        'above_horizon': '{alt}° πάνω από τον ορίζοντα',
+        'below_horizon': 'Κάτω από τον ορίζοντα',
+        'moonrise': 'Ανατολή Σελήνης',
+        'moonset': 'Δύση Σελήνης',
+        'in_days': 'σε {days} ημέρες',
+        'in_days_one': 'σε {days} ημέρα',
+        'begins_at_sunset': 'αρχίζει με τη δύση του ήλιου',
+        'in_time': 'σε {dur}',
+        'year_day': 'Ημέρα {n} από {total}',
+        'light_of_moon': 'γέμισμα του φεγγαριού',
+        'dark_of_moon': 'χάση του φεγγαριού',
+        'good_for': 'Ευνοούνται: {things}',
+        'hold_off': 'Αναβάλετε: {things}',
+        'light_good': 'σπορά υπέργειων καλλιεργειών, εμβολιασμοί, μεταφυτεύσεις',
+        'light_hold': 'καλλιέργειες ριζών',
+        'dark_good': 'καλλιέργειες ριζών, κλάδεμα, βοτάνισμα',
+        'dark_hold': 'σπορά υπέργειων καλλιεργειών',
+        'solunar_major': 'Κύρια ηλιοσεληνιακή περίοδος',
+        'solunar_minor': 'δευτερεύουσα',
+        'spring_equinox': 'Εαρινή ισημερία',
+        'summer_solstice': 'Θερινό ηλιοστάσιο',
+        'autumn_equinox': 'Φθινοπωρινή ισημερία',
+        'winter_solstice': 'Χειμερινό ηλιοστάσιο',
+    },
 }
 
 
@@ -819,6 +848,7 @@ MONTHS_I18N = {
     "cs": ["led", "úno", "bře", "dub", "kvě", "čvn",
            "čvc", "srp", "zář", "říj", "lis", "pro"],
     "sw": ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ago", "Sep", "Okt", "Nov", "Des"],
+    "el": ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μαΐ', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'],
 }
 
 # Date order/format per language: {month} = abbreviated name from

@@ -102,7 +102,7 @@ The frames below show each app once or twice. [GALLERY.md](GALLERY.md) shows the
 
 ![weather dashboard](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather.png)
 
-The dashboard speaks twenty-six languages, and its units follow the place or your own setting. Reykjavík in Icelandic and Kyoto in Japanese, both metric:
+The dashboard speaks twenty-eight languages, and its units follow the place or your own setting. Reykjavík in Icelandic and Kyoto in Japanese, both metric:
 
 <p>
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather-reykjavik.png" width="49%" alt="the weather in Reykjavík, in Icelandic">
@@ -269,7 +269,7 @@ linecast language auto      # follow the terminal again
 linecast radar --lang zh    # just this once
 ```
 
-The languages are English (`en`), French (`fr`), Spanish (`es`), Portuguese (`pt`), Italian (`it`), Romanian (`ro`), German (`de`), Dutch (`nl`), Danish (`da`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Finnish (`fi`), Czech (`cs`), Polish (`pl`), Russian (`ru`), Ukrainian (`uk`), Turkish (`tr`), Swahili (`sw`), Chinese in the simplified script (`zh`) and the traditional (`zh-Hant`), Japanese (`ja`), Korean (`ko`), Thai (`th`), Vietnamese (`vi`), Indonesian (`id`), and Esperanto (`eo`). Swahili sky labels use documented names for Crux and Scorpius; other constellations and stars retain their catalogue names. A Chinese terminal locale picks the script by its region: `zh_TW`, `zh_HK`, and `zh_MO` read the traditional characters, `zh_CN` and `zh_SG` the simplified.
+The languages are English (`en`), French (`fr`), Spanish (`es`), Portuguese (`pt`), Italian (`it`), Romanian (`ro`), German (`de`), Dutch (`nl`), Danish (`da`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Finnish (`fi`), Czech (`cs`), Polish (`pl`), Russian (`ru`), Ukrainian (`uk`), Greek (`el`), Turkish (`tr`), Swahili (`sw`), Chinese in the simplified script (`zh`) and the traditional (`zh-Hant`), Japanese (`ja`), Korean (`ko`), Thai (`th`), Vietnamese (`vi`), Indonesian (`id`), and Esperanto (`eo`). Swahili sky labels use documented names for Crux and Scorpius; other constellations and stars retain their catalogue names. A Chinese terminal locale picks the script by its region: `zh_TW`, `zh_HK`, and `zh_MO` read the traditional characters, `zh_CN` and `zh_SG` the simplified.
 
 In India, many alerts are published in the state language. Add `--lang hi`, `--lang te`, `--lang mr`, or another Indian language code to `weather` to read them in that language where it exists; the rest of the app stays in English.
 

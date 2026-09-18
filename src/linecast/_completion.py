@@ -15,35 +15,7 @@ from linecast._i18n import LANGUAGE_CODES
 
 # --lang accepts any code; the parser lists these in its help text but
 # has no `choices`, so the completion offers them from here.
-LANG_CODES = (
-    "en",
-    "fr",
-    "es",
-    "de",
-    "it",
-    "pt",
-    "nl",
-    "pl",
-    "no",
-    "sv",
-    "is",
-    "da",
-    "fi",
-    "ja",
-    "ko",
-    "zh",
-    "zh-Hant",
-    "th",
-    "id",
-    "uk",
-    "vi",
-    "eo",
-    "tr",
-    "ru",
-    "ro",
-    "cs",
-    "sw",
-)
+LANG_CODES = LANGUAGE_CODES
 
 SHELLS = ("bash", "zsh", "fish", "nu", "nushell")
 

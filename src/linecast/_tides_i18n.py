@@ -165,6 +165,12 @@ _TIDES_STRINGS = {
         "swell": "Mawimbi ya mbali",
         "tide_model": "Modeli ya Open-Meteo ya kujaa na kupwa",
     },
+    "el": {
+        'space_to_now': 'space για επιστροφή στο τώρα',
+        'waves': 'Κύματα',
+        'swell': 'Αποθαλασσία',
+        'tide_model': 'Μοντέλο παλίρροιας Open-Meteo',
+    },
 }
 
 
@@ -222,6 +228,7 @@ MOON_NAMES_I18N = {
     "cs": ["Nov", "Dorůstající srpek", "První čtvrť", "Dorůstající Měsíc",
            "Úplněk", "Couvající Měsíc", "Poslední čtvrť", "Couvající srpek"],
     "sw": ["Mwezi mpya", "Hilali inayoongezeka", "Robo ya kwanza", "Mwezi unaoongezeka", "Mwezi mpevu", "Mwezi unaopungua", "Robo ya mwisho", "Hilali inayopungua"],
+    "el": ['Νέα Σελήνη', 'Αύξων μηνίσκος', 'Πρώτο τέταρτο', 'Αύξουσα αμφίκυρτη', 'Πανσέληνος', 'Φθίνουσα αμφίκυρτη', 'Τελευταίο τέταρτο', 'Φθίνων μηνίσκος'],
 }
 
 

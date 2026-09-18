@@ -4,10 +4,11 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, Swahili, and Chinese in the traditional script, twenty-seven languages in all, and sunshine can read the day in the halachic, Roman, Edo, Islamic, or Swahili hours.
+linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, Greek, Swahili, and Chinese in the traditional script, twenty-eight languages in all, and sunshine can read the day in the halachic, Roman, Edo, Islamic, or Swahili hours.
 
 New this version:
 
+- Language: Added Greek (`el`) across the views, with Greek weather forecast prose, dates, and controls. Use `linecast language el` or `--lang el`.
 - Weather: Change location from the top-right menu, with search suggestions and the ten most recent locations. Recent locations are saved between runs and can be cleared from the menu. A loading toast with an animated spinner appears while the new forecast loads. The menu sizes itself to its contents, separates places from its actions, and can save the displayed place as the default for all views.
 - Language: linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, and Swahili. `linecast language tr`, `eo`, `ru`, `ro`, `cs`, or `sw`, or a terminal locale in one of them, puts every view in that language, and the sky names its constellations in each and its brightest stars where the language has its own names. Turkish search takes a dotless ı or a dotted i alike, so `yildiz` finds Yıldız, and Esperanto search takes the x-system, so `gxemeloj` finds Ĝemeloj. (If you have your terminal set to the `eo` locale, please [reach out](https://github.com/ashuttl/linecast/discussions). I want to hear about it.)
 - Language: linecast speaks Chinese in the traditional script. `linecast language zh-Hant`, or a Taiwan, Hong Kong, or Macau terminal locale, puts every view in traditional characters, with the Chinese calendar and the Chinese sky as `zh` has them. `zh` is the simplified script, as before.
