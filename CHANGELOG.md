@@ -9,6 +9,7 @@ linecast speaks Turkish, Esperanto, Russian, Romanian, Czech, Greek, Swahili, an
 New this version:
 
 - Weather: The UV index appears under the hourly chart from UV 3, where sun protection is advised, rather than from UV 6. Suggested by [@GigaHanBaoBao](https://github.com/GigaHanBaoBao) in [#115](https://github.com/ashuttl/linecast/issues/115).
+- Weather: The wind and UV readings under the hourly chart share a line when none of them would overlap, so the chart takes one row less.
 - Weather: Scrolling back from either end of the hourly chart responds immediately, even after extra wheel or arrow-key input at the limit.
 - Weather: The hourly graph's climate scale arrives reliably after a change of location. A scale that was missing when the forecast appeared is filled in afterwards rather than left off until the next change.
 - Language: Added Greek (`el`) across the views, with Greek weather forecast prose, dates, and controls. Use `linecast language el` or `--lang el`.

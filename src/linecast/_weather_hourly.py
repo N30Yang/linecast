@@ -1083,8 +1083,12 @@ def _place_uv_labels(uv_values, total_hours, graph_w, runtime):
 
 
 def _render_label_canvas(canvas, graph_w, color, midnight_cols=None, hover_col=None,
-                         now_col=None):
-    """Render a pre-computed label canvas with styling and indicator lines."""
+                         now_col=None, colors=None):
+    """Render a pre-computed label canvas with styling and indicator lines.
+
+    `colors`, when given, names an escape per column for the label cells
+    there, so one row can carry labels of two kinds; `color` covers the
+    rest."""
     if canvas is None or not any(c != " " for c in canvas):
         return None
 
@@ -1092,13 +1096,14 @@ def _render_label_canvas(canvas, graph_w, color, midnight_cols=None, hover_col=N
     now_fg = fg(*CHART_NOW_RGB)
     midnight_fg = DIM
     parts = []
-    in_label = False
+    current = None
     for x in range(graph_w):
         ch = canvas[x] if x < len(canvas) else " "
         if ch != " ":
-            if not in_label:
-                parts.append(color)
-                in_label = True
+            want = (colors[x] if colors and x < len(colors) and colors[x] else color)
+            if want != current:
+                parts.append(want)
+                current = want
             parts.append(ch)
         else:
             indicator = None
@@ -1109,16 +1114,50 @@ def _render_label_canvas(canvas, graph_w, color, midnight_cols=None, hover_col=N
             elif midnight_cols and x in midnight_cols:
                 indicator = midnight_fg
             if indicator:
-                if in_label:
-                    in_label = False
                 parts.append(f"{indicator}\u2502")
+                current = None
             else:
-                if not in_label:
+                if current is None:
                     parts.append(color)
-                    in_label = True
+                    current = color
                 parts.append(" ")
     parts.append(RESET)
     return "".join(parts)
+
+
+def _labels_can_share(a, b, gap=2):
+    """Whether two sets of placed labels fit on one row, keeping at least
+    `gap` blank columns between a label of one kind and one of the other."""
+    spans_b = [(start, start + len(text)) for start, text in b]
+    for start, text in a:
+        end = start + len(text)
+        for b_start, b_end in spans_b:
+            if start < b_end + gap and b_start < end + gap:
+                return False
+    return True
+
+
+def _render_shared_row(wind, uv, graph_w, midnight_cols=None, hover_col=None, now_col=None):
+    """One row carrying wind and UV labels together, each in its own color.
+
+    The sets were checked apart before the window took them, so they should
+    not meet; if the window's rounding brings two together, the one on the
+    left stays, as it does within a kind."""
+    labels = sorted([(start, text, WIND_COLOR) for start, text in wind]
+                    + [(start, text, UV_COLOR) for start, text in uv])
+    canvas = [" "] * graph_w
+    colors = [None] * graph_w
+    last_end = -1
+    for start, text, color in labels:
+        if start <= last_end:
+            continue
+        for j, ch in enumerate(text):
+            if 0 <= start + j < graph_w:
+                canvas[start + j] = ch
+                colors[start + j] = color
+        last_end = start + len(text) - 1
+    return _render_label_canvas(canvas, graph_w, WIND_COLOR, midnight_cols=midnight_cols,
+                                hover_col=hover_col, now_col=now_col, colors=colors)
 
 
 def _render_wind_row(window_winds, window_wind_dirs, total_hours, graph_w, runtime,
@@ -1290,29 +1329,40 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     all_winds = window.get("all_winds", window_winds)
     all_wind_dirs = window.get("all_wind_dirs", window_wind_dirs)
     all_uv = window.get("all_uv", window_uv)
-    if use_full_canvas and all_winds:
-        all_wind_hours = max(1, len(all_winds) - 1)
-        placed = _place_wind_labels(all_winds, all_wind_dirs, all_wind_hours,
-                                    all_graph_w, runtime)
-        visible = _labels_in_window(placed, win_start_col, win_span, graph_w)
-        wind_line = _render_label_canvas(_labels_to_canvas(visible, graph_w), graph_w, WIND_COLOR,
-                                         midnight_cols=midnight_cols, hover_col=hover_col,
-                                         now_col=now_col)
+    if use_full_canvas:
+        placed_wind = (_place_wind_labels(all_winds, all_wind_dirs, max(1, len(all_winds) - 1),
+                                          all_graph_w, runtime) if all_winds else [])
+        placed_uv = (_place_uv_labels(all_uv, max(1, len(all_uv) - 1), all_graph_w, runtime)
+                     if all_uv else [])
+
+        def in_window(placed):
+            return _labels_in_window(placed, win_start_col, win_span, graph_w)
     else:
-        wind_line = _render_wind_row(window_winds, window_wind_dirs, total_hours, graph_w, runtime,
-                                     midnight_cols=midnight_cols, hover_col=hover_col,
-                                     now_col=now_col)
-    if use_full_canvas and all_uv:
-        all_uv_hours = max(1, len(all_uv) - 1)
-        placed = _place_uv_labels(all_uv, all_uv_hours, all_graph_w, runtime)
-        visible = _labels_in_window(placed, win_start_col, win_span, graph_w)
-        uv_line = _render_label_canvas(_labels_to_canvas(visible, graph_w), graph_w, UV_COLOR,
+        placed_wind = _place_wind_labels(window_winds, window_wind_dirs, total_hours, graph_w,
+                                         runtime)
+        placed_uv = _place_uv_labels(window_uv, total_hours, graph_w, runtime)
+
+        def in_window(placed):
+            return placed
+
+    # Wind and UV share one row when none of the week's labels would meet,
+    # as rain and wind share a column in the daily table. The choice is
+    # made on the whole forecast, not the window, so the chart keeps its
+    # height while scrolling and a windy sunny afternoon never loses a
+    # reading to save a line.
+    shared = _labels_can_share(placed_wind, placed_uv)
+    if shared:
+        wind_line = _render_shared_row(in_window(placed_wind), in_window(placed_uv), graph_w,
                                        midnight_cols=midnight_cols, hover_col=hover_col,
                                        now_col=now_col)
+        uv_line = None
     else:
-        uv_line = _render_uv_row(window_uv, total_hours, graph_w, runtime,
-                                 midnight_cols=midnight_cols, hover_col=hover_col,
-                                 now_col=now_col)
+        wind_line = _render_label_canvas(_labels_to_canvas(in_window(placed_wind), graph_w),
+                                         graph_w, WIND_COLOR, midnight_cols=midnight_cols,
+                                         hover_col=hover_col, now_col=now_col)
+        uv_line = _render_label_canvas(_labels_to_canvas(in_window(placed_uv), graph_w),
+                                       graph_w, UV_COLOR, midnight_cols=midnight_cols,
+                                       hover_col=hover_col, now_col=now_col)
 
     # Always reserve rows for wind/UV/precip if they appear anywhere in the
     # full dataset, so the chart height stays stable while scrolling.  A
@@ -1321,12 +1371,13 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     indicators = _indicator_colors(graph_w, midnight_cols, hover_col, now_col)
     if wind_line:
         lines.append(wind_line)
-    elif has_global_wind:
+    elif has_global_wind or (shared and has_global_uv):
         lines.append(_indicator_row(graph_w, indicators))
-    if uv_line:
-        lines.append(uv_line)
-    elif has_global_uv:
-        lines.append(_indicator_row(graph_w, indicators))
+    if not shared:
+        if uv_line:
+            lines.append(uv_line)
+        elif has_global_uv:
+            lines.append(_indicator_row(graph_w, indicators))
 
     cloud_line = (_render_cloud_row(window.get("cloud", []), graph_w, indicator_cols=indicators,
                                     through_col=hover_col)
