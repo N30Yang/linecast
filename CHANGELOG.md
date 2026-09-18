@@ -36,6 +36,7 @@ New this version:
 
 Fixes:
 
+- Maps: Editing a search clears the old suggestions and cancels any pending Enter, so a changed query cannot send the map to an unintended place.
 - Weather: Startup waits at most 30 seconds for data providers and keeps completed results; Ctrl-C exits cleanly while loading.
 - Weather: The hours after a clock change read by the clock there. The day after the clocks changed ran an hour off, sunrise and sunset with it.
 - Weather: The day and night tint of the hourly chart no longer shifts by an hour on the night the machine's clocks change.

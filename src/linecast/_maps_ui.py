@@ -153,8 +153,10 @@ class SearchState:
     # -- the worker --------------------------------------------------------
     def _arm(self, lat, lon, zoom, lang):
         self._cancel()
+        # Suggestions and a pending Enter belong to the previous text.
+        self.results, self.sel, self.submitted = [], 0, False
         if len(self.query.strip()) < MIN_CHARS:
-            self.results, self.status, self.sel = [], "", 0
+            self.status = ""
             return
         self.status = "pending"
         gen, query = self.gen, self.query

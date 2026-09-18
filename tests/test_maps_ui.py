@@ -302,6 +302,37 @@ class TestCommit:
         assert st.chosen.name == "First"
         assert not st.open
 
+    @pytest.mark.parametrize('edit', ['char:t', 'key:backspace'])
+    def test_enter_after_editing_waits_for_the_new_query(self, edit):
+        st = self._listed()
+        st.handle('back', 43.6, -70.2, 12)
+        st._fetch = lambda *args: [result("New match")]
+        st.handle(edit, 43.6, -70.2, 12)
+        st.handle('key:enter', 43.6, -70.2, 12)
+        assert st.open
+        assert st.take_chosen() is None
+        FakeTimer.armed[-1].fire()
+        assert st.take_chosen().name == "New match"
+        assert not st.open
+
+    @pytest.mark.parametrize('edit', ['char:t', 'key:backspace', 'key:kill'])
+    def test_editing_cancels_a_pending_enter(self, edit):
+        st = state([result("New match")])
+        st.start()
+        typed(st, "por")
+        st.handle('key:enter', 43.6, -70.2, 12)
+        stale = FakeTimer.armed[-1]
+        st.handle(edit, 43.6, -70.2, 12)
+        if edit == 'key:kill':
+            typed(st, "london")
+        stale.fire()
+        FakeTimer.armed[-1].fire()
+        assert st.open
+        assert st.take_chosen() is None
+        assert [r.name for r in st.results] == ["New match"]
+        st.handle('key:enter', 43.6, -70.2, 12)
+        assert st.take_chosen().name == "New match"
+
     def test_enter_on_an_empty_list_asks_nominatim_once(self):
         seen = []
 

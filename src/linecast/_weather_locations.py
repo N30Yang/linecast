@@ -55,11 +55,6 @@ class RecentLocations:
 class LocationSearch(SearchState):
     """The map's geocoder, with an explicit choice after every query."""
 
-    def _arm(self, *args):
-        # Old suggestions must never be selectable for the new text.
-        self.results, self.sel, self.submitted = [], 0, False
-        super()._arm(*args)
-
     def submit(self, lang='en'):
         if self.status != 'pending':
             super().submit(lang)
