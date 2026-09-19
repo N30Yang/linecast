@@ -27,7 +27,8 @@ from linecast._png import DecodeMemo
 from linecast._radar_basemap import DotLayer, _bresenham, _edge_dots
 from linecast._runtime import debug_log, log_failure
 from linecast._theme import lerp_rgb
-from linecast._vtiles import fetch_tiles, iter_layer, tile_info, tiles_for_bbox
+from linecast._vtiles import (fetch_tiles, iter_layer, prefetch_tiles,
+                              tile_info, tiles_for_bbox)
 
 # Fill ids double as indices into style.FILL_ORDER, so the id order *is*
 # the stacking order: water over park (a pond in a park), park over
@@ -82,6 +83,43 @@ def view_tiles(bbox, height_cells):
         z_src -= 1
         keys = tiles_for_bbox(bbox, z_src)
     return band, z_src, keys
+
+
+def prefetch_around(bbox, height_cells, keys, zoom_step=1.5):
+    """Queue the tiles a pan or a zoom from this view will want.
+
+    A ring around the view's own tiles covers a pan; one zoom step out
+    and one in cover `-` and `+`. The zooms are the slow ones cold,
+    since a change of source zoom means nothing on disk is theirs.
+    """
+    if not keys:
+        return
+    z = keys[0][0]
+    n = 1 << z
+    xs = [k[1] for k in keys]
+    ys = [k[2] for k in keys]
+    x0, x1 = min(xs), max(xs)
+    if x1 - x0 > n // 2:  # the view straddles the antimeridian, so take the lot
+        x0, x1 = 0, n - 1
+    ring = {(z, x % n, y)
+            for x in range(x0 - 1, x1 + 2)
+            for y in range(max(0, min(ys) - 1), min(n - 1, max(ys) + 1) + 1)}
+    minlon, minlat, maxlon, maxlat = bbox
+    cx, cy = (minlon + maxlon) / 2, (minlat + maxlat) / 2
+    zoomed = []
+    for step in (zoom_step, 1.0 / zoom_step):
+        hx = (maxlon - minlon) * step / 2
+        hy = (maxlat - minlat) * step / 2
+        if hy >= 85:
+            continue
+        _band, _z, zkeys = view_tiles(
+            (cx - hx, max(-85.0, cy - hy), cx + hx, min(85.0, cy + hy)),
+            height_cells)
+        zoomed += zkeys
+    want = set(keys)
+    # zooms first: a pan can lean on the ring, a zoom has nothing
+    prefetch_tiles([k for k in zoomed if k not in want]
+                   + sorted(ring - want))
 
 
 def fetch_view(bbox, height_cells):
