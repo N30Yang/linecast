@@ -692,7 +692,9 @@ class WeatherApp(_live.LiveApp):
         self._loading = None
         self._location_hit = None
         self._worker = None
+        self._climate_worker = None
         self.attempted = None   # local time the last refresh finished
+        self._start_climate(delay=_CLIMATE_RETRY_DELAY)
 
     def _refresh(self, generation, lat, lng, country):
         """Refresh a snapshot of the location; discard it if the user moved."""
@@ -714,6 +716,55 @@ class WeatherApp(_live.LiveApp):
                     self.attempted = (None if forecast_is_todays(self.data)
                                       else _local_now_for_data(self.data))
         _live.nudge()
+        # The refresh is also the climate scale's next chance: a
+        # location that arrived without one keeps asking every interval.
+        with self._state_lock:
+            if generation == self._generation:
+                self._start_climate()
+
+    def _fetch_climate(self, generation, lat, lng, delay=0):
+        """Ask the archive for the climate scale a location arrived
+        without, for the day it is there, and keep the answer unless the
+        user has moved on.  The graph's scale falls in on the next paint."""
+        if delay:
+            _t.sleep(delay)
+        with self._state_lock:
+            if generation != self._generation or self.historical is not None:
+                return
+            data = self.data
+
+        def stale():
+            return generation != self._generation
+
+        historical = None
+        try:
+            historical = fetch_historical(
+                lat, lng, _local_now_for_data(data).date(),
+                celsius=getattr(self.runtime, "celsius", False),
+                metric=getattr(self.runtime, "metric", False), stale=stale)
+        except Exception as exc:
+            log_failure("weather", "climate scale", exc, fallback="forecast's own range")
+        if historical is None:
+            return
+        with self._state_lock:
+            if generation != self._generation or self.historical is not None:
+                return
+            self.historical = historical
+        _live.nudge()
+
+    def _start_climate(self, delay=0):
+        """Another try for a missing climate scale, in the background:
+        a little after a location arrives without one, and at each
+        refresh until it has one.  Called with the state lock held."""
+        if self.historical is not None or not self.data:
+            return
+        worker = self._climate_worker
+        if worker and worker.is_alive():
+            return
+        self._climate_worker = threading.Thread(
+            target=self._fetch_climate,
+            args=(self._generation, self.lat, self.lng, delay), daemon=True)
+        self._climate_worker.start()
 
     def _refreshing(self):
         return bool(self._worker and self._worker.is_alive())
@@ -742,7 +793,8 @@ class WeatherApp(_live.LiveApp):
 
         def fetch():
             try:
-                result = gather(place.lat, place.lon, "", self.runtime, geo_label=place.name)
+                result = gather(place.lat, place.lon, "", self.runtime, geo_label=place.name,
+                                stale=lambda: generation != self._generation)
             except Exception as exc:
                 log_failure("weather", "change location", exc, fallback="keep current location")
                 result = None
@@ -807,6 +859,7 @@ class WeatherApp(_live.LiveApp):
         apply_india_aqi(self.aqi, self.country)
         self.fetched, self.attempted = _t.monotonic(), None
         self.locations.recent.remember(place)
+        self._start_climate(delay=_CLIMATE_RETRY_DELAY)
 
     def text_mode(self):
         return self.locations.search.open
@@ -926,9 +979,19 @@ class WeatherApp(_live.LiveApp):
 # Main
 # ---------------------------------------------------------------------------
 _FETCH_CEILING = 30  # shared wall-clock budget for the dashboard providers
+# How long the live dashboard waits for the climate scale before showing
+# the forecast without it. The archive answers in a few seconds when it
+# answers; when it hangs, the view fills the scale in afterwards.
+_CLIMATE_PATIENCE = 10
+# How long the live view waits before asking again for a climate scale
+# that did not arrive with the forecast. Long enough for a request the
+# dashboard stopped waiting for to finish and leave its answer in the
+# cache, and to spare an archive that is refusing requests a second
+# volley on its heels.
+_CLIMATE_RETRY_DELAY = 20
 
 
-def gather(lat, lng, country_code, runtime, geo_label=""):
+def gather(lat, lng, country_code, runtime, geo_label="", stale=None):
     """Everything the dashboard is built from, fetched side by side.
 
     Returns a dict with name, country_code, data, alerts, aqi and
@@ -936,7 +999,9 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
     provider that raises -- an alert feed with a null where a string
     was expected, say -- costs only its own entry, logged under --debug,
     and never the air quality or the climate scale fetched beside it.
-    All providers share one deadline; completed results survive a timeout."""
+    All providers share one deadline; completed results survive a timeout.
+    `stale` says whether the caller has stopped wanting the answer; the
+    archive, which queues its requests, asks it before taking its turn."""
     from concurrent.futures import Future, TimeoutError
     from datetime import date
 
@@ -959,13 +1024,17 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
         threading.Thread(target=run, daemon=True).start()
         return future
 
-    def _settle(future, what, fallback):
+    def _settle(future, what, fallback, patience=None):
         # With the traceback: a worker that failed is the one thing a
         # --debug transcript exists to explain.
+        wait = max(0, deadline - _t.monotonic())
+        why = "omitted after fetch deadline"
+        if patience is not None and patience < wait:
+            wait, why = patience, "left for the live view to fill in"
         try:
-            return future.result(timeout=max(0, deadline - _t.monotonic()))
+            return future.result(timeout=wait)
         except TimeoutError as exc:
-            log_failure("worker", what, exc, fallback="omitted after fetch deadline")
+            log_failure("worker", what, exc, fallback=why)
             return fallback
         except Exception as exc:
             log_failure("worker", what, exc, fallback="omitted", trace=True)
@@ -977,7 +1046,7 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
     fut_aqi = _submit(fetch_aqi, lat, lng)
     today = date.today()
     fut_hist = _submit(fetch_historical, lat, lng, today,
-                       celsius=runtime.celsius, metric=runtime.metric)
+                       celsius=runtime.celsius, metric=runtime.metric, stale=stale)
 
     # Alerts depend on geocode for country_code
     name, cc, addr = _settle(fut_geocode, "reverse geocode", ("", "", {}))
@@ -999,19 +1068,27 @@ def gather(lat, lng, country_code, runtime, geo_label=""):
     result["country_code"] = cc or country_code
     result["data"] = _settle(fut_forecast, "forecast", None)
     result["aqi"] = _settle(fut_aqi, "air quality", None)
-    result["historical"] = _settle(fut_hist, "historical averages", None)
+    # The live view can fill the climate scale in later, so it does not
+    # keep the forecast waiting on a hung archive; a one-shot run has no
+    # later, and waits out the deadline.
+    patience = _CLIMATE_PATIENCE if getattr(runtime, "live", False) else None
+    result["historical"] = _settle(fut_hist, "historical averages", None, patience)
     # The archive was asked for the machine's day, which is the
     # location's until the date line or a midnight comes between.
     # Then it is asked again for the day it is there: the download
     # covers the whole year, so the second answer comes from the
-    # first's cache (issue #110).
+    # first's cache (issue #110).  Should that second ask miss the
+    # deadline, the first answer stands: its year's extremes are the
+    # same, and only the day's averages are a day off.
     if result["data"]:
         there = _local_now_for_data(result["data"]).date()
         if there != today:
-            result["historical"] = _settle(
+            again = _settle(
                 _submit(fetch_historical, lat, lng, there,
-                        celsius=runtime.celsius, metric=runtime.metric),
-                "historical averages", None)
+                        celsius=runtime.celsius, metric=runtime.metric, stale=stale),
+                "historical averages", None, patience)
+            if again is not None:
+                result["historical"] = again
     result["alerts"] = _settle(fut_alerts, "alerts", [])
 
     # A place no geocoder can name shows its coordinates, as radar and

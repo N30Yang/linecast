@@ -171,7 +171,10 @@ def test_switch_commits_all_location_data_and_remembers_departure():
     with patch.object(weather, 'gather', return_value=result) as gather:
         view._choose_location(place())
         finish(view)
-    gather.assert_called_once_with(48.85, 2.35, '', view.runtime, geo_label='Paris')
+    gather.assert_called_once()
+    assert gather.call_args.args == (48.85, 2.35, '', view.runtime)
+    assert gather.call_args.kwargs['geo_label'] == 'Paris'
+    assert gather.call_args.kwargs['stale']() is False   # still the place on screen
     assert (view.lat, view.lng, view.country, view.location_name) == (48.85, 2.35, 'FR', 'Paris')
     assert view.data == view.aqi == view.historical == {'new': 1}
     assert view.alerts == [{'new': 1}]

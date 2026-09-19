@@ -7,19 +7,37 @@ temperature graph its scale under --temp-range climate or auto.
 
 The Archive API is free, requires no key, and the data is immutable
 for past dates — so we cache aggressively (7 days).
+
+The archive is the slow provider on the dashboard, and the touchy one:
+it takes a few seconds to answer, refuses a handful of requests in
+flight at once from one address with a 429, and now and then accepts a
+request and never answers it.  So this module sends it one request at a
+time, retries a refusal or a timeout, and lets a request that no one is
+waiting for any more give up its place in the queue.
 """
 
+import threading
+import time
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import Callable, Optional
 
-from linecast._cache import location_cache_key
-from linecast._http import fetch_json_cached
+from linecast._cache import location_cache_key, read_cache
+from linecast._http import HTTPError, fetch_json, fetch_json_cached
 from linecast._paths import cache_dir
-from linecast._runtime import log_skipped
+from linecast._runtime import debug_log, log_skipped
 
 _HISTORY_YEARS = 10
 _CACHE_MAX_AGE = 7 * 86400  # 7 days — historical data doesn't change
+# One archive request in flight per process: the server answers a burst
+# of them with "Too many concurrent requests".
+_ARCHIVE_LOCK = threading.Lock()
+# Pauses before the second and third attempt after a refusal.
+_RETRY_DELAYS = (1.0, 2.0)
+# A request the server accepted and never answered is tried once more,
+# with less patience: the first wait already spent most of the caller's.
+_RETRY_TIMEOUT = 10
+_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
 # Per terminal character row, not per braille dot. At this resolution a
 # 10°C daily swing still has two rows in which to show its shape.
 _AUTO_MAX_CELSIUS_PER_ROW = 5.0
@@ -39,13 +57,61 @@ class HistoricalAverages:
     year_low: Optional[float] = None
 
 
+class Superseded(Exception):
+    """The caller stopped waiting for this answer before it was asked for."""
+
+
+def _fetch_archive(url: str, timeout: float = 15,
+                   stale: "Callable[[], bool] | None" = None, cache_file=None):
+    """One archive request, in its turn, retried when the server balks.
+
+    Requests queue on _ARCHIVE_LOCK so that a run of location changes
+    reaches the server one at a time instead of tripping its concurrency
+    limit.  `stale` is asked before each attempt whether anyone still
+    wants the answer; a request from a location the user has since left
+    raises Superseded rather than take the next place's turn.  A request
+    that queued behind another for the same place finds its answer in
+    `cache_file` when its turn comes, and sends nothing.  A 429 or a 5xx
+    is retried after a short pause; a timeout or a body cut short is
+    retried once with a shorter timeout.
+    """
+    from http.client import IncompleteRead
+
+    with _ARCHIVE_LOCK:
+        if cache_file is not None:
+            cached = read_cache(cache_file, _CACHE_MAX_AGE)
+            if cached is not None:
+                return cached
+        attempt = 0
+        while True:
+            if stale is not None and stale():
+                raise Superseded("archive request no longer wanted")
+            try:
+                return fetch_json(url, timeout=timeout)
+            except HTTPError as exc:
+                if exc.code not in _RETRY_STATUSES or attempt >= len(_RETRY_DELAYS):
+                    raise
+                debug_log(f"weather/climate: archive answered {exc.code}; "
+                          f"retrying in {_RETRY_DELAYS[attempt]:g}s")
+                time.sleep(_RETRY_DELAYS[attempt])
+            except (TimeoutError, IncompleteRead) as exc:
+                if attempt >= 1:
+                    raise
+                debug_log(f"weather/climate: archive {type(exc).__name__}; retrying once")
+                timeout = min(timeout, _RETRY_TIMEOUT)
+            attempt += 1
+
+
 def fetch_historical(lat: float, lng: float, target_date: date,
-                     celsius: bool = False, metric: bool = False) -> Optional[HistoricalAverages]:
+                     celsius: bool = False, metric: bool = False,
+                     stale: "Callable[[], bool] | None" = None) -> Optional[HistoricalAverages]:
     """Fetch historical averages for *target_date* at the given location.
 
     Returns ``HistoricalAverages`` or ``None`` if data is unavailable.
     Uses Open-Meteo's Archive API with the same temperature/precipitation
-    units as the forecast so values are directly comparable.
+    units as the forecast so values are directly comparable.  `stale`
+    tells the network step that the answer is no longer wanted (see
+    _fetch_archive); a cached answer is returned regardless.
     """
     # The archive request covers the last N complete years and depends only
     # on that year span, the units, and the location -- not on the calendar
@@ -85,6 +151,8 @@ def fetch_historical(lat: float, lng: float, target_date: date,
         url,
         timeout=15,
         fallback=None,
+        fetch=lambda url, timeout: _fetch_archive(url, timeout, stale=stale,
+                                                  cache_file=cache_file),
     )
     if not data:
         return None
