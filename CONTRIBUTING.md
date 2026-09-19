@@ -13,7 +13,7 @@ git fetch origin next
 git checkout -b my-change origin/next
 ```
 
-A bug in the released version is fixed on `next` like everything else. There are no hotfix branches. A fix that cannot wait becomes a patch release.
+The exception is a fix that cannot wait for the next release. For that, branch from `main`, make the fix there, and merge it back into `main`, where it ships as a patch release. The fix then needs to reach `next` as well, by a separate merge, or the next release will lose it. That is the path for urgent fixes only. A bug that can wait is fixed on `next` like everything else.
 
 ## Before you open a pull request
 
