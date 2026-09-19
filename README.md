@@ -423,14 +423,7 @@ Cached data lives in `~/Library/Caches/linecast` on macOS and `~/.cache/linecast
 
 ## Contributing
 
-Questions, requests, and ideas are welcome in [Discussions](https://github.com/ashuttl/linecast/discussions). Pull requests are very welcome for contained changes: a new data provider, an improvement to a view, a bug fix. Larger contributions are welcome too, but for those, start a discussion before you write code. Every view here was found slowly, and a new view or command needs that same care from the start, which is hard to give a pull request that arrives finished. [ARCHITECTURE.md](ARCHITECTURE.md) is the map of the code.
-
-```sh
-uv run --with pytest pytest tests -q   # tests
-uvx ruff check src tests scripts       # lint
-```
-
-Both are meant to run without the network and without touching your home directory.
+Questions, requests, and ideas are welcome in [Discussions](https://github.com/ashuttl/linecast/discussions), and pull requests are welcome too. [CONTRIBUTING.md](CONTRIBUTING.md) says what kinds of change fit, which branch to start from, and how to run the tests.
 
 ## Lineage
 
