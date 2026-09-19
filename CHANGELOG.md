@@ -11,6 +11,7 @@ New this version:
 - Maps: Street maps open faster, and panning to a new area no longer reconnects to the tile server each time. Contributed by [@N30Yang](https://github.com/N30Yang) in [#117](https://github.com/ashuttl/linecast/pull/117).
 - Weather: The UV index appears under the hourly chart from UV 3, where sun protection is advised, rather than from UV 6. Suggested by [@GigaHanBaoBao](https://github.com/GigaHanBaoBao) in [#115](https://github.com/ashuttl/linecast/issues/115).
 - Weather: The wind and UV readings under the hourly chart share a line when none of them would overlap, so the chart takes one row less.
+- Weather: In a short window the cloud strip outlasts the UV and wind rows under the hourly chart. The UV labels go first, then the wind row, then the strip, and the chart fills the window it is given.
 - Weather: Scrolling back from either end of the hourly chart responds immediately, even after extra wheel or arrow-key input at the limit.
 - Weather: The hourly graph's climate scale arrives reliably after a change of location. A scale that was missing when the forecast appeared is filled in afterwards rather than left off until the next change.
 - Language: Added Greek (`el`) across the views, with Greek weather forecast prose, dates, and controls. Use `linecast language el` or `--lang el`.

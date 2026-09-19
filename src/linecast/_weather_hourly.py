@@ -44,6 +44,11 @@ def _uv_label_value(uv):
     return int(round(uv))
 
 
+def _wind_threshold(runtime):
+    """The wind speed above which the chart labels the wind."""
+    return 25 if runtime.metric else 15
+
+
 def _daylight_factor(col_dt, sun_events):
     """Return a brightness factor (0.0-1.0) for a given datetime.
 
@@ -1046,7 +1051,7 @@ def _place_wind_labels(winds, wind_dirs, total_hours, graph_w, runtime):
     Placement is separate from rendering so it can run over the whole dataset,
     which keeps labels still while the chart scrolls under them.
     """
-    wind_threshold = 25 if runtime.metric else 15
+    wind_threshold = _wind_threshold(runtime)
     if not winds or max(winds, default=0) <= wind_threshold:
         return []
 
@@ -1204,12 +1209,99 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
     return [f"{''.join(precip_chars)}{RESET}"]
 
 
+def _full_canvas(window, graph_w):
+    """The virtual canvas of the whole forecast that labels are placed on,
+    so they hold still while the chart scrolls: (all_graph_w, win_start_col,
+    win_span), or None when the window already shows the whole forecast."""
+    all_temps = window.get("all_temps", window["temps"])
+    start_idx = window.get("start_idx", 0)
+    end_idx = window.get("end_idx", len(all_temps) - 1)
+    n_window = end_idx - start_idx + 1
+    n_all = len(all_temps)
+    if not (n_all > n_window and n_window > 1):
+        return None
+    # Columns per hour, fixed by the terminal width alone. Deriving it from
+    # the window's sample count instead would rescale the whole canvas
+    # whenever the window happened to hold one hour more or less, and every
+    # label on it would shift.
+    cols_per_hour = (graph_w - 1) / max(1, window.get("hours_shown", 24))
+    all_graph_w = max(graph_w, int(round(cols_per_hour * (n_all - 1))) + 1)
+    win_start_col = start_idx * cols_per_hour
+    win_end_col = end_idx * cols_per_hour
+    return all_graph_w, win_start_col, win_end_col - win_start_col
+
+
+def _place_week_labels(window, graph_w, runtime, show_wind=True, show_uv=True):
+    """Place the wind and UV labels on the whole forecast, so they hold
+    still while the chart scrolls, and decide whether they can share a row.
+
+    Returns (wind, uv, shared, in_window): the two placed sets, whether
+    they fit on one row, and a function that moves a placed set into the
+    visible window.  With show_wind or show_uv off that kind has no labels."""
+    window_winds = window["winds"] if show_wind else []
+    window_wind_dirs = window["wind_dirs"]
+    window_uv = window.get("uv", []) if show_uv else []
+    canvas = _full_canvas(window, graph_w)
+    if canvas:
+        all_graph_w, win_start_col, win_span = canvas
+        all_winds = window.get("all_winds", window_winds) if show_wind else []
+        all_wind_dirs = window.get("all_wind_dirs", window_wind_dirs)
+        all_uv = window.get("all_uv", window_uv) if show_uv else []
+        placed_wind = (_place_wind_labels(all_winds, all_wind_dirs, max(1, len(all_winds) - 1),
+                                          all_graph_w, runtime) if all_winds else [])
+        placed_uv = (_place_uv_labels(all_uv, max(1, len(all_uv) - 1), all_graph_w, runtime)
+                     if all_uv else [])
+
+        def in_window(placed):
+            return _labels_in_window(placed, win_start_col, win_span, graph_w)
+    else:
+        total_hours = window["total_hours"]
+        placed_wind = _place_wind_labels(window_winds, window_wind_dirs, total_hours, graph_w,
+                                         runtime)
+        placed_uv = _place_uv_labels(window_uv, total_hours, graph_w, runtime)
+
+        def in_window(placed):
+            return placed
+
+    # Wind and UV share one row when none of the week's labels would meet,
+    # as rain and wind share a column in the daily table. The choice is
+    # made on the whole forecast, not the window, so the chart keeps its
+    # height while scrolling and a windy sunny afternoon never loses a
+    # reading to save a line.
+    shared = _labels_can_share(placed_wind, placed_uv)
+    return placed_wind, placed_uv, shared, in_window
+
+
+def _has_week_wind(window, runtime):
+    return window.get("all_wind_max", 0) > _wind_threshold(runtime)
+
+
+def _has_week_uv(window):
+    return _uv_label_value(window.get("all_uv_max", 0)) >= UV_LABEL_MIN
+
+
+def label_rows(window, graph_w, runtime):
+    """How many rows the wind and UV labels take under the chart, as
+    (wind, uv): the rows the wind reserves, and the rows UV adds beyond
+    them.  UV adds none when its labels can share the wind's row, so
+    leaving it off would save nothing."""
+    has_wind = _has_week_wind(window, runtime)
+    has_uv = _has_week_uv(window)
+    if not has_uv:
+        return int(has_wind), 0
+    _wind, _uv, shared, _in_window = _place_week_labels(window, graph_w, runtime)
+    return int(has_wind), int(not shared or not has_wind)
+
+
 def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runtime=None,
-                  hover_col=None, offset_minutes=0, show_cloud=True, historical=None):
+                  hover_col=None, offset_minutes=0, show_cloud=True, historical=None,
+                  show_wind=True, show_uv=True):
     """Hourly forecast: braille temperature curve + precipitation graph.
 
-    show_cloud: draw the cloud strip when the data has cloud cover; the
-    dashboard turns it off in a window too short to spare the row.
+    show_cloud, show_wind and show_uv: draw the cloud strip, the wind row
+    and the UV labels when the data calls for them.  The dashboard turns
+    them off in a window too short for their rows, UV first, then the
+    wind, then the cloud strip.
     historical: the location's HistoricalAverages, which set the graph's
     scale under --temp-range climate or auto."""
     if runtime is None:
@@ -1229,8 +1321,6 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     window_precip = window["precip"]
     window_amount = window["precip_amount"]
     window_codes = window["codes"]
-    window_winds = window["winds"]
-    window_wind_dirs = window["wind_dirs"]
     window_dts = window["dts"]
     total_hours = window["total_hours"]
     chart_lo = min(window_temps)
@@ -1259,23 +1349,10 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     # Full-data virtual canvas for stable label placement while scrolling.
     # Temperature extrema and wind labels are computed on this canvas, then
     # remapped into the visible window so they don't jump around.
-    all_temps = window.get("all_temps", window_temps)
-    start_idx = window.get("start_idx", 0)
-    end_idx = window.get("end_idx", len(all_temps) - 1)
-    n_window = end_idx - start_idx + 1
-    n_all = len(all_temps)
-    use_full_canvas = n_all > n_window and n_window > 1
-    if use_full_canvas:
-        # Columns per hour, fixed by the terminal width alone. Deriving it from
-        # the window's sample count instead would rescale the whole canvas
-        # whenever the window happened to hold one hour more or less, and every
-        # label on it would shift.
-        cols_per_hour = (graph_w - 1) / max(1, window.get("hours_shown", 24))
-        all_graph_w = max(graph_w, int(round(cols_per_hour * (n_all - 1))) + 1)
-        win_start_col = start_idx * cols_per_hour
-        win_end_col = end_idx * cols_per_hour
-        win_span = win_end_col - win_start_col
-
+    canvas = _full_canvas(window, graph_w)
+    if canvas:
+        all_graph_w, win_start_col, win_span = canvas
+        all_temps = window.get("all_temps", window_temps)
         all_col_temps = _interpolate_columns(all_temps, all_graph_w)
         all_extrema = _find_temperature_extrema(all_col_temps, all_graph_w)
         extrema = []
@@ -1285,9 +1362,6 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
             if 0 <= ix < graph_w:
                 extrema.append((ix, temp, is_peak))
     else:
-        all_graph_w = graph_w
-        win_start_col = 0
-        win_span = graph_w - 1
         extrema = _find_temperature_extrema(col_temps, graph_w)
 
     lines = [
@@ -1318,39 +1392,14 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     lines.extend(_render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime, overlays,
                                        hover_col=hover_col, now_col=now_col))
 
-    window_uv = window.get("uv", [])
-    wind_threshold = 25 if runtime.metric else 15
-    has_global_wind = window.get("all_wind_max", 0) > wind_threshold
-    has_global_uv = _uv_label_value(window.get("all_uv_max", 0)) >= UV_LABEL_MIN
+    has_global_wind = show_wind and _has_week_wind(window, runtime)
+    has_global_uv = show_uv and _has_week_uv(window)
     has_global_precip = window.get("all_precip_max", 0) > 0
 
     # Place wind and UV labels on the full dataset, then move the ones that
     # fall inside the window into it, so they hold still while scrolling.
-    all_winds = window.get("all_winds", window_winds)
-    all_wind_dirs = window.get("all_wind_dirs", window_wind_dirs)
-    all_uv = window.get("all_uv", window_uv)
-    if use_full_canvas:
-        placed_wind = (_place_wind_labels(all_winds, all_wind_dirs, max(1, len(all_winds) - 1),
-                                          all_graph_w, runtime) if all_winds else [])
-        placed_uv = (_place_uv_labels(all_uv, max(1, len(all_uv) - 1), all_graph_w, runtime)
-                     if all_uv else [])
-
-        def in_window(placed):
-            return _labels_in_window(placed, win_start_col, win_span, graph_w)
-    else:
-        placed_wind = _place_wind_labels(window_winds, window_wind_dirs, total_hours, graph_w,
-                                         runtime)
-        placed_uv = _place_uv_labels(window_uv, total_hours, graph_w, runtime)
-
-        def in_window(placed):
-            return placed
-
-    # Wind and UV share one row when none of the week's labels would meet,
-    # as rain and wind share a column in the daily table. The choice is
-    # made on the whole forecast, not the window, so the chart keeps its
-    # height while scrolling and a windy sunny afternoon never loses a
-    # reading to save a line.
-    shared = _labels_can_share(placed_wind, placed_uv)
+    placed_wind, placed_uv, shared, in_window = _place_week_labels(
+        window, graph_w, runtime, show_wind=show_wind, show_uv=show_uv)
     if shared:
         wind_line = _render_shared_row(in_window(placed_wind), in_window(placed_uv), graph_w,
                                        midnight_cols=midnight_cols, hover_col=hover_col,

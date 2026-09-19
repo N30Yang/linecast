@@ -40,7 +40,7 @@ from linecast._weather_i18n import (
     _wmo_icons,
     has_string,
 )
-from linecast._weather_hourly import _precip_bar_full, _present
+from linecast._weather_hourly import _precip_bar_full, _present, label_rows
 from linecast._weather_render import (
     ALERT_AMBER,
     CLOUD_RGB,
@@ -83,11 +83,13 @@ from linecast._weather_sources import (
 
 # What the dashboard keeps when the window is too short for all of it:
 # the graph is the view -- its day line, its ticks and two rows of braille
-# -- and three days is still a forecast.
+# -- and three days is still a forecast.  The rows under the curve give
+# way in turn as the window shrinks: the UV labels first, then the wind
+# row, then the cloud strip.  The rain bar stays.
 MIN_HOURLY_ROWS = 4
 MIN_DAILY_ROWS = 3
-MIN_CURVE_ROWS_WITH_CLOUD = 4  # the cloud strip appears only above this
-CURVE_ROWS_COMFORTABLE = 6     # below this the spacing rows give way
+MIN_CURVE_ROWS_WITH_CLOUD = 4  # the rows under the curve take from it only above this
+CURVE_ROWS_COMFORTABLE = 5     # the spacing rows stay while the curve keeps this many
 MAX_PRECIP_ROWS = 3            # the precipitation bar at its tallest
 
 
@@ -444,10 +446,12 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
 
     # Check full dataset for optional rows so layout stays stable while
     # scrolling.  The series can hold nulls, so the stats are over the
-    # hours that have a value.
-    wind_threshold = 25 if runtime.metric else 15
-    has_wind_row = max(_present(hourly.get("wind_speed_10m")), default=0) > wind_threshold
-    has_uv_row = max(_present(hourly.get("uv_index")), default=0) >= 6
+    # hours that have a value.  The wind and UV rows are what the chart
+    # will draw for this width: UV adds no row when its labels can share
+    # the wind's.
+    graph_w = max(10, cols)
+    window = _prepare_hourly_window(hourly, now_local, graph_w, offset_minutes=offset_minutes)
+    wind_rows, uv_rows = label_rows(window, graph_w, runtime) if window else (0, 0)
     precip_peak = max(_present(hourly.get("precipitation")), default=0)
     has_precip_graph = precip_peak > 0
     has_cloud_data = bool(_present(hourly.get("cloud_cover")))
@@ -467,21 +471,20 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         non_hourly += 1  # the credit and help row
 
     # The shortest the hourly section will render: the day line, the ticks,
-    # two rows of braille, and whichever of the wind, UV and precipitation
-    # rows the data calls for.
+    # two rows of braille, and the precipitation row when the data calls
+    # for one.  The wind and UV rows and the cloud strip are not in it:
+    # they have their rows only while the curve can spare them.
     hourly_floor = MIN_HOURLY_ROWS
-    if has_wind_row:
-        hourly_floor += 1
-    if has_uv_row:
-        hourly_floor += 1
     if has_precip_graph:
         hourly_floor += 1
+    optional_rows = wind_rows + uv_rows + int(has_cloud_data)
 
     # The spacing rows -- under the header, and between the prose and the
     # daily rows -- are the first to go: they stay only while the curve
-    # would still have a comfortable height with them in.  A third, above
-    # the credit row, is a luxury of a window with room to spare.
-    comfortable = hourly_floor - 2 + CURVE_ROWS_COMFORTABLE
+    # would still have a comfortable height with them in and every row
+    # under it in place.  A third, above the credit row, is a luxury of a
+    # window with room to spare.
+    comfortable = hourly_floor - 2 + CURVE_ROWS_COMFORTABLE + optional_rows
     spacing = min(2, max(0, rows - non_hourly - comfortable))
     blank_before_daily = spacing >= 1   # keeps two blocks of text apart
     blank_after_header = spacing >= 2
@@ -505,14 +508,10 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         daily_spans = daily_spans[:-dropped]
         non_hourly -= dropped
 
-    # All remaining rows go to hourly section
-    # hourly contains: today_line(1) + tick(1) + braille(N) + wind(0-1) + uv(0-1) + precip(0-P)
+    # All remaining rows go to hourly section: today_line(1) + tick(1) +
+    # braille(N) + wind(0-1) + uv(0-1) + cloud(0-1) + precip(0-P)
     hourly_budget = max(hourly_floor, rows - non_hourly)
     graph_budget = hourly_budget - 2  # today_line + tick_labels
-    if has_wind_row:
-        graph_budget -= 1
-    if has_uv_row:
-        graph_budget -= 1
 
     if has_precip_graph:
         # The bar fills at a fixed hourly amount, so a forecast whose wettest
@@ -527,12 +526,26 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         n_precip_braille = 0
         remaining_for_temp = graph_budget
 
-    # The cloud strip is the first thing to go in a short window: it takes
-    # its row from the temperature curve only once the curve has more rows
-    # than it needs to read well.
-    has_cloud_row = has_cloud_data and remaining_for_temp >= MIN_CURVE_ROWS_WITH_CLOUD + 1
-    if has_cloud_row:
+    # The cloud strip, the wind row and the UV row take their rows from
+    # the temperature curve only while the curve keeps more rows than it
+    # needs to read well, and in that order: in a window with room for
+    # one of them, the strip stays.  UV labels that share the wind's row
+    # cost nothing while that row is there, and go with it when it is not.
+    def spare_row():
+        nonlocal remaining_for_temp
+        if remaining_for_temp <= MIN_CURVE_ROWS_WITH_CLOUD:
+            return False
         remaining_for_temp -= 1
+        return True
+
+    has_cloud_row = has_cloud_data and spare_row()
+    has_wind_row = wind_rows > 0 and spare_row()
+    if wind_rows > 0 and not has_wind_row:
+        show_uv = False
+    elif uv_rows > 0:
+        show_uv = spare_row()
+    else:
+        show_uv = True
 
     n_braille = max(2, remaining_for_temp)
 
@@ -551,19 +564,21 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     hourly_lines = render_hourly(
         data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
         now=now_local, runtime=runtime, offset_minutes=offset_minutes,
-        show_cloud=has_cloud_row, historical=historical,
+        show_cloud=has_cloud_row, show_wind=has_wind_row, show_uv=show_uv,
+        historical=historical,
     )
 
-    # Adjust if hourly used more/fewer lines than budgeted (wind appeared,
-    # or precip didn't render for the visible window)
-    if len(hourly_lines) != hourly_budget and n_braille > 2:
+    # Adjust if hourly used more/fewer lines than budgeted, giving the
+    # difference to or taking it from the curve.
+    if len(hourly_lines) != hourly_budget:
         adjusted = max(2, n_braille - (len(hourly_lines) - hourly_budget))
         if adjusted != n_braille:
             n_braille = adjusted
             hourly_lines = render_hourly(
                 data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
                 now=now_local, runtime=runtime, offset_minutes=offset_minutes,
-                show_cloud=has_cloud_row, historical=historical,
+                show_cloud=has_cloud_row, show_wind=has_wind_row, show_uv=show_uv,
+                historical=historical,
             )
 
     hourly_end = hourly_start + len(hourly_lines)
@@ -573,11 +588,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     if mouse_pos:
         mouse_row_idx = mouse_pos[1] - 1  # 1-based → 0-based
         if hourly_start <= mouse_row_idx < hourly_end:
-            graph_w = max(10, cols)
             mouse_col_raw = mouse_pos[0] - 1  # 1-based terminal col → 0-based graph col
             if 0 <= mouse_col_raw < graph_w:
-                window = _prepare_hourly_window(hourly, now_local, graph_w,
-                                                offset_minutes=offset_minutes)
                 if window:
                     n = len(window["temps"])
                     total_hours = window["total_hours"]
@@ -590,7 +602,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         hourly_lines = render_hourly(
             data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
             now=now_local, runtime=runtime, hover_col=hover_graph_col,
-            offset_minutes=offset_minutes, show_cloud=has_cloud_row, historical=historical,
+            offset_minutes=offset_minutes, show_cloud=has_cloud_row,
+            show_wind=has_wind_row, show_uv=show_uv, historical=historical,
         )
 
     lines.extend(hourly_lines)
