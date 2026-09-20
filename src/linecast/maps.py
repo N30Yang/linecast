@@ -76,7 +76,7 @@ MIN_ZOOM_DEG = 0.0012
 # (the disk's diameter is 2·(180/π) ≈ 114.6 zoom-degrees).  A narrow
 # terminal needs more room than that: see max_zoom.
 MAX_ZOOM_DEG = 130.0
-ZOOM_STEP = 1.5          # matches radar, so the two views feel the same
+ZOOM_STEP = _maps_style.ZOOM_STEP
 
 
 _route_layer_cache = Memo(keep=1)   # one slot: (route id, view key) -> DotLayer

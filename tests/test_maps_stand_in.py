@@ -60,3 +60,31 @@ class TestReprojectStreet:
             _prev(_full()), (2.0, 2.0, 6.0, 6.0), GW, HC, "g")
         assert _count(layer.dots) == GW * HC * 8
         assert all(f != "g" for row in fills for f in row)
+
+
+class TestPrefetchAround:
+    """What a landed view asks for next."""
+
+    def _asked(self, monkeypatch, spans):
+        from linecast import _maps_streets as ms
+        asked = []
+        monkeypatch.setattr(ms, "prefetch_tiles", lambda keys: asked.append(list(keys)))
+        monkeypatch.setattr(ms, "tile_info", lambda: ("t", "v", 14))
+        monkeypatch.setattr(ms, "_last_span", [None])
+        for span in spans:
+            bbox = (0.0, 0.0, span * 2, span)
+            _band, _z, keys = ms.view_tiles(bbox, 8)
+            ms.prefetch_around(bbox, 8, keys)
+        return asked[-1], keys
+
+    def test_a_pan_asks_only_for_the_ring(self, monkeypatch):
+        asked, keys = self._asked(monkeypatch, [1.0, 1.0])
+        z = keys[0][0]
+        assert asked and all(k[0] == z for k in asked)  # no other zoom level
+
+    def test_a_zoom_asks_the_way_the_reader_went(self, monkeypatch):
+        out, keys = self._asked(monkeypatch, [1.0, 1.5])
+        assert any(k[0] < keys[0][0] for k in out)      # coarser tiles
+        assert not any(k[0] > keys[0][0] for k in out)  # and nothing finer
+        into, keys = self._asked(monkeypatch, [1.5, 1.0])
+        assert not any(k[0] < keys[0][0] for k in into)

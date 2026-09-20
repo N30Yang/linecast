@@ -277,6 +277,16 @@ class TestPrefetch:
         vt.shutdown()
         assert len([k for k in fetched if k[0] == 13]) <= 2
 
+    def test_nothing_speculative_while_the_fallback_serves(self, monkeypatch):
+        fetched = []
+        monkeypatch.setattr(vt, "fetch_tile",
+                            lambda z, x, y, timeout=15: fetched.append(z))
+        monkeypatch.setattr(vt, "tile_info", lambda: (TEMPLATE, "v", 14))
+        monkeypatch.setattr(vt, "_active_url", vt.FALLBACK_TILEJSON_URL)
+        vt.prefetch_tiles([(13, x, 0) for x in range(8)])
+        vt.shutdown()
+        assert not fetched   # OSM US rate-limits; the view needs that budget
+
     def test_shutdown_leaves_the_queue_where_it_is(self, monkeypatch):
         fetched = []
         monkeypatch.setattr(vt, "fetch_tile",

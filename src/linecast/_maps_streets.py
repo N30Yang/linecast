@@ -85,12 +85,16 @@ def view_tiles(bbox, height_cells):
     return band, z_src, keys
 
 
-def prefetch_around(bbox, height_cells, keys, zoom_step=1.5):
-    """Queue the tiles a pan or a zoom from this view will want.
+_last_span = [None]   # the last view's height, for which way a zoom went
 
-    A ring around the view's own tiles covers a pan; one zoom step out
-    and one in cover `-` and `+`. The zooms are the slow ones cold,
-    since a change of source zoom means nothing on disk is theirs.
+
+def prefetch_around(bbox, height_cells, keys):
+    """Queue the tiles a pan or another zoom the same way will want.
+
+    A ring around the view's own tiles covers a pan. A zoom is the slow
+    one cold, since a change of source zoom means nothing on disk is
+    theirs, but guessing both ways is most of the tiles asked for in a
+    session, so only the way the reader just went is guessed.
     """
     if not keys:
         return
@@ -105,19 +109,21 @@ def prefetch_around(bbox, height_cells, keys, zoom_step=1.5):
             for x in range(x0 - 1, x1 + 2)
             for y in range(max(0, min(ys) - 1), min(n - 1, max(ys) + 1) + 1)}
     minlon, minlat, maxlon, maxlat = bbox
-    cx, cy = (minlon + maxlon) / 2, (minlat + maxlat) / 2
+    span = maxlat - minlat
+    last, _last_span[0] = _last_span[0], span
     zoomed = []
-    for step in (zoom_step, 1.0 / zoom_step):
+    # a pan leaves the span alone; a rounding-sized change is a pan too
+    if last is not None and abs(span - last) > last * 0.01:
+        step = style.ZOOM_STEP if span > last else 1.0 / style.ZOOM_STEP
+        cx, cy = (minlon + maxlon) / 2, (minlat + maxlat) / 2
         hx = (maxlon - minlon) * step / 2
-        hy = (maxlat - minlat) * step / 2
-        if hy >= 85:
-            continue
-        _band, _z, zkeys = view_tiles(
-            (cx - hx, max(-85.0, cy - hy), cx + hx, min(85.0, cy + hy)),
-            height_cells)
-        zoomed += zkeys
+        hy = span * step / 2
+        if hy < 85:
+            _band, _z, zoomed = view_tiles(
+                (cx - hx, max(-85.0, cy - hy), cx + hx, min(85.0, cy + hy)),
+                height_cells)
     want = set(keys)
-    # zooms first: a pan can lean on the ring, a zoom has nothing
+    # the zoom first: a pan can lean on the ring, a zoom has nothing
     prefetch_tiles([k for k in zoomed if k not in want]
                    + sorted(ring - want))
 

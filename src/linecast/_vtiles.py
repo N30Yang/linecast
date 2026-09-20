@@ -364,9 +364,11 @@ def prefetch_tiles(keys: Iterable[tuple[int, int, int]]) -> None:
     For the views a reader is likely to ask for next; a tile already on
     disk costs a stat. Each tile checks the generation it was queued
     under before it fetches, so once the view moves the rest cost
-    nothing.
+    nothing. Nothing is asked for at all while the fallback is serving.
     """
     global _prefetch_gen
+    if _active_url == FALLBACK_TILEJSON_URL:
+        return  # OSM US rate-limits anonymous use; don't spend it on guesses
     pool = _pool("prefetch", 2)
     if pool is None:
         return
